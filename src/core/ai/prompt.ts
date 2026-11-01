@@ -12,6 +12,8 @@ export interface ExplainInput {
   chosenAnswer: string | null
   /** Plain-language description of what went wrong. */
   mistake: string
+  /** Neutral study-pattern notes from the learner profile, to adapt the style. */
+  hints?: readonly string[]
 }
 
 export function buildExplainPrompt(i: ExplainInput): string {
@@ -29,6 +31,9 @@ export function buildExplainPrompt(i: ExplainInput): string {
     `Risposta corretta: ${i.correctAnswer}`,
     `Risposta dello studente: ${i.chosenAnswer ?? 'nessuna (non lo sapeva)'}`,
     `Problema: ${i.mistake}`,
+    ...(i.hints && i.hints.length > 0
+      ? ['', 'Come studia (usalo solo per adattare lo stile):', ...i.hints.map((h) => `- ${h}`)]
+      : []),
   ].join('\n')
 }
 

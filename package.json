@@ -1,6 +1,6 @@
 {
   "name": "vector",
-  "version": "0.3.0",
+  "version": "1.0.0",
   "private": true,
   "description": "Vector — local-first study app: understand concepts, don't memorize answers.",
   "type": "module",
@@ -25,6 +25,7 @@
     "check": "pnpm typecheck && pnpm ci:lint && pnpm test && pnpm build && pnpm size"
   },
   "dependencies": {
+    "@mediapipe/tasks-vision": "1.2.0",
     "dexie": "^4.4.7",
     "pdfjs-dist": "6.4.299",
     "react": "^19.3.1",

@@ -15,6 +15,8 @@ export interface StudySettings {
   includeSample: boolean
   /** Reading text size step, 0 (small) to 3 (very large). */
   readingSize: number
+  /** Adapt AI explanations to the learner's study patterns (sent as short neutral notes). */
+  personalize: boolean
 }
 
 export function defaultSettings(config: Config): StudySettings {
@@ -25,6 +27,7 @@ export function defaultSettings(config: Config): StudySettings {
     fullscreen: true,
     includeSample: true,
     readingSize: 1,
+    personalize: true,
   }
 }
 

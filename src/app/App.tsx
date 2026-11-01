@@ -11,6 +11,7 @@ const Plan = lazy(() => import('./screens/Plan').then((m) => ({ default: m.Plan 
 const Tools = lazy(() => import('./screens/Tools').then((m) => ({ default: m.Tools })))
 const Library = lazy(() => import('./screens/Library').then((m) => ({ default: m.Library })))
 const Reader = lazy(() => import('./screens/Reader').then((m) => ({ default: m.Reader })))
+const Profile = lazy(() => import('./screens/Profile').then((m) => ({ default: m.Profile })))
 const PomodoroScreen = lazy(() =>
   import('./screens/PomodoroScreen').then((m) => ({ default: m.PomodoroScreen })),
 )
@@ -21,6 +22,7 @@ const nav: { label: string; route: Route }[] = [
   { label: 'Piano', route: { name: 'plan' } },
   { label: 'Strumenti', route: { name: 'tools', tool: null } },
   { label: 'Materie', route: { name: 'subjects', subjectId: null } },
+  { label: 'Profilo', route: { name: 'profile' } },
   { label: 'Impostazioni', route: { name: 'settings' } },
 ]
 
@@ -99,12 +101,13 @@ function Shell() {
           {route.name === 'settings' && <Settings />}
           {route.name === 'plan' && <Plan />}
           {route.name === 'library' && <Library />}
+          {route.name === 'profile' && <Profile />}
           {route.name === 'tools' && <Tools tool={route.tool} />}
         </Suspense>
       </main>
 
       <footer className="flex flex-wrap justify-between gap-2 py-6 text-xs text-[var(--fg-quiet)]">
-        <span>vector v0.3</span>
+        <span>vector v1.0</span>
         <span>I tuoi dati restano su questo dispositivo.</span>
       </footer>
     </div>

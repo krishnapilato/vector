@@ -85,6 +85,11 @@ export function Settings() {
           onChange={(v) => setStudy({ fullscreen: v })}
         />
         <Checkbox
+          label="Adatta le spiegazioni dell’IA a come studio"
+          checked={prefs.study.personalize}
+          onChange={(v) => setStudy({ personalize: v })}
+        />
+        <Checkbox
           label="Includi i concetti di esempio scritti a mano"
           checked={prefs.study.includeSample}
           onChange={(v) => setStudy({ includeSample: v })}
@@ -120,6 +125,8 @@ export function Settings() {
         />
       </Section>
 
+      <FocusSection prefs={prefs} save={save} setConfig={setConfig} />
+
       <AiSection />
 
       <Section title="I tuoi dati">
@@ -144,6 +151,100 @@ export function Settings() {
         </div>
       </Section>
     </Page>
+  )
+}
+
+function FocusSection({
+  prefs,
+  save,
+  setConfig,
+}: {
+  prefs: Preferences
+  save: (p: Preferences) => Promise<void>
+  setConfig: (fn: (c: Config) => Config) => Promise<void>
+}) {
+  const [note, setNote] = useState<string | null>(null)
+  const set = (patch: Partial<Preferences['focus']>) =>
+    save({ ...prefs, focus: { ...prefs.focus, ...patch } })
+
+  /** Asks the browser for permission right away, so the first session isn't interrupted. */
+  const enable = async (kind: 'camera' | 'mic', on: boolean) => {
+    if (!on) return set({ [kind]: false })
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia(
+        kind === 'camera' ? { video: true } : { audio: true },
+      )
+      for (const t of stream.getTracks()) t.stop()
+      setNote(null)
+      await set({ [kind]: true })
+    } catch {
+      setNote(
+        kind === 'camera'
+          ? 'Il browser non ha concesso la fotocamera.'
+          : 'Il browser non ha concesso il microfono.',
+      )
+    }
+  }
+
+  return (
+    <Section title="Concentrazione">
+      <p className="text-sm text-[var(--fg-quiet)]">
+        L’uscita dall’app viene sempre contata. Fotocamera e microfono sono facoltativi: le immagini
+        e l’audio vengono analizzati in memoria su questo dispositivo e scartati subito, mai salvati
+        né inviati. Vector non ascolta cosa si dice: capisce solo se c’è una voce e se è la tua. I
+        modelli di analisi si scaricano una volta da Google e poi restano in cache.
+      </p>
+      <Checkbox
+        label="Usa la fotocamera"
+        checked={prefs.focus.camera}
+        onChange={(v) => void enable('camera', v)}
+      />
+      {prefs.focus.camera && (
+        <Checkbox
+          label="Accorgiti del telefono in mano"
+          checked={prefs.focus.phone}
+          onChange={(v) => set({ phone: v })}
+        />
+      )}
+      <Checkbox
+        label="Usa il microfono"
+        checked={prefs.focus.mic}
+        onChange={(v) => void enable('mic', v)}
+      />
+      {prefs.focus.mic && (
+        <Checkbox
+          label="Studio ad alta voce: la mia voce non è una distrazione"
+          checked={prefs.focus.aloud}
+          onChange={(v) => set({ aloud: v })}
+        />
+      )}
+      <Checkbox
+        label="Suono quando mi distraggo"
+        checked={prefs.focus.sound}
+        onChange={(v) => set({ sound: v })}
+      />
+      <NumberField
+        label="Ignora distrazioni più brevi di (secondi)"
+        value={prefs.config.focus.ignoreDistractionSeconds}
+        min={0}
+        max={60}
+        onChange={(v) =>
+          setConfig((c) => ({ ...c, focus: { ...c.focus, ignoreDistractionSeconds: v } }))
+        }
+      />
+      <NumberField
+        label="Metti in pausa dopo (secondi lontano)"
+        value={prefs.config.focus.pauseAfterSeconds}
+        min={1}
+        max={600}
+        onChange={(v) => setConfig((c) => ({ ...c, focus: { ...c.focus, pauseAfterSeconds: v } }))}
+      />
+      {note && (
+        <p role="alert" className="text-sm">
+          {note}
+        </p>
+      )}
+    </Section>
   )
 }
 

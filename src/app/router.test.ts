@@ -15,6 +15,7 @@ describe('router', () => {
       { name: 'tools', tool: 'vento' },
       { name: 'pomodoro' },
       { name: 'library' },
+      { name: 'profile' },
       { name: 'reader', bookId: 'abc', page: null, view: 'text' },
       { name: 'reader', bookId: 'abc', page: 12, view: 'page' },
     ]

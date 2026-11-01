@@ -1,6 +1,7 @@
 import Dexie, { type EntityTable } from 'dexie'
 import { type Config, configSchema, defaultConfig } from '../../config/config'
 import type { UserConcept } from '../../core/ai/questions'
+import { defaultFocusSettings, type FocusSettings } from '../../core/focus/focus'
 import type { PlanItem } from '../../core/plan'
 import type { Pomodoro } from '../../core/pomodoro'
 import type { ConceptProgress } from '../../core/progress'
@@ -27,6 +28,7 @@ interface SettingsRow {
   study: StudySettings
   ai?: AiSettings
   plan?: PlanSettings
+  focus?: FocusSettings
 }
 
 /** One completed focus period: the honest "minutes studied". */
@@ -77,6 +79,8 @@ export interface Attempt {
 export interface FocusRecord {
   id: string
   endedAt: string
+  kind?: 'study' | 'reading'
+  sensors?: { camera: boolean; mic: boolean }
   seconds: number
   attentiveSeconds: number
   lookAways: number
@@ -145,6 +149,7 @@ export interface Preferences {
   study: StudySettings
   ai: AiSettings
   plan: PlanSettings
+  focus: FocusSettings
 }
 
 export async function loadPreferences(): Promise<Preferences> {
@@ -156,6 +161,7 @@ export async function loadPreferences(): Promise<Preferences> {
     study: { ...defaultSettings(config), ...row?.study },
     ai: { apiKey: null, model: DEFAULT_MODEL, ...row?.ai },
     plan: { examDate: null, ...row?.plan },
+    focus: { ...defaultFocusSettings, ...row?.focus },
   }
 }
 
@@ -166,6 +172,7 @@ export async function savePreferences(p: Preferences): Promise<void> {
     study: p.study,
     ai: p.ai,
     plan: p.plan,
+    focus: p.focus,
   })
 }
 
@@ -268,6 +275,13 @@ export const loadDrawing = (bookId: string, page: number) =>
 export const saveDrawing = (d: Drawing) => db.drawings.put(d)
 
 /** A readable backup the learner can keep: their data, in their hands. */
+/** Forgets what Vector learned about how the learner studies. Progress and books stay. */
+export async function clearLearningHistory(): Promise<void> {
+  await db.transaction('rw', [db.attempts, db.focusRecords, db.lookups], async () => {
+    await Promise.all([db.attempts.clear(), db.focusRecords.clear(), db.lookups.clear()])
+  })
+}
+
 export async function exportAll(): Promise<string> {
   const [progress, rows, plan, focusLog, books, highlights, userConcepts, attempts, focusRecords] =
     await Promise.all([

@@ -1,6 +1,7 @@
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react'
 import { buildExplainPrompt, type ExplainInput } from '../../core/ai/prompt'
 import { minReadSeconds } from '../../core/content/question'
+import { distractionLabel } from '../../core/focus/focus'
 import { type Confidence, type Graded, grade, verdictLabel } from '../../core/grading'
 import { remainingFraction, timeLimitFor } from '../../core/question-timer'
 import { createRng, randomSeed } from '../../core/random'
@@ -15,6 +16,7 @@ import {
   summarize,
 } from '../../core/session'
 import { AiError, generate } from '../ai/gemini'
+import { FocusLine, type FocusView, useFocus } from '../focus/useFocus'
 import { hrefFor, navigate } from '../router'
 import { useStore } from '../state'
 import { LinkButton, PrimaryButton, QuietButton, QuietLink } from '../ui'
@@ -65,6 +67,8 @@ export function Study({ subjectId, early }: { subjectId: string | null; early: b
     return exitFullscreen
   }, [fullscreen])
 
+  const focus = useFocus(session !== null && !isFinished(session), 'study')
+
   if (!session) {
     return (
       <Centered>
@@ -81,7 +85,7 @@ export function Study({ subjectId, early }: { subjectId: string | null; early: b
 
   if (isFinished(session)) return <SessionEnd session={session} />
 
-  return <Question session={session} setSession={setSession} rngSeed={rng} />
+  return <Question session={session} setSession={setSession} rngSeed={rng} focus={focus} />
 }
 
 function Centered({ children }: { children: React.ReactNode }) {
@@ -128,9 +132,10 @@ interface QuestionProps {
   session: Session
   setSession: (s: Session) => void
   rngSeed: () => number
+  focus: FocusView
 }
 
-function Question({ session, setSession, rngSeed }: QuestionProps) {
+function Question({ session, setSession, rngSeed, focus }: QuestionProps) {
   const store = useStore()
   const { config } = store.prefs
   const item = currentItem(session)
@@ -145,6 +150,7 @@ function Question({ session, setSession, rngSeed }: QuestionProps) {
   const [graded, setGraded] = useState<Graded | null>(null)
   const [reported, setReported] = useState(false)
   const [paused, setPaused] = useState(false)
+  const [pauseReason, setPauseReason] = useState('sei uscito dall’app')
   // Tools never pause the timer: they are part of studying.
   const [toolsOpen, setToolsOpen] = useState(false)
 
@@ -168,18 +174,31 @@ function Question({ session, setSession, rngSeed }: QuestionProps) {
   const latest = useRef(session)
   latest.current = session
 
+  const pause = useCallback(
+    (reason: string) => {
+      if (pausedRef.current) return
+      spent.current += (performance.now() - startedAt.current) / 1000
+      pausedRef.current = true
+      setPauseReason(reason)
+      setPaused(true)
+      if (running) setSession(addInterruption(latest.current))
+    },
+    [running, setSession],
+  )
+
   useEffect(() => {
     const onVisibility = () => {
-      if (document.hidden && !pausedRef.current) {
-        spent.current += (performance.now() - startedAt.current) / 1000
-        pausedRef.current = true
-        setPaused(true)
-        if (running) setSession(addInterruption(latest.current))
-      }
+      if (document.hidden) pause('sei uscito dall’app')
     }
     document.addEventListener('visibilitychange', onVisibility)
     return () => document.removeEventListener('visibilitychange', onVisibility)
-  }, [running, setSession])
+  }, [pause])
+
+  // Camera: away from the desk, phone in hand or eyes closed for too long.
+  useEffect(() => {
+    if (focus.shouldPause && focus.distraction && focus.distraction !== 'left')
+      pause(distractionLabel[focus.distraction].toLowerCase())
+  }, [focus.shouldPause, focus.distraction, pause])
 
   const resume = useCallback(() => {
     startedAt.current = performance.now()
@@ -312,7 +331,10 @@ function Question({ session, setSession, rngSeed }: QuestionProps) {
       <div className="h-px bg-[var(--rule)]" aria-hidden="true">
         <div className="h-px bg-[var(--fg)]" style={{ width: `${progressDone * 100}%` }} />
       </div>
-      <header className="mx-auto flex w-full max-w-2xl justify-end gap-1 px-6 pt-3">
+      <header className="mx-auto flex w-full max-w-2xl items-center justify-end gap-1 px-6 pt-3">
+        <div className="mr-auto">
+          <FocusLine view={focus} />
+        </div>
         <QuietButton onClick={() => setToolsOpen((o) => !o)} aria-expanded={toolsOpen}>
           Strumenti
         </QuietButton>
@@ -342,7 +364,7 @@ function Question({ session, setSession, rngSeed }: QuestionProps) {
 
         {paused ? (
           <div className="flex flex-col items-start gap-4" role="alert">
-            <p className="text-lg">In pausa: sei uscito dall'app.</p>
+            <p className="text-lg">In pausa: {pauseReason}.</p>
             <PrimaryButton onClick={resume}>Continua</PrimaryButton>
           </div>
         ) : phase === 'think' ? (
@@ -453,7 +475,7 @@ function Question({ session, setSession, rngSeed }: QuestionProps) {
 
 /** Optional: a different explanation from Gemini, only on request and only with the learner's key. */
 function ExplainAgain({ input }: { input: ExplainInput }) {
-  const { prefs } = useStore()
+  const { prefs, course } = useStore()
   const [state, setState] = useState<
     | { kind: 'idle' }
     | { kind: 'loading' }
@@ -466,7 +488,20 @@ function ExplainAgain({ input }: { input: ExplainInput }) {
   const ask = async () => {
     setState({ kind: 'loading' })
     try {
-      const text = await generate(apiKey, prefs.ai.model, buildExplainPrompt(input))
+      let hints: string[] = []
+      if (prefs.study.personalize) {
+        const [{ buildProfile, profileHints }, db] = await Promise.all([
+          import('../../core/profile'),
+          import('../data/db'),
+        ])
+        const [attempts, focus, lookups] = await Promise.all([
+          db.loadAttempts(),
+          db.loadFocusRecords(),
+          db.loadLookups(),
+        ])
+        hints = profileHints(buildProfile(attempts, focus, lookups, course))
+      }
+      const text = await generate(apiKey, prefs.ai.model, buildExplainPrompt({ ...input, hints }))
       setState({ kind: 'done', text })
     } catch (e) {
       setState({

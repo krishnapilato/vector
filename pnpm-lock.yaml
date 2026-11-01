@@ -166,6 +166,9 @@ importers:
 
   .:
     dependencies:
+      '@mediapipe/tasks-vision':
+        specifier: 1.2.0
+        version: 1.2.0
       dexie:
         specifier: ^4.4.7
         version: 4.4.7
@@ -865,6 +868,9 @@ packages:
 
   '@jridgewell/trace-mapping@0.3.31':
     resolution: {integrity: sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw==}
+
+  '@mediapipe/tasks-vision@1.2.0':
+    resolution: {integrity: sha512-7+dr9GbGyTtcuLh11wE5TOn4dNFRncIT9oAWs72620WX99KW5FfzF6rFJ/ChTgXG9vJ6dCiE9FrEEY4CnwPWKQ==}
 
   '@napi-rs/canvas-android-arm64@1.0.13':
     resolution: {integrity: sha512-trn7AaDzQ+yeeA0ezhkC7cB1ZDPtp4UYk0EvB5F8qtYL9jEVWtVrU30WOpI52DszoTxaTsCgf5PP4ZVaOlOIHQ==}
@@ -3627,6 +3633,8 @@ snapshots:
     dependencies:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.6.0
+
+  '@mediapipe/tasks-vision@1.2.0': {}
 
   '@napi-rs/canvas-android-arm64@1.0.13':
     optional: true

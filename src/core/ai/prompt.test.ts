@@ -18,6 +18,13 @@ describe('buildExplainPrompt', () => {
     expect(p).toContain('Usa solo le informazioni del testo')
   })
 
+  it('adds study-pattern hints only when present', () => {
+    expect(buildExplainPrompt(input)).not.toContain('Come studia')
+    expect(buildExplainPrompt({ ...input, hints: ['Parti da un esempio.'] })).toContain(
+      '- Parti da un esempio.',
+    )
+  })
+
   it('handles "I don\'t know"', () => {
     expect(buildExplainPrompt({ ...input, chosenAnswer: null })).toContain('non lo sapeva')
   })

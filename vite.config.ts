@@ -33,6 +33,16 @@ export default defineConfig({
         globPatterns: ['**/*.{js,mjs,css,html,svg,png,woff2}'],
         // The PDF reader's worker is large; it is cached so books open offline.
         maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
+        // Focus-mode vision engine and models: fetched only if the camera is turned on, then cached.
+        runtimeCaching: [
+          {
+            urlPattern: ({ url }) =>
+              url.pathname.endsWith('.wasm') ||
+              url.href.startsWith('https://storage.googleapis.com/mediapipe-models/'),
+            handler: 'CacheFirst',
+            options: { cacheName: 'vision', expiration: { maxEntries: 8 } },
+          },
+        ],
       },
     }),
   ],

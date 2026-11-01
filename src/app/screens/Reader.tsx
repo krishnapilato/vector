@@ -9,6 +9,7 @@ import {
 } from '../../core/reading/book'
 import { paragraphs } from '../../core/reading/text'
 import { deleteHighlight, loadHighlights, loadPage, saveHighlight } from '../data/db'
+import { FocusLine, useFocus } from '../focus/useFocus'
 import { hrefFor, navigate } from '../router'
 import { useStore } from '../state'
 import { QuietButton, QuietLink } from '../ui'
@@ -83,6 +84,7 @@ function ReaderBody({
   const [activeHighlight, setActiveHighlight] = useState<string | null>(null)
   const [glossaryTerm, setGlossaryTerm] = useState('')
   const articleRef = useRef<HTMLElement>(null)
+  const focus = useFocus(true, 'reading')
 
   useEffect(() => {
     void loadHighlights(book.id).then(setHighlights)
@@ -224,6 +226,7 @@ function ReaderBody({
           {book.title}
           {chapter ? ` · ${chapter.title}` : ''}
         </h1>
+        <FocusLine view={focus} />
         <nav aria-label="Lettore" className="flex flex-wrap items-center">
           <QuietButton onClick={() => setPanel('toc')} aria-expanded={panel === 'toc'}>
             Indice

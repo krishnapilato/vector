@@ -13,6 +13,7 @@ export type Route =
   | { name: 'tools'; tool: string | null }
   | { name: 'pomodoro' }
   | { name: 'library' }
+  | { name: 'profile' }
   | { name: 'reader'; bookId: string; page: number | null; view: 'text' | 'page' }
 
 export function parseRoute(hash: string): Route {
@@ -32,6 +33,8 @@ export function parseRoute(hash: string): Route {
       return { name: 'tools', tool: second || null }
     case 'pomodoro':
       return { name: 'pomodoro' }
+    case 'profilo':
+      return { name: 'profile' }
     case 'libreria': {
       if (!second) return { name: 'library' }
       const p = Number(params.get('p'))
@@ -70,6 +73,8 @@ export function hrefFor(route: Route): string {
       return '#/pomodoro'
     case 'library':
       return '#/libreria'
+    case 'profile':
+      return '#/profilo'
     case 'reader': {
       const q = new URLSearchParams()
       if (route.page) q.set('p', String(route.page))
