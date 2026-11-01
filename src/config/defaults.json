@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "timers": {
+    "recall": 30,
+    "reasoning": 60,
+    "calculation": 150,
+    "open": 150
+  },
+  "pomodoro": {
+    "focusMinutes": 25,
+    "shortBreakMinutes": 5,
+    "longBreakMinutes": 15,
+    "cyclesBeforeLongBreak": 4
+  },
+  "focus": {
+    "ignoreDistractionSeconds": 3,
+    "pauseAfterSeconds": 10
+  }
+}

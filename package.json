@@ -1,0 +1,56 @@
+{
+  "name": "vector",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Vector — local-first study app: understand concepts, don't memorize answers.",
+  "type": "module",
+  "packageManager": "pnpm@12.16.1",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview --port 4173 --strictPort",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "lint": "biome check .",
+    "lint:fix": "biome check --write .",
+    "ci:lint": "biome ci .",
+    "test": "vitest run --project unit",
+    "test:browser": "vitest run --project browser",
+    "test:watch": "vitest --project unit",
+    "test:coverage": "vitest run --project unit --coverage",
+    "e2e": "playwright test",
+    "size": "node scripts/check-bundle-size.mjs",
+    "check": "pnpm typecheck && pnpm ci:lint && pnpm test && pnpm build && pnpm size"
+  },
+  "dependencies": {
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "zod": "^4.4.7"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.14.0",
+    "@babel/core": "^7.29.0",
+    "@biomejs/biome": "2.6.4",
+    "@playwright/test": "1.63.0",
+    "@rolldown/plugin-babel": "^0.2.4",
+    "@tailwindcss/vite": "^4.3.3",
+    "@types/babel__core": "^7.20.5",
+    "@types/node": "^26.6.6",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.2",
+    "@vitest/browser-playwright": "^5.0.5",
+    "@vitest/coverage-v8": "^5.0.5",
+    "babel-plugin-react-compiler": "^1.0.0",
+    "playwright": "1.63.0",
+    "tailwindcss": "^4.3.3",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.5",
+    "vite-plugin-pwa": "^2.0.0",
+    "vitest": "^5.0.5",
+    "vitest-browser-react": "^2.0.4",
+    "workbox-window": "^7.4.1"
+  }
+}
