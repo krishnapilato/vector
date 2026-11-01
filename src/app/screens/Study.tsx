@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react'
 import { buildExplainPrompt, type ExplainInput } from '../../core/ai/prompt'
 import { minReadSeconds } from '../../core/content/question'
 import { type Confidence, type Graded, grade, verdictLabel } from '../../core/grading'
@@ -18,6 +18,8 @@ import { AiError, generate } from '../ai/gemini'
 import { hrefFor, navigate } from '../router'
 import { useStore } from '../state'
 import { LinkButton, PrimaryButton, QuietButton, QuietLink } from '../ui'
+
+const ToolsPanel = lazy(() => import('./ToolsPanel').then((m) => ({ default: m.ToolsPanel })))
 
 type Phase = 'think' | 'answer' | 'confidence' | 'why' | 'feedback'
 
@@ -143,6 +145,8 @@ function Question({ session, setSession, rngSeed }: QuestionProps) {
   const [graded, setGraded] = useState<Graded | null>(null)
   const [reported, setReported] = useState(false)
   const [paused, setPaused] = useState(false)
+  // Tools never pause the timer: they are part of studying.
+  const [toolsOpen, setToolsOpen] = useState(false)
 
   // Time: counted only while the app is visible.
   const startedAt = useRef(performance.now())
@@ -261,6 +265,12 @@ function Question({ session, setSession, rngSeed }: QuestionProps) {
         }
         return
       }
+      if (toolsOpen) {
+        if (e.key === 'Escape') setToolsOpen(false)
+        return
+      }
+      const target = e.target as HTMLElement | null
+      if (target?.closest('input, select, textarea')) return
       if (e.key === 'Escape') return exit()
       if (phase === 'think' && e.key === ' ') {
         e.preventDefault()
@@ -290,11 +300,19 @@ function Question({ session, setSession, rngSeed }: QuestionProps) {
       <div className="h-px bg-[var(--rule)]" aria-hidden="true">
         <div className="h-px bg-[var(--fg)]" style={{ width: `${progressDone * 100}%` }} />
       </div>
-      <div className="mx-auto flex w-full max-w-2xl justify-end px-6 pt-3">
+      <header className="mx-auto flex w-full max-w-2xl justify-end gap-1 px-6 pt-3">
+        <QuietButton onClick={() => setToolsOpen((o) => !o)} aria-expanded={toolsOpen}>
+          Strumenti
+        </QuietButton>
         <QuietButton onClick={exit} aria-label="Esci e salva la sessione">
           Esci
         </QuietButton>
-      </div>
+      </header>
+      {toolsOpen && (
+        <Suspense fallback={null}>
+          <ToolsPanel onClose={() => setToolsOpen(false)} />
+        </Suspense>
+      )}
 
       <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col justify-between gap-10 px-6 pb-10 pt-6">
         <div className="flex flex-col gap-6">

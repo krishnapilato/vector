@@ -1,15 +1,22 @@
 import { lazy, Suspense } from 'react'
 import { hrefFor, type Route, useRoute } from './router'
 import { Home } from './screens/Home'
-import { Subjects } from './screens/Subjects'
 import { StoreProvider } from './state'
 
 // Screens beyond the home page load on demand: the startup bundle stays small.
 const Study = lazy(() => import('./screens/Study').then((m) => ({ default: m.Study })))
 const Settings = lazy(() => import('./screens/Settings').then((m) => ({ default: m.Settings })))
+const Subjects = lazy(() => import('./screens/Subjects').then((m) => ({ default: m.Subjects })))
+const Plan = lazy(() => import('./screens/Plan').then((m) => ({ default: m.Plan })))
+const Tools = lazy(() => import('./screens/Tools').then((m) => ({ default: m.Tools })))
+const PomodoroScreen = lazy(() =>
+  import('./screens/PomodoroScreen').then((m) => ({ default: m.PomodoroScreen })),
+)
 
 const nav: { label: string; route: Route }[] = [
   { label: 'Studia', route: { name: 'home' } },
+  { label: 'Piano', route: { name: 'plan' } },
+  { label: 'Strumenti', route: { name: 'tools', tool: null } },
   { label: 'Materie', route: { name: 'subjects', subjectId: null } },
   { label: 'Impostazioni', route: { name: 'settings' } },
 ]
@@ -25,7 +32,14 @@ export function App() {
 function Shell() {
   const route = useRoute()
 
-  // Study state: no menu, no footer. Only the question on screen.
+  // Study state: no menu, no footer.
+  if (route.name === 'pomodoro') {
+    return (
+      <Suspense fallback={null}>
+        <PomodoroScreen />
+      </Suspense>
+    )
+  }
   if (route.name === 'study') {
     return (
       <Suspense fallback={null}>
@@ -45,7 +59,7 @@ function Shell() {
           vector
         </a>
         <nav aria-label="Principale">
-          <ul className="flex gap-1">
+          <ul className="flex flex-wrap gap-1">
             {nav.map((item) => {
               const current = item.route.name === route.name
               return (
@@ -70,16 +84,16 @@ function Shell() {
 
       <main className="flex-1 py-10">
         {route.name === 'home' && <Home />}
-        {route.name === 'subjects' && <Subjects subjectId={route.subjectId} />}
-        {route.name === 'settings' && (
-          <Suspense fallback={null}>
-            <Settings />
-          </Suspense>
-        )}
+        <Suspense fallback={null}>
+          {route.name === 'subjects' && <Subjects subjectId={route.subjectId} />}
+          {route.name === 'settings' && <Settings />}
+          {route.name === 'plan' && <Plan />}
+          {route.name === 'tools' && <Tools tool={route.tool} />}
+        </Suspense>
       </main>
 
       <footer className="flex flex-wrap justify-between gap-2 py-6 text-xs text-[var(--fg-quiet)]">
-        <span>vector v0.2</span>
+        <span>vector v0.3</span>
         <span>I tuoi dati restano su questo dispositivo.</span>
       </footer>
     </div>

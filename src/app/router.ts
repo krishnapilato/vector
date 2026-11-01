@@ -1,7 +1,7 @@
 import { useSyncExternalStore } from 'react'
 
 /**
- * A tiny hash router: four screens don't need a routing library.
+ * A tiny hash router: a handful of screens don't need a routing library.
  * Hash URLs also work on GitHub Pages and offline without server rewrites.
  */
 export type Route =
@@ -9,6 +9,9 @@ export type Route =
   | { name: 'study'; subjectId: string | null; early: boolean }
   | { name: 'subjects'; subjectId: string | null }
   | { name: 'settings' }
+  | { name: 'plan' }
+  | { name: 'tools'; tool: string | null }
+  | { name: 'pomodoro' }
 
 export function parseRoute(hash: string): Route {
   const [path = '', query = ''] = hash.replace(/^#\/?/, '').split('?')
@@ -21,6 +24,12 @@ export function parseRoute(hash: string): Route {
       return { name: 'subjects', subjectId: second || null }
     case 'impostazioni':
       return { name: 'settings' }
+    case 'piano':
+      return { name: 'plan' }
+    case 'strumenti':
+      return { name: 'tools', tool: second || null }
+    case 'pomodoro':
+      return { name: 'pomodoro' }
     default:
       return { name: 'home' }
   }
@@ -41,6 +50,12 @@ export function hrefFor(route: Route): string {
       return route.subjectId ? `#/materie/${route.subjectId}` : '#/materie'
     case 'settings':
       return '#/impostazioni'
+    case 'plan':
+      return '#/piano'
+    case 'tools':
+      return route.tool ? `#/strumenti/${route.tool}` : '#/strumenti'
+    case 'pomodoro':
+      return '#/pomodoro'
   }
 }
 

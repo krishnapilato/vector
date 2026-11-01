@@ -7,7 +7,8 @@ import * as z from 'zod/mini'
  */
 
 const BASE = 'https://generativelanguage.googleapis.com/v1beta'
-export const DEFAULT_MODEL = 'gemini-flash-latest'
+
+export { DEFAULT_MODEL } from './model'
 
 export class AiError extends Error {}
 

@@ -10,6 +10,10 @@ describe('router', () => {
       { name: 'subjects', subjectId: null },
       { name: 'subjects', subjectId: 'pof' },
       { name: 'settings' },
+      { name: 'plan' },
+      { name: 'tools', tool: null },
+      { name: 'tools', tool: 'vento' },
+      { name: 'pomodoro' },
     ]
     for (const r of routes) expect(parseRoute(hrefFor(r))).toEqual(r)
   })

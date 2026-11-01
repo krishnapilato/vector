@@ -4,7 +4,7 @@ Studia i concetti, non le risposte.
 
 Vector è una web app di studio **local-first**, open source e gratuita. Nasce per preparare la teoria del PPL(A) EASA, ma è costruita per qualsiasi esame. Obiettivo: capire davvero, non memorizzare le risposte dei quiz.
 
-> Stato: **v0.2 — prima sezione funzionante**. Sessioni di studio complete su un piccolo corso PPL di esempio; l'importazione del proprio materiale arriva nelle prossime versioni.
+> Stato: **v0.3 — studio, piano e strumenti**. Sessioni di studio complete su un piccolo corso PPL di esempio; l'importazione del proprio materiale arriva nelle prossime versioni.
 
 ## Cosa fa già
 
@@ -15,6 +15,9 @@ Vector è una web app di studio **local-first**, open source e gratuita. Nasce p
 - **Timer per tipo di domanda**; un tempo scaduto vale «non lo so». Pausa automatica se esci dall'app.
 - **Ripresa esatta** della sessione dopo una chiusura.
 - **Materie** con lo stato di ogni concetto e il testo da rileggere.
+- **Piano**: data dell'esame con conto alla rovescia e concetti nuovi al giorno consigliati, calendario settimanale delle sessioni (anche ripetute ogni settimana), export `.ics` per Google Calendar.
+- **Pomodoro** che continua su ogni schermata: tempo nascosto (si mostra per 2 secondi su richiesta), suono breve e notifica a fine fase, minuti di concentrazione registrati.
+- **Strumenti di volo**, offline: calcolatrice (in gradi, senza `eval`), conversioni, triangolo del vento e componenti per la pista, quota pressione / ISA / quota densità / TAS, tempo-distanza-velocità, carburante, peso e centraggio. Si aprono anche **durante lo studio** in un pannello laterale, senza uscire dalla sessione.
 - **Impostazioni**: modalità Capire / Allenamento, lunghezza della sessione, timer, chiave Gemini facoltativa, backup e cancellazione dei dati.
 - **Spiegamelo in un altro modo** (facoltativo): con la propria chiave Gemini, una spiegazione alternativa dopo un errore.
 - Tastiera: `1`–`4` rispondi, `0` non lo so, `Spazio`/`Invio` avanti, `Esc` esci.

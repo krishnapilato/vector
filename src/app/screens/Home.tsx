@@ -1,3 +1,5 @@
+import { nextPlanned, planKindLabel, readiness, sameDay } from '../../core/plan'
+import { phaseLabel } from '../../core/pomodoro'
 import { masteryOf, scores } from '../../core/progress'
 import { isFinished, nextDue } from '../../core/session'
 import { hrefFor } from '../router'
@@ -14,7 +16,7 @@ const dateFmt = new Intl.DateTimeFormat('it-IT', {
 
 /** Navigation state: one obvious action, the honest numbers, nothing else. */
 export function Home() {
-  const { course, progress, activeSession, prefs } = useStore()
+  const { course, progress, activeSession, prefs, plan, pomodoro, focusLog } = useStore()
   const now = new Date()
 
   const levels = course.concepts.map((c) => masteryOf(progress.get(c.id), now))
@@ -23,6 +25,13 @@ export function Home() {
   const s = scores(progress.values())
   const resume = activeSession && !isFinished(activeSession) ? activeSession : null
   const upcoming = nextDue(course, progress)
+  const planned = nextPlanned(plan, now)
+  const exam = prefs.plan.examDate ? new Date(`${prefs.plan.examDate}T00:00:00`) : null
+  const daysLeft = exam ? readiness(exam, now, 0).daysLeft : null
+  const todayMinutes = focusLog
+    .filter((e) => sameDay(new Date(e.endedAt), now))
+    .reduce((sum, e) => sum + e.minutes, 0)
+  const timeFmt = new Intl.DateTimeFormat('it-IT', { hour: '2-digit', minute: '2-digit' })
 
   return (
     <div className="flex flex-col gap-12">
@@ -65,6 +74,33 @@ export function Home() {
           </div>
         )}
       </section>
+
+      {(planned || pomodoro || (daysLeft !== null && daysLeft > 0) || todayMinutes > 0) && (
+        <section aria-labelledby="today" className="flex flex-col gap-2">
+          <h2 id="today" className="text-sm text-[var(--fg-quiet)]">
+            Oggi
+          </h2>
+          <ul className="flex flex-col gap-1">
+            {pomodoro && (
+              <li>
+                <a href={hrefFor({ name: 'pomodoro' })} className="underline underline-offset-4">
+                  Pomodoro in corso: {phaseLabel[pomodoro.phase].toLowerCase()}
+                </a>
+              </li>
+            )}
+            {planned && (
+              <li>
+                Prossima sessione: {planKindLabel[planned.kind].toLowerCase()}
+                {sameDay(new Date(planned.start), now)
+                  ? ` alle ${timeFmt.format(new Date(planned.start))}`
+                  : ` ${dateFmt.format(new Date(planned.start))}`}
+              </li>
+            )}
+            {todayMinutes > 0 && <li>{todayMinutes} minuti di concentrazione</li>}
+            {daysLeft !== null && daysLeft > 0 && <li>Esame tra {daysLeft} giorni</li>}
+          </ul>
+        </section>
+      )}
 
       {s.answered > 0 && (
         <section aria-labelledby="scores" className="flex flex-col gap-3">
