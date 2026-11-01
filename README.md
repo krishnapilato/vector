@@ -4,7 +4,7 @@ Studia i concetti, non le risposte.
 
 Vector è una web app di studio **local-first**, open source e gratuita. Nasce per preparare la teoria del PPL(A) EASA, ma è costruita per qualsiasi esame. Obiettivo: capire davvero, non memorizzare le risposte dei quiz.
 
-> Stato: **v1.2 — telefono, «Ho X minuti», sincronizzazione cifrata**. Importi i tuoi libri, li leggi e li sottolinei, generi domande di comprensione e studi con un monitoraggio dell'attenzione che resta sul tuo computer.
+> Stato: **v1.3 — note a penna sulle pagine**. Importi i tuoi libri, li leggi e li sottolinei, generi domande di comprensione e studi con un monitoraggio dell'attenzione che resta sul tuo computer.
 
 ## Cosa fa già
 
@@ -32,6 +32,7 @@ Vector è una web app di studio **local-first**, open source e gratuita. Nasce p
 - **Ho 5 / 10 / 20 / 30 minuti**: una sessione dimensionata sul tempo che hai, in base al tuo ritmo reale.
 - **Backup cifrato** su file con una frase segreta, e ripristino.
 - **Sincronizzazione tra dispositivi** facoltativa, cifrata end-to-end, con un server tuo (Cloudflare Worker gratuito, istruzioni in [`worker/`](worker/README.md)). Il server non può leggere niente.
+- **Note a penna** sulla pagina originale del PDF: penna sensibile alla pressione (perfect-freehand), evidenziatore, gomma, annulla; con penna attiva le dita non disegnano. I tratti sono vettori salvati sul dispositivo e si sincronizzano. **Trascrivi in testo** (facoltativo, IA): viene inviata solo l'immagine della tua scrittura, non la pagina del libro.
 - Tastiera: `1`–`4` rispondi, `0` non lo so, `Spazio`/`Invio` avanti, `Esc` esci.
 
 ## Principi

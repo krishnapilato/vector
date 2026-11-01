@@ -276,7 +276,7 @@ function ReaderBody({
       <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-6 py-10">
         {view === 'page' ? (
           <Suspense fallback={null}>
-            <PageView bookId={book.id} page={page} />
+            <PageView bookId={book.id} page={page} language={book.language} />
           </Suspense>
         ) : text === null ? null : missing ? (
           <p>

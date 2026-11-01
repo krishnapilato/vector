@@ -149,7 +149,7 @@ function Shell() {
       </main>
 
       <footer className="flex flex-wrap justify-between gap-2 py-6 text-xs text-[var(--fg-quiet)]">
-        <span>vector v1.2</span>
+        <span>vector v1.3</span>
         <span>I tuoi dati restano su questo dispositivo.</span>
       </footer>
     </div>

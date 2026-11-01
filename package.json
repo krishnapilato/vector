@@ -1,6 +1,6 @@
 {
   "name": "vector",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "private": true,
   "description": "Vector — local-first study app: understand concepts, don't memorize answers.",
   "type": "module",
@@ -28,6 +28,7 @@
     "@mediapipe/tasks-vision": "1.2.0",
     "dexie": "^4.4.7",
     "pdfjs-dist": "6.4.299",
+    "perfect-freehand": "^1.2.3",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
     "ts-fsrs": "^6.0.0",

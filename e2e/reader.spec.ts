@@ -99,3 +99,74 @@ test('question generation asks for a key', async ({ page }) => {
   await page.getByRole('button', { name: 'Crea domande' }).click()
   await expect(page.getByText(/serve la tua chiave Google AI Studio/)).toBeVisible()
 })
+
+test('pen notes on the original page, eraser, undo, transcription', async ({ page }) => {
+  await page.route('https://generativelanguage.googleapis.com/**', async (route) => {
+    if (route.request().url().includes(':generateContent')) {
+      const body = route.request().postDataJSON()
+      // Only the handwriting is sent, as an image, never the page text.
+      expect(body.contents[0].parts[1].inlineData.mimeType).toBe('image/png')
+      await route.fulfill({
+        json: {
+          candidates: [
+            { content: { parts: [{ text: 'Vento relativo = opposto alla traiettoria' }] } },
+          ],
+        },
+      })
+    } else {
+      await route.fulfill({
+        json: {
+          models: [
+            { name: 'models/gemini-flash-latest', supportedGenerationMethods: ['generateContent'] },
+          ],
+        },
+      })
+    }
+  })
+  await page.goto('/#/impostazioni')
+  await page.getByLabel('Chiave API di Google AI Studio').fill('test-key-not-real')
+  await page.getByRole('button', { name: 'Verifica e salva' }).click()
+  await expect(page.getByText(/Chiave valida/)).toBeVisible()
+
+  await importFixture(page)
+  await page.getByRole('link', { name: 'Inizia a leggere' }).click()
+  await page.getByRole('button', { name: 'Vista pagina' }).click()
+  const pageImg = page.getByRole('img', { name: 'Pagina 1 del PDF originale' })
+  await expect(pageImg).toBeVisible()
+  await page.getByRole('button', { name: 'Penna' }).click()
+  await expect(page.getByRole('button', { name: 'Penna' })).toHaveAttribute('aria-pressed', 'true')
+
+  await expect(page.locator('svg.absolute')).toBeAttached()
+  const box = await pageImg.boundingBox()
+  if (!box) throw new Error('no page')
+  const draw = async (y: number) => {
+    await page.mouse.move(box.x + 60, box.y + y)
+    await page.mouse.down()
+    for (let i = 1; i <= 10; i++)
+      await page.mouse.move(box.x + 60 + i * 15, box.y + y + (i % 2) * 6)
+    await page.mouse.up()
+  }
+  const strokes = page.locator('svg path')
+  await draw(120)
+  await expect(strokes).toHaveCount(1)
+  await draw(180)
+  await expect(strokes).toHaveCount(2)
+
+  // Persisted.
+  await page.reload()
+  await expect(page.locator('svg path')).toHaveCount(2)
+
+  // Eraser removes one, undo brings it back.
+  await page.getByRole('button', { name: 'Gomma' }).click()
+  await page.mouse.click(box.x + 120, box.y + 183)
+  await expect(strokes).toHaveCount(1)
+  await page.getByRole('button', { name: 'Annulla' }).click()
+  await expect(strokes).toHaveCount(2)
+
+  await page.getByRole('button', { name: 'Trascrivi in testo (IA)' }).click()
+  await expect(page.getByText('Vento relativo = opposto alla traiettoria')).toBeVisible()
+  await page.getByRole('button', { name: 'Note', exact: true }).click()
+  await expect(
+    page.getByRole('complementary').getByText('Vento relativo = opposto alla traiettoria'),
+  ).toBeVisible()
+})

@@ -2,6 +2,7 @@ import Dexie, { type EntityTable } from 'dexie'
 import { type Config, configSchema, defaultConfig } from '../../config/config'
 import type { UserConcept } from '../../core/ai/questions'
 import { defaultFocusSettings, type FocusSettings } from '../../core/focus/focus'
+import type { Stroke } from '../../core/ink'
 import type { PlanItem } from '../../core/plan'
 import type { Pomodoro } from '../../core/pomodoro'
 import type { ConceptProgress } from '../../core/progress'
@@ -96,7 +97,9 @@ export interface Drawing {
   id: string
   bookId: string
   page: number
-  strokes: { points: [number, number, number][]; width: number }[]
+  strokes: Stroke[]
+  /** Text read from the handwriting, on request. */
+  transcript?: string
   updatedAt: string
 }
 
@@ -294,6 +297,7 @@ export const loadFocusRecords = () => db.focusRecords.orderBy('endedAt').toArray
 export const loadDrawing = (bookId: string, page: number) =>
   db.drawings.where('[bookId+page]').equals([bookId, page]).first()
 export const saveDrawing = (d: Drawing) => db.drawings.put(d)
+export const loadDrawings = (bookId: string) => db.drawings.where('bookId').equals(bookId).toArray()
 
 /** A readable backup the learner can keep: their data, in their hands. */
 /** Forgets what Vector learned about how the learner studies. Progress and books stay. */

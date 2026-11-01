@@ -10,7 +10,7 @@ import { type GlossaryEntry, lookup } from '../../core/content/glossary'
 import type { Book, Highlight } from '../../core/reading/book'
 import { type SearchHit, searchPages } from '../../core/reading/text'
 import { AiError, generate } from '../ai/gemini'
-import { countLookup, loadAllPages, loadPages } from '../data/db'
+import { countLookup, type Drawing, loadAllPages, loadDrawings, loadPages } from '../data/db'
 import { hrefFor } from '../router'
 import { useStore } from '../state'
 import { PrimaryButton, QuietButton, QuietLink } from '../ui'
@@ -252,24 +252,43 @@ function Glossary({ book, glossaryTerm, glossaryContext }: PanelProps) {
   )
 }
 
-function Notes({ highlights, go }: PanelProps) {
-  const sorted = [...highlights].sort((a, b) => a.page - b.page || a.start - b.start)
-  if (sorted.length === 0)
-    return <p className="text-[var(--fg-quiet)]">Seleziona del testo e scegli Evidenzia o Nota.</p>
+function Notes({ book, highlights, go }: PanelProps) {
+  const [drawings, setDrawings] = useState<Drawing[]>([])
+  useEffect(() => {
+    void loadDrawings(book.id).then((d) => setDrawings(d.filter((x) => x.strokes.length > 0)))
+  }, [book.id])
+  const items = [
+    ...highlights.map((h) => ({ kind: 'h' as const, page: h.page, order: h.start, h })),
+    ...drawings.map((d) => ({ kind: 'd' as const, page: d.page, order: -1, d })),
+  ].sort((a, b) => a.page - b.page || a.order - b.order)
+  if (items.length === 0)
+    return (
+      <p className="text-[var(--fg-quiet)]">
+        Seleziona del testo e scegli Evidenzia o Nota, oppure scrivi a penna in vista pagina.
+      </p>
+    )
   return (
     <ul className="flex flex-col">
-      {sorted.map((h) => (
-        <li key={h.id}>
+      {items.map((it) => (
+        <li key={it.kind === 'h' ? it.h.id : it.d.id}>
           <button
             type="button"
-            onClick={() => go(h.page)}
+            onClick={() => go(it.page)}
             className="flex w-full flex-col gap-1 border-t border-[var(--rule)] py-3 text-left"
           >
-            <span className="text-xs text-[var(--fg-quiet)]">Pagina {h.page}</span>
-            <span className="text-sm">
-              “{h.quote.length > 200 ? `${h.quote.slice(0, 200)}…` : h.quote}”
-            </span>
-            {h.note && <span className="text-sm text-[var(--fg-quiet)]">{h.note}</span>}
+            <span className="text-xs text-[var(--fg-quiet)]">Pagina {it.page}</span>
+            {it.kind === 'h' ? (
+              <>
+                <span className="text-sm">
+                  “{it.h.quote.length > 200 ? `${it.h.quote.slice(0, 200)}…` : it.h.quote}”
+                </span>
+                {it.h.note && <span className="text-sm text-[var(--fg-quiet)]">{it.h.note}</span>}
+              </>
+            ) : (
+              <span className="whitespace-pre-line text-sm">
+                {it.d.transcript ?? `Note a penna (${it.d.strokes.length} tratti)`}
+              </span>
+            )}
           </button>
         </li>
       ))}
