@@ -16,6 +16,11 @@ describe('router', () => {
       { name: 'pomodoro' },
       { name: 'library' },
       { name: 'profile' },
+      { name: 'open', subjectId: null },
+      { name: 'open', subjectId: 'met' },
+      { name: 'diary' },
+      { name: 'map', subjectId: null },
+      { name: 'map', subjectId: 'nav' },
       { name: 'reader', bookId: 'abc', page: null, view: 'text' },
       { name: 'reader', bookId: 'abc', page: 12, view: 'page' },
     ]

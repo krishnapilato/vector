@@ -4,7 +4,7 @@ Studia i concetti, non le risposte.
 
 Vector è una web app di studio **local-first**, open source e gratuita. Nasce per preparare la teoria del PPL(A) EASA, ma è costruita per qualsiasi esame. Obiettivo: capire davvero, non memorizzare le risposte dei quiz.
 
-> Stato: **v1.0 — libreria, lettore, concentrazione e profilo**. Importi i tuoi libri, li leggi e li sottolinei, generi domande di comprensione e studi con un monitoraggio dell'attenzione che resta sul tuo computer.
+> Stato: **v1.1 — domande aperte, diario degli errori, programma**. Importi i tuoi libri, li leggi e li sottolinei, generi domande di comprensione e studi con un monitoraggio dell'attenzione che resta sul tuo computer.
 
 ## Cosa fa già
 
@@ -25,6 +25,9 @@ Vector è una web app di studio **local-first**, open source e gratuita. Nasce p
 - **Crea domande dal libro**: con la propria chiave Gemini, dalle pagine scelte nascono concetti con più formulazioni, distrattori, «Perché?» e punti chiave. Si controllano e approvano prima di entrare nel corso; ogni concetto mostra da dove viene e si può eliminare.
 - **Concentrazione**: l'uscita dall'app è sempre contata. Facoltativi fotocamera (assenza, sguardo altrove, telefono in mano, occhi chiusi) e microfono (c'è una voce? è la tua?). Analisi in memoria sul dispositivo, nessuna immagine o audio salvati o inviati. Distrazioni brevi ignorate, pausa automatica se sei lontano troppo a lungo, punteggio di attenzione per sessione.
 - **Cosa so di te**: una pagina con tutto ciò che Vector ha dedotto dalle tue risposte (materie e tipi di domanda più difficili, risposte riconosciute o indovinate, orari migliori, attenzione, termini cercati) e le note neutre che adattano le spiegazioni dell'IA. Si cancella con un clic.
+- **Spiegalo a parole tue**: domande aperte scritte o dettate a voce. La correzione è guidata: invece della soluzione arriva una domanda sul punto che manca, e si riprova (fino a tre volte). Senza IA, si confronta la risposta con i punti chiave e si segna onestamente cosa si è detto.
+- **Diario degli errori**: ogni errore per concetto, con la tua risposta, quella giusta e il testo da rileggere; un concetto è «sistemato» solo quando poi lo rispondi capendolo.
+- **Programma EASA**: gli argomenti del programma PPL(A) materia per materia, con i concetti collegati, quanto li sai e i capitoli dei tuoi libri da leggere. Si vede subito cosa è scoperto.
 - Tastiera: `1`–`4` rispondi, `0` non lo so, `Spazio`/`Invio` avanti, `Esc` esci.
 
 ## Principi

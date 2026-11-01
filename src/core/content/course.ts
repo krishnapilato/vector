@@ -11,6 +11,7 @@ export function fromUserConcept(u: UserConcept): Concept {
     source: u.source,
     variants: u.variants,
     ...(u.why ? { why: u.why } : {}),
+    ...(u.keyPoints && u.keyPoints.length > 0 ? { keyPoints: u.keyPoints } : {}),
   }
 }
 

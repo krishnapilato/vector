@@ -17,6 +17,8 @@ export interface StudySettings {
   readingSize: number
   /** Adapt AI explanations to the learner's study patterns (sent as short neutral notes). */
   personalize: boolean
+  /** The learner accepted that browser dictation may send audio to the browser vendor. */
+  voiceConsent: boolean
 }
 
 export function defaultSettings(config: Config): StudySettings {
@@ -28,6 +30,7 @@ export function defaultSettings(config: Config): StudySettings {
     includeSample: true,
     readingSize: 1,
     personalize: true,
+    voiceConsent: false,
   }
 }
 

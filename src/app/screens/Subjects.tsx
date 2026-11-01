@@ -15,6 +15,10 @@ export function Subjects({ subjectId }: { subjectId: string | null }) {
   if (!subject) {
     return (
       <Page title="Materie">
+        <div className="flex flex-wrap gap-6">
+          <QuietLink href={hrefFor({ name: 'map', subjectId: null })}>Programma EASA</QuietLink>
+          <QuietLink href={hrefFor({ name: 'diary' })}>Diario degli errori</QuietLink>
+        </div>
         <ul className="flex flex-col">
           {course.subjects.map((s) => {
             const concepts = course.concepts.filter((c) => c.subjectId === s.id)
@@ -53,6 +57,10 @@ export function Subjects({ subjectId }: { subjectId: string | null }) {
         <LinkButton href={hrefFor({ name: 'study', subjectId: subject.id, early: true })}>
           Studia questa materia
         </LinkButton>
+        <QuietLink href={hrefFor({ name: 'open', subjectId: subject.id })}>
+          Spiega a parole
+        </QuietLink>
+        <QuietLink href={hrefFor({ name: 'map', subjectId: subject.id })}>Programma</QuietLink>
         <QuietLink href={hrefFor({ name: 'subjects', subjectId: null })}>
           Tutte le materie
         </QuietLink>

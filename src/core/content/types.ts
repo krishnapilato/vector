@@ -46,6 +46,8 @@ export interface Concept {
   source: string
   variants: readonly Variant[]
   why?: WhyCheck
+  /** What a good explanation in the learner's own words must contain (open questions). */
+  keyPoints?: readonly string[]
 }
 
 export interface Course {

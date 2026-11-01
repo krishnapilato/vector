@@ -1,0 +1,628 @@
+/**
+ * The EASA PPL(A) theory programme (Part-FCL, AMC1 FCL.210.A), condensed to topics.
+ * Coverage is matched by keywords on the learner's concepts and books: approximate
+ * by design, enough to see what is still blank.
+ */
+import type { Concept } from './content/types'
+
+export interface Topic {
+  id: string
+  title: string
+  /** Lower-case keywords, Italian and English. */
+  keywords: readonly string[]
+}
+
+export const syllabus: Record<string, readonly Topic[]> = {
+  law: [
+    t('law-icao', 'ICAO e Convenzione di Chicago', [
+      'icao',
+      'chicago',
+      'annesso',
+      'annex',
+      'convenzione',
+    ]),
+    t('law-eu', 'Regolamenti europei: Basic Regulation, Part-FCL, Part-MED', [
+      'easa',
+      'part-fcl',
+      'licenz',
+      'licence',
+      'license',
+      'medical',
+      'certificato medico',
+      'abilitazion',
+      'rating',
+    ]),
+    t('law-sera', 'Regole dell’aria (SERA)', [
+      'sera',
+      'regole dell',
+      'rules of the air',
+      'precedenz',
+      'right of way',
+      'vmc',
+      'vfr',
+      'quota minima',
+      'minimum height',
+    ]),
+    t('law-airspace', 'Spazi aerei e servizi ATS', [
+      'spazio aereo',
+      'airspace',
+      'classe',
+      'ctr',
+      'tma',
+      'atz',
+      'servizi del traffico',
+      'ats',
+    ]),
+    t('law-atc', 'Procedure ATC e transponder', [
+      'atc',
+      'squawk',
+      'transponder',
+      '7700',
+      '7600',
+      '7500',
+      'autorizzazione',
+      'clearance',
+    ]),
+    t('law-ais', 'Informazioni aeronautiche (AIP, NOTAM)', ['aip', 'notam', 'ais', 'aic']),
+    t('law-aerodromes', 'Aerodromi, piste e segnali', [
+      'aerodrom',
+      'aeroporto',
+      'airport',
+      'pista',
+      'runway',
+      'segnal',
+      'signal',
+      'tora',
+      'asda',
+      'lda',
+      'toda',
+    ]),
+    t('law-sar', 'Ricerca e soccorso, security, incidenti', [
+      'soccorso',
+      'search and rescue',
+      'sar',
+      'security',
+      'incidente',
+      'accident',
+      'inconvenient',
+    ]),
+  ],
+  hpl: [
+    t('hpl-basics', 'Fattore umano e sicurezza', [
+      'fattore umano',
+      'human factor',
+      'human performance',
+      'shell',
+    ]),
+    t('hpl-physiology', 'Fisiologia: atmosfera, ipossia, iperventilazione', [
+      'ipossia',
+      'hypoxia',
+      'iperventilazion',
+      'hyperventilation',
+      'monossido',
+      'carbon monoxide',
+      'pressione parziale',
+      'barotrauma',
+      'decompress',
+    ]),
+    t('hpl-senses', 'Vista, udito e illusioni', [
+      'vista',
+      'vision',
+      'udito',
+      'hearing',
+      'illusion',
+      'disorient',
+      'vestibolar',
+      'vestibular',
+      'otolit',
+    ]),
+    t('hpl-health', 'Salute: alcol, farmaci, fatica', [
+      'alcol',
+      'alcohol',
+      'farmac',
+      'medication',
+      'fatica',
+      'fatigue',
+      'sonno',
+      'sleep',
+      'immersion',
+      'diving',
+    ]),
+    t('hpl-psychology', 'Psicologia: errore, decisione, stress', [
+      'errore',
+      'error',
+      'decision',
+      'stress',
+      'carico di lavoro',
+      'workload',
+      'consapevolezza',
+      'situational awareness',
+      'tem',
+      'minacce',
+    ]),
+  ],
+  met: [
+    t('met-atmosphere', 'Atmosfera e ISA', [
+      'atmosfera',
+      'atmosphere',
+      'isa',
+      'troposfera',
+      'troposphere',
+      'tropopausa',
+      'gradiente termico',
+      'lapse rate',
+    ]),
+    t('met-pressure', 'Pressione, altimetria e sistemi barici', [
+      'pressione',
+      'pressure',
+      'qnh',
+      'qfe',
+      'isobar',
+      'anticiclon',
+      'ciclon',
+      'depression',
+      'altimetr',
+    ]),
+    t('met-wind', 'Vento', [
+      'vento',
+      'wind',
+      'brezza',
+      'breeze',
+      'foehn',
+      'geostrofic',
+      'raffic',
+      'gust',
+    ]),
+    t('met-thermo', 'Umidità e stabilità', [
+      'umidit',
+      'humidity',
+      'punto di rugiada',
+      'dew point',
+      'stabil',
+      'instabil',
+      'adiabatic',
+    ]),
+    t('met-clouds', 'Nubi, nebbia e precipitazioni', [
+      'nub',
+      'cloud',
+      'nebbia',
+      'fog',
+      'foschia',
+      'mist',
+      'pioggia',
+      'rain',
+      'precipitazion',
+      'cumul',
+      'strat',
+    ]),
+    t('met-fronts', 'Masse d’aria e fronti', ['fronte', 'front', 'massa d', 'air mass', 'occlus']),
+    t('met-hazards', 'Fenomeni pericolosi: ghiaccio, turbolenza, temporali', [
+      'ghiaccio',
+      'icing',
+      'turbolenz',
+      'turbulence',
+      'temporal',
+      'thunderstorm',
+      'wind shear',
+      'microburst',
+      'grandine',
+    ]),
+    t('met-info', 'Informazioni meteo: METAR, TAF, carte', [
+      'metar',
+      'taf',
+      'sigmet',
+      'airmet',
+      'carta',
+      'chart',
+      'cavok',
+      'gamet',
+    ]),
+  ],
+  com: [
+    t('com-terms', 'Definizioni, abbreviazioni, alfabeto', [
+      'alfabeto',
+      'alphabet',
+      'abbreviazion',
+      'q code',
+      'codice q',
+      'definizion',
+    ]),
+    t('com-general', 'Procedure generali e numeri', [
+      'chiamata',
+      'call sign',
+      'nominativo',
+      'readback',
+      'collazion',
+      'numer',
+      'orario',
+      'utc',
+    ]),
+    t('com-phrases', 'Fraseologia di partenza, arrivo e circuito', [
+      'fraseolog',
+      'phraseology',
+      'circuito',
+      'circuit',
+      'downwind',
+      'sottovento',
+      'final',
+      'finale',
+      'taxi',
+      'rullaggio',
+    ]),
+    t('com-failure', 'Avaria radio', [
+      'avaria radio',
+      'radio failure',
+      'communication failure',
+      '7600',
+    ]),
+    t('com-emergency', 'Emergenza e urgenza', [
+      'mayday',
+      'pan pan',
+      'emergenza',
+      'emergency',
+      'urgenza',
+      'urgency',
+    ]),
+    t('com-vhf', 'Propagazione VHF', ['vhf', 'propagazion', 'portata', 'line of sight']),
+  ],
+  pof: [
+    t('pof-air', 'Flusso d’aria, portanza e resistenza', [
+      'portanza',
+      'lift',
+      'resistenza',
+      'drag',
+      'bernoulli',
+      'flusso',
+      'airflow',
+      'coefficiente',
+    ]),
+    t('pof-airfoil', 'Profilo alare e angolo d’attacco', [
+      'profilo',
+      'airfoil',
+      'aerofoil',
+      'angolo d',
+      'angle of attack',
+      'corda',
+      'chord',
+      'incidenza',
+    ]),
+    t('pof-stall', 'Stallo e vite', ['stallo', 'stall', 'vite', 'spin']),
+    t('pof-flaps', 'Ipersostentatori', ['flap', 'ipersostentator', 'slat', 'high lift']),
+    t('pof-stability', 'Stabilità', [
+      'stabilit',
+      'stability',
+      'diedro',
+      'dihedral',
+      'centro di pressione',
+    ]),
+    t('pof-controls', 'Comandi di volo e trim', [
+      'alettone',
+      'aileron',
+      'timone',
+      'rudder',
+      'equilibratore',
+      'elevator',
+      'trim',
+      'imbardata',
+      'yaw',
+      'rollio',
+      'roll',
+      'beccheggio',
+      'pitch',
+    ]),
+    t('pof-limits', 'Limitazioni: fattore di carico, inviluppo', [
+      'fattore di carico',
+      'load factor',
+      'inviluppo',
+      'envelope',
+      'vne',
+      'vno',
+      'va ',
+      'manovra',
+    ]),
+    t('pof-propeller', 'Elica', [
+      'elica',
+      'propeller',
+      'passo',
+      'coppia',
+      'torque',
+      'effetto giroscop',
+    ]),
+    t('pof-mechanics', 'Meccanica del volo: virata, salita, planata', [
+      'virata',
+      'turn',
+      'salita',
+      'climb',
+      'planata',
+      'glide',
+      'discesa',
+      'descent',
+      'efficienza',
+    ]),
+  ],
+  ops: [
+    t('ops-general', 'Procedure operative generali', [
+      'procedur',
+      'checklist',
+      'briefing',
+      'rumore',
+      'noise',
+    ]),
+    t('ops-wake', 'Turbolenza di scia', ['scia', 'wake', 'vortic']),
+    t('ops-windshear', 'Wind shear e microburst', [
+      'wind shear',
+      'windshear',
+      'microburst',
+      'gradiente del vento',
+    ]),
+    t('ops-runway', 'Piste contaminate', [
+      'contaminat',
+      'neve',
+      'snow',
+      'acqua sulla pista',
+      'standing water',
+      'aquaplaning',
+      'hydroplan',
+    ]),
+    t('ops-emergency', 'Emergenze: fuoco, fumo, atterraggio forzato, ammaraggio', [
+      'fuoco',
+      'fire',
+      'fumo',
+      'smoke',
+      'atterraggio forzato',
+      'forced landing',
+      'ammaraggio',
+      'ditching',
+      'emergen',
+    ]),
+  ],
+  fpp: [
+    t('fpp-mass', 'Massa e centraggio', [
+      'massa',
+      'mass',
+      'peso',
+      'weight',
+      'centraggio',
+      'balance',
+      'baricentro',
+      'centre of gravity',
+      'center of gravity',
+      'momento',
+    ]),
+    t('fpp-performance', 'Prestazioni: decollo, atterraggio, salita, crociera', [
+      'prestazion',
+      'performance',
+      'decollo',
+      'take-off',
+      'takeoff',
+      'atterraggio',
+      'landing',
+      'crociera',
+      'cruise',
+      'quota densit',
+      'density altitude',
+    ]),
+    t('fpp-planning', 'Pianificazione del volo VFR', [
+      'pianificazion',
+      'planning',
+      'log di navigazione',
+      'nav log',
+      'rotta',
+      'route',
+    ]),
+    t('fpp-fuel', 'Carburante e riserve', [
+      'carburante',
+      'fuel',
+      'riserva',
+      'reserve',
+      'autonomia',
+      'endurance',
+      'consumo',
+    ]),
+    t('fpp-flightplan', 'Piano di volo ATS', ['piano di volo', 'flight plan', 'fpl']),
+  ],
+  agk: [
+    t('agk-airframe', 'Cellula e carrello', [
+      'cellula',
+      'airframe',
+      'carrello',
+      'landing gear',
+      'freni',
+      'brake',
+      'pneumatic',
+    ]),
+    t('agk-engine', 'Motore a pistoni e miscela', [
+      'motore',
+      'engine',
+      'pistoni',
+      'piston',
+      'miscela',
+      'mixture',
+      'magnet',
+      'carburator',
+      'ghiaccio al carburatore',
+      'carburettor',
+      'detonazion',
+      'cilindr',
+    ]),
+    t('agk-systems', 'Carburante, olio ed elettrico', [
+      'olio',
+      'oil',
+      'alternator',
+      'batteria',
+      'battery',
+      'impianto elettrico',
+      'electrical',
+      'serbatoi',
+      'tank',
+    ]),
+    t('agk-pitot', 'Strumenti a pressione: anemometro, altimetro, variometro', [
+      'anemometro',
+      'airspeed indicator',
+      'altimetro',
+      'altimeter',
+      'variometro',
+      'vertical speed',
+      'pitot',
+      'statica',
+      'static',
+      'ias',
+      'tas',
+      'cas',
+    ]),
+    t('agk-gyro', 'Strumenti giroscopici', [
+      'giroscop',
+      'gyro',
+      'orizzonte artificiale',
+      'attitude indicator',
+      'direzionale',
+      'heading indicator',
+      'virosbandometro',
+      'turn coordinator',
+    ]),
+    t('agk-compass', 'Bussola magnetica', [
+      'bussola',
+      'compass',
+      'deviazion',
+      'deviation',
+      'errore di virata',
+      'turning error',
+      'acceleration error',
+    ]),
+    t('agk-avionics', 'Avionica e transponder', [
+      'avionic',
+      'transponder',
+      'radio',
+      'elt',
+      'glass cockpit',
+    ]),
+  ],
+  nav: [
+    t('nav-basics', 'La Terra: coordinate, distanze, direzioni', [
+      'latitudin',
+      'latitude',
+      'longitudin',
+      'longitude',
+      'meridian',
+      'parallel',
+      'miglio nautico',
+      'nautical mile',
+      'ortodromi',
+      'great circle',
+      'lossodromi',
+      'rhumb',
+    ]),
+    t('nav-magnetism', 'Magnetismo: declinazione e deviazione', [
+      'declinazion',
+      'variation',
+      'nord magnetico',
+      'magnetic north',
+      'nord vero',
+      'true north',
+      'isogon',
+    ]),
+    t('nav-charts', 'Carte aeronautiche', [
+      'carta',
+      'chart',
+      'scala',
+      'scale',
+      'lambert',
+      'mercator',
+      'icao 1:500',
+    ]),
+    t('nav-dr', 'Navigazione stimata e triangolo del vento', [
+      'triangolo del vento',
+      'wind triangle',
+      'deriva',
+      'drift',
+      'correzione',
+      'wca',
+      'ground speed',
+      'velocità al suolo',
+      'prua',
+      'heading',
+      'stimata',
+      'dead reckoning',
+    ]),
+    t('nav-inflight', 'Navigazione in volo', [
+      'orientamento',
+      'punto di riporto',
+      'reporting point',
+      'regola 1 in 60',
+      '1 in 60',
+      'deviazione dalla rotta',
+    ]),
+    t('nav-radio', 'Radionavigazione: VOR, ADF, DME', [
+      'vor',
+      'adf',
+      'ndb',
+      'dme',
+      'radiale',
+      'radial',
+      'qdm',
+      'qdr',
+      'cdi',
+    ]),
+    t('nav-gnss', 'GNSS', ['gnss', 'gps', 'raim', 'egnos']),
+  ],
+}
+
+function t(id: string, title: string, keywords: string[]): Topic {
+  return { id, title, keywords }
+}
+
+const fold = (s: string) =>
+  s
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '')
+    .toLowerCase()
+
+export function matchesTopic(text: string, topic: Topic): boolean {
+  const hay = ` ${fold(text)} `
+  return topic.keywords.some((k) => hay.includes(fold(k)))
+}
+
+export interface TopicCoverage {
+  topic: Topic
+  concepts: string[]
+  /** 0..1, share of the matched concepts the learner has consolidated or answered right last time. */
+  known: number
+  chapters: { bookId: string; bookTitle: string; title: string; page: number }[]
+}
+
+export function coverage(
+  subjectId: string,
+  concepts: readonly Pick<Concept, 'id' | 'subjectId' | 'title' | 'source'>[],
+  isKnown: (conceptId: string) => boolean,
+  books: readonly {
+    id: string
+    title: string
+    subjectId: string | null
+    chapters: readonly { title: string; startPage: number }[]
+  }[],
+): TopicCoverage[] {
+  const own = concepts.filter((c) => c.subjectId === subjectId)
+  return (syllabus[subjectId] ?? []).map((topic) => {
+    const matched = own.filter((c) => matchesTopic(`${c.title} ${c.source}`, topic))
+    return {
+      topic,
+      concepts: matched.map((c) => c.id),
+      known:
+        matched.length === 0 ? 0 : matched.filter((c) => isKnown(c.id)).length / matched.length,
+      chapters: books
+        .filter((b) => b.subjectId === null || b.subjectId === subjectId)
+        .flatMap((b) =>
+          b.chapters
+            .filter((ch) => matchesTopic(ch.title, topic))
+            .slice(0, 3)
+            .map((ch) => ({
+              bookId: b.id,
+              bookTitle: b.title,
+              title: ch.title,
+              page: ch.startPage,
+            })),
+        )
+        .slice(0, 4),
+    }
+  })
+}

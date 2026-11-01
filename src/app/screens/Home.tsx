@@ -73,6 +73,9 @@ export function Home() {
             </QuietLink>
           </div>
         )}
+        <QuietLink href={hrefFor({ name: 'open', subjectId: null })}>
+          Oppure spiega un concetto a parole tue
+        </QuietLink>
       </section>
 
       {(planned || pomodoro || (daysLeft !== null && daysLeft > 0) || todayMinutes > 0) && (

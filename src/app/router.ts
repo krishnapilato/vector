@@ -14,6 +14,9 @@ export type Route =
   | { name: 'pomodoro' }
   | { name: 'library' }
   | { name: 'profile' }
+  | { name: 'open'; subjectId: string | null }
+  | { name: 'diary' }
+  | { name: 'map'; subjectId: string | null }
   | { name: 'reader'; bookId: string; page: number | null; view: 'text' | 'page' }
 
 export function parseRoute(hash: string): Route {
@@ -35,6 +38,12 @@ export function parseRoute(hash: string): Route {
       return { name: 'pomodoro' }
     case 'profilo':
       return { name: 'profile' }
+    case 'spiega':
+      return { name: 'open', subjectId: params.get('materia') }
+    case 'errori':
+      return { name: 'diary' }
+    case 'programma':
+      return { name: 'map', subjectId: second || null }
     case 'libreria': {
       if (!second) return { name: 'library' }
       const p = Number(params.get('p'))
@@ -75,6 +84,14 @@ export function hrefFor(route: Route): string {
       return '#/libreria'
     case 'profile':
       return '#/profilo'
+    case 'open':
+      return route.subjectId
+        ? `#/spiega?materia=${encodeURIComponent(route.subjectId)}`
+        : '#/spiega'
+    case 'diary':
+      return '#/errori'
+    case 'map':
+      return route.subjectId ? `#/programma/${route.subjectId}` : '#/programma'
     case 'reader': {
       const q = new URLSearchParams()
       if (route.page) q.set('p', String(route.page))

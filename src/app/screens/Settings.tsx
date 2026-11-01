@@ -274,8 +274,9 @@ function AiSection() {
   return (
     <Section title="Intelligenza artificiale (Gemini)">
       <p className="text-sm text-[var(--fg-quiet)]">
-        Facoltativa. Serve per spiegarti un concetto in un altro modo dopo un errore. Ricevono solo
-        il concetto e la domanda, mai dati su di te. La chiave resta su questo dispositivo.
+        Facoltativa. Serve per rispiegare un concetto dopo un errore, creare domande dai tuoi libri,
+        correggere le risposte a parole e spiegare un termine nella frase. Riceve solo il testo
+        necessario, mai dati personali. La chiave resta su questo dispositivo.
       </p>
       <div className="flex flex-col gap-2">
         <label htmlFor={keyId} className="text-sm">

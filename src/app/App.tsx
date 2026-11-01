@@ -12,6 +12,13 @@ const Tools = lazy(() => import('./screens/Tools').then((m) => ({ default: m.Too
 const Library = lazy(() => import('./screens/Library').then((m) => ({ default: m.Library })))
 const Reader = lazy(() => import('./screens/Reader').then((m) => ({ default: m.Reader })))
 const Profile = lazy(() => import('./screens/Profile').then((m) => ({ default: m.Profile })))
+const OpenQuestion = lazy(() =>
+  import('./screens/OpenQuestion').then((m) => ({ default: m.OpenQuestion })),
+)
+const Diary = lazy(() => import('./screens/Diary').then((m) => ({ default: m.Diary })))
+const ProgramMap = lazy(() =>
+  import('./screens/ProgramMap').then((m) => ({ default: m.ProgramMap })),
+)
 const PomodoroScreen = lazy(() =>
   import('./screens/PomodoroScreen').then((m) => ({ default: m.PomodoroScreen })),
 )
@@ -45,6 +52,13 @@ function Shell() {
       </Suspense>
     )
   }
+  if (route.name === 'open') {
+    return (
+      <Suspense fallback={null}>
+        <OpenQuestion subjectId={route.subjectId} />
+      </Suspense>
+    )
+  }
   if (route.name === 'reader') {
     return (
       <Suspense fallback={null}>
@@ -73,7 +87,9 @@ function Shell() {
         <nav aria-label="Principale">
           <ul className="flex flex-wrap gap-1">
             {nav.map((item) => {
-              const current = item.route.name === route.name
+              const current =
+                item.route.name === route.name ||
+                (item.route.name === 'subjects' && (route.name === 'diary' || route.name === 'map'))
               return (
                 <li key={item.label}>
                   <a
@@ -102,12 +118,14 @@ function Shell() {
           {route.name === 'plan' && <Plan />}
           {route.name === 'library' && <Library />}
           {route.name === 'profile' && <Profile />}
+          {route.name === 'diary' && <Diary />}
+          {route.name === 'map' && <ProgramMap subjectId={route.subjectId} />}
           {route.name === 'tools' && <Tools tool={route.tool} />}
         </Suspense>
       </main>
 
       <footer className="flex flex-wrap justify-between gap-2 py-6 text-xs text-[var(--fg-quiet)]">
-        <span>vector v1.0</span>
+        <span>vector v1.1</span>
         <span>I tuoi dati restano su questo dispositivo.</span>
       </footer>
     </div>
