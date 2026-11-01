@@ -57,6 +57,7 @@ interface Store {
   flag: (conceptId: string, variantId: string) => void
   setActiveSession: (s: Session | null) => void
   reset: () => Promise<void>
+  reload: () => Promise<void>
   plan: readonly PlanItem[]
   savePlan: (items: PlanItem[]) => void
   removePlan: (id: string) => void
@@ -92,12 +93,9 @@ interface Loaded {
   userConcepts: UserConcept[]
 }
 
-export function StoreProvider({ children }: { children: ReactNode }) {
-  const [loaded, setLoaded] = useState<Loaded | null>(null)
-  const [error, setError] = useState<string | null>(null)
-
-  useEffect(() => {
-    Promise.all([
+async function loadState(): Promise<Loaded> {
+  const [prefs, progress, activeSession, srs, plan, pomodoro, focusLog, books, userConcepts] =
+    await Promise.all([
       loadPreferences(),
       loadProgress(),
       loadActiveSession(),
@@ -108,22 +106,21 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       loadBooks(),
       loadUserConcepts(),
     ])
-      .then(
-        ([prefs, progress, activeSession, srs, plan, pomodoro, focusLog, books, userConcepts]) =>
-          setLoaded({
-            prefs,
-            progress,
-            activeSession,
-            srs,
-            plan,
-            pomodoro,
-            focusLog,
-            books,
-            userConcepts,
-          }),
-      )
+  return { prefs, progress, activeSession, srs, plan, pomodoro, focusLog, books, userConcepts }
+}
+
+export function StoreProvider({ children }: { children: ReactNode }) {
+  const [loaded, setLoaded] = useState<Loaded | null>(null)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    loadState()
+      .then(setLoaded)
       .catch((e: unknown) => setError(e instanceof Error ? e.message : String(e)))
   }, [])
+
+  /** Reads everything again from storage, after an import or a sync. */
+  const reload = useCallback(async () => setLoaded(await loadState()), [])
 
   const updatePrefs = useCallback(async (prefs: Preferences) => {
     // Optimistic: the screen updates at once, the write follows.
@@ -260,6 +257,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         flag,
         setActiveSession,
         reset,
+        reload,
         savePlan,
         removePlan,
         setPomodoro,
@@ -282,6 +280,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       flag,
       setActiveSession,
       reset,
+      reload,
       savePlan,
       removePlan,
       setPomodoro,

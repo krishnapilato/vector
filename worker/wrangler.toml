@@ -1,0 +1,10 @@
+name = "vector-sync"
+main = "index.ts"
+compatibility_date = "2026-10-01"
+
+# Create it with: npx wrangler kv namespace create VECTOR_SYNC  (then paste the id below)
+kv_namespaces = [{ binding = "VECTOR_SYNC", id = "REPLACE_WITH_YOUR_KV_ID" }]
+
+[vars]
+# The exact origin of your Vector, without a trailing slash.
+ALLOWED_ORIGIN = "https://krishnapilato.github.io"

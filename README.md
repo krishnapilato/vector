@@ -4,7 +4,7 @@ Studia i concetti, non le risposte.
 
 Vector è una web app di studio **local-first**, open source e gratuita. Nasce per preparare la teoria del PPL(A) EASA, ma è costruita per qualsiasi esame. Obiettivo: capire davvero, non memorizzare le risposte dei quiz.
 
-> Stato: **v1.1 — domande aperte, diario degli errori, programma**. Importi i tuoi libri, li leggi e li sottolinei, generi domande di comprensione e studi con un monitoraggio dell'attenzione che resta sul tuo computer.
+> Stato: **v1.2 — telefono, «Ho X minuti», sincronizzazione cifrata**. Importi i tuoi libri, li leggi e li sottolinei, generi domande di comprensione e studi con un monitoraggio dell'attenzione che resta sul tuo computer.
 
 ## Cosa fa già
 
@@ -28,6 +28,10 @@ Vector è una web app di studio **local-first**, open source e gratuita. Nasce p
 - **Spiegalo a parole tue**: domande aperte scritte o dettate a voce. La correzione è guidata: invece della soluzione arriva una domanda sul punto che manca, e si riprova (fino a tre volte). Senza IA, si confronta la risposta con i punti chiave e si segna onestamente cosa si è detto.
 - **Diario degli errori**: ogni errore per concetto, con la tua risposta, quella giusta e il testo da rileggere; un concetto è «sistemato» solo quando poi lo rispondi capendolo.
 - **Programma EASA**: gli argomenti del programma PPL(A) materia per materia, con i concetti collegati, quanto li sai e i capitoli dei tuoi libri da leggere. Si vede subito cosa è scoperto.
+- **Sul telefono**: menu richiudibile, nessuno scorrimento orizzontale (verificato da un test), tutto usabile con il pollice.
+- **Ho 5 / 10 / 20 / 30 minuti**: una sessione dimensionata sul tempo che hai, in base al tuo ritmo reale.
+- **Backup cifrato** su file con una frase segreta, e ripristino.
+- **Sincronizzazione tra dispositivi** facoltativa, cifrata end-to-end, con un server tuo (Cloudflare Worker gratuito, istruzioni in [`worker/`](worker/README.md)). Il server non può leggere niente.
 - Tastiera: `1`–`4` rispondi, `0` non lo so, `Spazio`/`Invio` avanti, `Esc` esci.
 
 ## Principi

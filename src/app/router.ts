@@ -6,7 +6,7 @@ import { useSyncExternalStore } from 'react'
  */
 export type Route =
   | { name: 'home' }
-  | { name: 'study'; subjectId: string | null; early: boolean }
+  | { name: 'study'; subjectId: string | null; early: boolean; length?: number }
   | { name: 'subjects'; subjectId: string | null }
   | { name: 'settings' }
   | { name: 'plan' }
@@ -24,8 +24,15 @@ export function parseRoute(hash: string): Route {
   const params = new URLSearchParams(query)
   const [first, second] = path.split('/')
   switch (first) {
-    case 'studia':
-      return { name: 'study', subjectId: params.get('materia'), early: params.has('anticipo') }
+    case 'studia': {
+      const n = Number(params.get('domande'))
+      return {
+        name: 'study',
+        subjectId: params.get('materia'),
+        early: params.has('anticipo'),
+        ...(Number.isInteger(n) && n > 0 && n <= 50 ? { length: n } : {}),
+      }
+    }
     case 'materie':
       return { name: 'subjects', subjectId: second || null }
     case 'impostazioni':
@@ -67,6 +74,7 @@ export function hrefFor(route: Route): string {
       const q = new URLSearchParams()
       if (route.subjectId) q.set('materia', route.subjectId)
       if (route.early) q.set('anticipo', '')
+      if (route.length) q.set('domande', String(route.length))
       const s = q.toString().replace(/=(?=&|$)/g, '')
       return s ? `#/studia?${s}` : '#/studia'
     }

@@ -10,3 +10,4 @@ Ogni decisione importante ha un file breve: contesto, alternative, decisione, co
 | 0004 | [Logica pura fuori dal framework](0004-core-senza-framework.md)                  |
 | 0005 | [Zero animazioni come regola verificata](0005-zero-animazioni.md)                |
 | 0006 | [Chiave AI dell'utente, solo sul dispositivo](0006-chiave-ai-sul-dispositivo.md) |
+| 0007 | [Sincronizzazione cifrata, server dell'utente](0007-sync-cifrata.md)             |

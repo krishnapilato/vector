@@ -35,7 +35,15 @@ function exitFullscreen() {
   if (document.fullscreenElement) void document.exitFullscreen().catch(() => {})
 }
 
-export function Study({ subjectId, early }: { subjectId: string | null; early: boolean }) {
+export function Study({
+  subjectId,
+  early,
+  length,
+}: {
+  subjectId: string | null
+  early: boolean
+  length: number | null
+}) {
   const store = useStore()
   const rng = useRef(createRng(randomSeed())).current
 
@@ -44,7 +52,7 @@ export function Study({ subjectId, early }: { subjectId: string | null; early: b
     return buildSession({
       course: store.course,
       progress: store.progress,
-      settings: store.prefs.study,
+      settings: length ? { ...store.prefs.study, sessionLength: length } : store.prefs.study,
       config: store.prefs.config,
       rng,
       now: new Date(),

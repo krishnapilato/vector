@@ -85,6 +85,7 @@ function ReaderBody({
   const [glossaryTerm, setGlossaryTerm] = useState('')
   const articleRef = useRef<HTMLElement>(null)
   const focus = useFocus(true, 'reading')
+  const [missing, setMissing] = useState(false)
 
   useEffect(() => {
     void loadHighlights(book.id).then(setHighlights)
@@ -95,7 +96,10 @@ function ReaderBody({
   useEffect(() => {
     setText(null)
     setSelection(null)
-    void loadPage(book.id, page).then((p) => setText(p?.text ?? ''))
+    void loadPage(book.id, page).then((p) => {
+      setMissing(p === undefined)
+      setText(p?.text ?? '')
+    })
     if (book.lastPage !== page || !book.readPages.includes(page)) {
       putBook({ ...book, lastPage: page, readPages: [...new Set([...book.readPages, page])] })
     }
@@ -274,7 +278,16 @@ function ReaderBody({
           <Suspense fallback={null}>
             <PageView bookId={book.id} page={page} />
           </Suspense>
-        ) : text === null ? null : text.trim() === '' ? (
+        ) : text === null ? null : missing ? (
+          <p>
+            Il testo di questo libro non è su questo dispositivo (arriva da un backup o da un altro
+            dispositivo).{' '}
+            <a href={hrefFor({ name: 'library' })} className="underline underline-offset-4">
+              Ricollega il PDF dalla Libreria
+            </a>
+            .
+          </p>
+        ) : text.trim() === '' ? (
           <p className="text-[var(--fg-quiet)]">
             Questa pagina non contiene testo selezionabile
             {book.hasFile ? ': aprila in vista pagina.' : '.'}

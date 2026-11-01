@@ -7,6 +7,7 @@ describe('router', () => {
       { name: 'home' },
       { name: 'study', subjectId: null, early: false },
       { name: 'study', subjectId: 'met', early: true },
+      { name: 'study', subjectId: null, early: true, length: 12 },
       { name: 'subjects', subjectId: null },
       { name: 'subjects', subjectId: 'pof' },
       { name: 'settings' },

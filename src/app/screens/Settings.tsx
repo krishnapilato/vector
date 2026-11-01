@@ -1,9 +1,11 @@
 import { type ReactNode, useId, useState } from 'react'
 import { type Config, configSchema } from '../../config/config'
 import type { QuestionKind } from '../../core/question-timer'
+import { generatePassphrase, passphraseProblem, WrongPassphrase } from '../../core/sync/crypto'
 import { AiError, DEFAULT_MODEL, listModels } from '../ai/gemini'
-import { exportAll, type Preferences } from '../data/db'
+import { exportAll, loadPreferences, type Preferences, savePreferences } from '../data/db'
 import { useStore } from '../state'
+import { download, encryptedBackup, pull, push, restoreBackup, SyncConflict } from '../sync/sync'
 import { Page, PrimaryButton, QuietButton } from '../ui'
 
 const timerLabels: Record<QuestionKind, string> = {
@@ -14,7 +16,7 @@ const timerLabels: Record<QuestionKind, string> = {
 }
 
 export function Settings() {
-  const { prefs, updatePrefs, reset } = useStore()
+  const { prefs, updatePrefs } = useStore()
   const [error, setError] = useState<string | null>(null)
   const [saved, setSaved] = useState(false)
 
@@ -129,27 +131,9 @@ export function Settings() {
 
       <AiSection />
 
-      <Section title="I tuoi dati">
-        <p className="text-sm text-[var(--fg-quiet)]">
-          Progressi e impostazioni sono salvati solo in questo browser. Il backup non contiene la
-          chiave API.
-        </p>
-        <div className="flex flex-wrap gap-4">
-          <QuietButton
-            onClick={async () => {
-              const blob = new Blob([await exportAll()], { type: 'application/json' })
-              const a = document.createElement('a')
-              a.href = URL.createObjectURL(blob)
-              a.download = `vector-backup-${new Date().toISOString().slice(0, 10)}.json`
-              a.click()
-              URL.revokeObjectURL(a.href)
-            }}
-          >
-            Scarica un backup
-          </QuietButton>
-          <ResetButton onReset={reset} />
-        </div>
-      </Section>
+      <SyncSection />
+
+      <DataSection />
     </Page>
   )
 }
@@ -244,6 +228,223 @@ function FocusSection({
           {note}
         </p>
       )}
+    </Section>
+  )
+}
+
+const inputClass =
+  'min-h-11 w-full rounded-lg border border-[var(--rule)] bg-transparent px-3 text-[var(--fg)]'
+
+const errorText = (e: unknown) =>
+  e instanceof WrongPassphrase || e instanceof Error ? e.message : 'Qualcosa non ha funzionato.'
+
+function SyncSection() {
+  const { prefs, updatePrefs, reload } = useStore()
+  const [url, setUrl] = useState(prefs.sync.url ?? '')
+  const [phrase, setPhrase] = useState(prefs.sync.passphrase ?? '')
+  const [status, setStatus] = useState<string | null>(null)
+  const [busy, setBusy] = useState(false)
+  const ids = { url: useId(), phrase: useId() }
+  const problem = phrase ? passphraseProblem(phrase) : null
+  const changed =
+    url.trim() !== (prefs.sync.url ?? '') || phrase.trim() !== (prefs.sync.passphrase ?? '')
+
+  const saveSync = (patch: Partial<Preferences['sync']>) =>
+    updatePrefs({ ...prefs, sync: { ...prefs.sync, ...patch } })
+
+  const run = async (what: 'push' | 'pull') => {
+    setBusy(true)
+    setStatus(what === 'push' ? 'Cifro e invio…' : 'Ricevo e decifro…')
+    try {
+      const s = { ...prefs.sync, url: url.trim(), passphrase: phrase.trim() }
+      if (what === 'push') {
+        const { version } = await push(s)
+        await saveSync({ ...s, version, lastSyncedAt: new Date().toISOString() })
+        setStatus('Inviato.')
+      } else {
+        await saveSync(s)
+        const r = await pull(s)
+        if (!r) {
+          setStatus('Sul server non c’è ancora niente: invia da questo dispositivo.')
+        } else {
+          const fresh = await loadPreferences()
+          await savePreferences({
+            ...fresh,
+            sync: { ...s, version: r.version, lastSyncedAt: new Date().toISOString() },
+          })
+          await reload()
+          setStatus('Ricevuto: i dati di questo dispositivo sono stati sostituiti.')
+        }
+      }
+    } catch (e) {
+      setStatus(e instanceof SyncConflict ? e.message : errorText(e))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <Section title="Sincronizzazione tra dispositivi">
+      <p className="text-sm text-[var(--fg-quiet)]">
+        Facoltativa, con un server tuo (istruzioni in <code>worker/README.md</code> nel repository).
+        Tutto viene cifrato qui con la frase segreta prima di partire: il server non può leggere
+        niente. Usa la stessa frase su ogni dispositivo. Se la perdi, i dati sul server sono
+        irrecuperabili. Il testo dei libri non viene sincronizzato.
+      </p>
+      <div className="flex flex-col gap-1">
+        <label htmlFor={ids.url} className="text-sm">
+          Indirizzo del server
+        </label>
+        <input
+          id={ids.url}
+          type="url"
+          inputMode="url"
+          placeholder="https://vector-sync.tuonome.workers.dev"
+          value={url}
+          onChange={(e) => setUrl(e.target.value)}
+          className={inputClass}
+        />
+      </div>
+      <div className="flex flex-col gap-1">
+        <label htmlFor={ids.phrase} className="text-sm">
+          Frase segreta
+        </label>
+        <div className="flex flex-wrap gap-2">
+          <input
+            id={ids.phrase}
+            autoComplete="off"
+            spellCheck={false}
+            value={phrase}
+            onChange={(e) => setPhrase(e.target.value)}
+            className={`${inputClass} flex-1 font-mono text-sm`}
+          />
+          <QuietButton onClick={() => setPhrase(generatePassphrase())}>Genera</QuietButton>
+        </div>
+        {problem && <p className="text-sm">{problem}</p>}
+      </div>
+      <div className="flex flex-wrap items-center gap-2">
+        <PrimaryButton
+          disabled={busy || !url.trim() || !phrase.trim() || problem !== null}
+          onClick={() => run('push')}
+        >
+          Invia da qui
+        </PrimaryButton>
+        <QuietButton
+          disabled={busy || !url.trim() || !phrase.trim() || problem !== null}
+          onClick={() => run('pull')}
+        >
+          Ricevi (sostituisce i dati qui)
+        </QuietButton>
+        {changed && !busy && (
+          <span className="text-xs text-[var(--fg-quiet)]">
+            Si salvano al primo invio o ricezione.
+          </span>
+        )}
+      </div>
+      {prefs.sync.lastSyncedAt && (
+        <p className="text-xs text-[var(--fg-quiet)]">
+          Ultima sincronizzazione: {new Date(prefs.sync.lastSyncedAt).toLocaleString('it-IT')} ·
+          versione {prefs.sync.version}
+        </p>
+      )}
+      {status && (
+        <p className="text-sm" aria-live="polite">
+          {status}
+        </p>
+      )}
+    </Section>
+  )
+}
+
+function DataSection() {
+  const { reset, reload } = useStore()
+  const [phrase, setPhrase] = useState('')
+  const [file, setFile] = useState<File | null>(null)
+  const [status, setStatus] = useState<string | null>(null)
+  const ids = { phrase: useId(), file: useId() }
+  const date = () => new Date().toISOString().slice(0, 10)
+
+  return (
+    <Section title="I tuoi dati">
+      <p className="text-sm text-[var(--fg-quiet)]">
+        Progressi e impostazioni sono salvati solo in questo browser. I backup non contengono la
+        chiave API né il testo dei libri.
+      </p>
+      <div className="flex flex-col gap-1">
+        <label htmlFor={ids.phrase} className="text-sm">
+          Frase segreta per il backup cifrato
+        </label>
+        <div className="flex flex-wrap gap-2">
+          <input
+            id={ids.phrase}
+            autoComplete="off"
+            spellCheck={false}
+            value={phrase}
+            onChange={(e) => setPhrase(e.target.value)}
+            className={`${inputClass} flex-1 font-mono text-sm`}
+          />
+          <QuietButton onClick={() => setPhrase(generatePassphrase())}>Genera</QuietButton>
+        </div>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        <QuietButton
+          disabled={!phrase.trim() || passphraseProblem(phrase) !== null}
+          onClick={async () => {
+            setStatus('Cifro…')
+            download(await encryptedBackup(phrase.trim()), `vector-backup-cifrato-${date()}.json`)
+            setStatus('Backup cifrato scaricato. Conserva la frase: senza non si apre.')
+          }}
+        >
+          Scarica un backup cifrato
+        </QuietButton>
+        <QuietButton
+          onClick={async () =>
+            download(
+              new Blob([await exportAll()], { type: 'application/json' }),
+              `vector-backup-${date()}.json`,
+            )
+          }
+        >
+          Scarica un backup leggibile
+        </QuietButton>
+      </div>
+      <div className="flex flex-col gap-2">
+        <label htmlFor={ids.file} className="text-sm">
+          Ripristina da un backup (sostituisce i dati qui)
+        </label>
+        <input
+          id={ids.file}
+          type="file"
+          accept="application/json,.json"
+          onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+          className="text-sm file:mr-4 file:min-h-11 file:rounded-lg file:border file:border-[var(--rule)] file:bg-transparent file:px-4 file:text-[var(--fg)]"
+        />
+        <QuietButton
+          className="self-start"
+          disabled={!file}
+          onClick={async () => {
+            if (!file) return
+            try {
+              setStatus('Ripristino…')
+              await restoreBackup(await file.text(), phrase.trim() || null)
+              await reload()
+              setStatus('Backup ripristinato. Ricollega i PDF dalla Libreria per leggere i libri.')
+            } catch (e) {
+              setStatus(errorText(e))
+            }
+          }}
+        >
+          Ripristina
+        </QuietButton>
+      </div>
+      {status && (
+        <p className="text-sm" aria-live="polite">
+          {status}
+        </p>
+      )}
+      <div>
+        <ResetButton onReset={reset} />
+      </div>
     </Section>
   )
 }

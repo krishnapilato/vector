@@ -171,3 +171,15 @@ describe('error diary', () => {
     expect(d[2]?.mistakes).toHaveLength(1)
   })
 })
+
+import { questionsForMinutes } from './session'
+
+describe('questionsForMinutes', () => {
+  it('fits the questions in the time, within bounds', () => {
+    expect(questionsForMinutes(10, null)).toBe(13)
+    expect(questionsForMinutes(10, 45)).toBe(10)
+    expect(questionsForMinutes(10, 1)).toBe(30)
+    expect(questionsForMinutes(1, 60)).toBe(3)
+    expect(questionsForMinutes(120, 10)).toBe(40)
+  })
+})

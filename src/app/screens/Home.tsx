@@ -1,7 +1,9 @@
+import { useEffect, useState } from 'react'
 import { nextPlanned, planKindLabel, readiness, sameDay } from '../../core/plan'
 import { phaseLabel } from '../../core/pomodoro'
 import { masteryOf, scores } from '../../core/progress'
-import { isFinished, nextDue } from '../../core/session'
+import { isFinished, nextDue, questionsForMinutes } from '../../core/session'
+import { loadAttempts } from '../data/db'
 import { hrefFor } from '../router'
 import { useStore } from '../state'
 import { LinkButton, percent, QuietLink } from '../ui'
@@ -73,6 +75,7 @@ export function Home() {
             </QuietLink>
           </div>
         )}
+        {!resume && <FewMinutes />}
         <QuietLink href={hrefFor({ name: 'open', subjectId: null })}>
           Oppure spiega un concetto a parole tue
         </QuietLink>
@@ -135,5 +138,36 @@ export function Home() {
 
       <p className="text-xs text-[var(--fg-quiet)]">{course.sourceNote}</p>
     </div>
+  )
+}
+
+/** "Ho X minuti": a session sized to the time available, from the learner's own pace. */
+function FewMinutes() {
+  const [median, setMedian] = useState<number | null>(null)
+  useEffect(() => {
+    void loadAttempts().then((a) => {
+      if (a.length < 10) return
+      const xs = a.map((x) => x.elapsedSeconds).sort((x, y) => x - y)
+      setMedian(xs[Math.floor(xs.length / 2)] ?? null)
+    })
+  }, [])
+  return (
+    <nav aria-label="Ho pochi minuti" className="flex flex-wrap items-center gap-1 text-sm">
+      <span className="pr-2 text-[var(--fg-quiet)]">Ho</span>
+      {[5, 10, 20, 30].map((m) => (
+        <a
+          key={m}
+          href={hrefFor({
+            name: 'study',
+            subjectId: null,
+            early: true,
+            length: questionsForMinutes(m, median),
+          })}
+          className="inline-flex min-h-11 items-center rounded-lg border border-[var(--rule)] px-3"
+        >
+          {m} min
+        </a>
+      ))}
+    </nav>
   )
 }

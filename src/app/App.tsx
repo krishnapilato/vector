@@ -1,4 +1,4 @@
-import { lazy, Suspense } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import { hrefFor, type Route, useRoute } from './router'
 import { Home } from './screens/Home'
 import { StoreProvider } from './state'
@@ -43,6 +43,12 @@ export function App() {
 
 function Shell() {
   const route = useRoute()
+  // Phone: the menu folds away; it closes on every navigation.
+  const [menuOpen, setMenuOpen] = useState(false)
+  const href = hrefFor(route)
+  useEffect(() => {
+    if (href) setMenuOpen(false)
+  }, [href])
 
   // Study state: no menu, no footer.
   if (route.name === 'pomodoro') {
@@ -69,7 +75,12 @@ function Shell() {
   if (route.name === 'study') {
     return (
       <Suspense fallback={null}>
-        <Study key={hrefFor(route)} subjectId={route.subjectId} early={route.early} />
+        <Study
+          key={hrefFor(route)}
+          subjectId={route.subjectId}
+          early={route.early}
+          length={route.length ?? null}
+        />
       </Suspense>
     )
   }
@@ -84,8 +95,21 @@ function Shell() {
           </svg>
           vector
         </a>
-        <nav aria-label="Principale">
-          <ul className="flex flex-wrap gap-1">
+        <button
+          type="button"
+          onClick={() => setMenuOpen((o) => !o)}
+          aria-expanded={menuOpen}
+          aria-controls="main-nav"
+          className="min-h-11 rounded-lg px-3 text-sm text-[var(--fg-quiet)] sm:hidden"
+        >
+          {menuOpen ? 'Chiudi' : 'Menu'}
+        </button>
+        <nav
+          id="main-nav"
+          aria-label="Principale"
+          className={`${menuOpen ? 'block' : 'hidden'} w-full sm:block sm:w-auto`}
+        >
+          <ul className="flex flex-col gap-1 sm:flex-row sm:flex-wrap">
             {nav.map((item) => {
               const current =
                 item.route.name === route.name ||
@@ -125,7 +149,7 @@ function Shell() {
       </main>
 
       <footer className="flex flex-wrap justify-between gap-2 py-6 text-xs text-[var(--fg-quiet)]">
-        <span>vector v1.1</span>
+        <span>vector v1.2</span>
         <span>I tuoi dati restano su questo dispositivo.</span>
       </footer>
     </div>

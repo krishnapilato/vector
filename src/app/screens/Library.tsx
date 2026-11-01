@@ -1,4 +1,4 @@
-import { useId, useState } from 'react'
+import { useEffect, useId, useState } from 'react'
 import { freeSources } from '../../core/content/sources'
 import {
   type Book,
@@ -7,7 +7,7 @@ import {
   readingProgress,
   reliabilityLabel,
 } from '../../core/reading/book'
-import { addBook } from '../data/db'
+import { addBook, booksWithText, relinkBook } from '../data/db'
 import { hrefFor } from '../router'
 import { useStore } from '../state'
 import { Page, PrimaryButton, QuietButton } from '../ui'
@@ -18,6 +18,11 @@ const inputClass =
 export function Library() {
   const { books, course } = useStore()
   const sorted = [...books].sort((a, b) => b.importedAt.localeCompare(a.importedAt))
+  const [withText, setWithText] = useState<Set<string> | null>(null)
+  // biome-ignore lint/correctness/useExhaustiveDependencies: re-check when the books change
+  useEffect(() => {
+    void booksWithText().then(setWithText)
+  }, [books])
 
   return (
     <Page title="Libreria">
@@ -27,6 +32,7 @@ export function Library() {
             <BookRow
               key={b.id}
               book={b}
+              missing={withText !== null && !withText.has(b.id)}
               subjectName={course.subjects.find((s) => s.id === b.subjectId)?.name ?? null}
             />
           ))}
@@ -68,8 +74,41 @@ export function Library() {
   )
 }
 
-function BookRow({ book, subjectName }: { book: Book; subjectName: string | null }) {
-  const { removeBook } = useStore()
+function BookRow({
+  book,
+  subjectName,
+  missing,
+}: {
+  book: Book
+  subjectName: string | null
+  missing: boolean
+}) {
+  const { removeBook, putBook } = useStore()
+  const [relink, setRelink] = useState<string | null>(null)
+  const fileId = useId()
+  const attach = async (file: File) => {
+    setRelink('Leggo il file…')
+    try {
+      const isPdf = file.name.toLowerCase().endsWith('.pdf')
+      const { importPdf, importText } = await import('../reading/pdf')
+      const pages = isPdf
+        ? (await importPdf(await file.arrayBuffer(), (d, t) => setRelink(`Pagina ${d} di ${t}…`)))
+            .pages
+        : importText(await file.text()).pages
+      if (pages.length !== book.pageCount) {
+        setRelink(
+          `Questo file ha ${pages.length} pagine, il libro ${book.pageCount}: probabilmente è un altro file.`,
+        )
+        return
+      }
+      const next = { ...book, hasFile: isPdf }
+      await relinkBook(next, pages, isPdf ? file : null)
+      putBook(next)
+      setRelink('Collegato.')
+    } catch (e) {
+      setRelink(`Non riuscito: ${e instanceof Error ? e.message : String(e)}`)
+    }
+  }
   const [armed, setArmed] = useState(false)
   const progress = Math.round(readingProgress(book) * 100)
   return (
@@ -88,6 +127,24 @@ function BookRow({ book, subjectName }: { book: Book; subjectName: string | null
         {book.pageCount} pagine · {book.chapters.length} capitoli
         {subjectName ? ` · ${subjectName}` : ''}
       </p>
+      {missing && (
+        <div className="flex flex-col gap-1 text-sm">
+          <label htmlFor={fileId}>
+            Il testo non è su questo dispositivo: ricollega lo stesso file.
+          </label>
+          <input
+            id={fileId}
+            type="file"
+            accept="application/pdf,.pdf,.txt,.md"
+            onChange={(e) => {
+              const f = e.target.files?.[0]
+              if (f) void attach(f)
+            }}
+            className="text-sm file:mr-4 file:min-h-11 file:rounded-lg file:border file:border-[var(--rule)] file:bg-transparent file:px-4 file:text-[var(--fg)]"
+          />
+          {relink && <p aria-live="polite">{relink}</p>}
+        </div>
+      )}
       <div className="flex flex-wrap items-center gap-1">
         <a
           href={hrefFor({ name: 'reader', bookId: book.id, page: book.lastPage, view: 'text' })}

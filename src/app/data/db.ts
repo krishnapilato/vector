@@ -29,6 +29,7 @@ interface SettingsRow {
   ai?: AiSettings
   plan?: PlanSettings
   focus?: FocusSettings
+  sync?: SyncSettings
 }
 
 /** One completed focus period: the honest "minutes studied". */
@@ -150,6 +151,24 @@ export interface Preferences {
   ai: AiSettings
   plan: PlanSettings
   focus: FocusSettings
+  sync: SyncSettings
+}
+
+/** Optional encrypted sync through the learner's own server. */
+export interface SyncSettings {
+  url: string | null
+  /** Stays on this device; never exported or synced. */
+  passphrase: string | null
+  /** Last server version this device has seen. */
+  version: number
+  lastSyncedAt: string | null
+}
+
+export const defaultSync: SyncSettings = {
+  url: null,
+  passphrase: null,
+  version: 0,
+  lastSyncedAt: null,
 }
 
 export async function loadPreferences(): Promise<Preferences> {
@@ -162,6 +181,7 @@ export async function loadPreferences(): Promise<Preferences> {
     ai: { apiKey: null, model: DEFAULT_MODEL, ...row?.ai },
     plan: { examDate: null, ...row?.plan },
     focus: { ...defaultFocusSettings, ...row?.focus },
+    sync: { ...defaultSync, ...row?.sync },
   }
 }
 
@@ -173,6 +193,7 @@ export async function savePreferences(p: Preferences): Promise<void> {
     ai: p.ai,
     plan: p.plan,
     focus: p.focus,
+    sync: p.sync,
   })
 }
 
@@ -282,40 +303,113 @@ export async function clearLearningHistory(): Promise<void> {
   })
 }
 
+/** Data that travels in backups and sync. Book text and PDFs stay on each device. */
+const syncedTables = [
+  'progress',
+  'settings',
+  'plan',
+  'focusLog',
+  'books',
+  'highlights',
+  'userConcepts',
+  'lookups',
+  'attempts',
+  'focusRecords',
+  'drawings',
+] as const
+type SyncedTable = (typeof syncedTables)[number]
+
+export type Snapshot = {
+  app: 'vector'
+  version: 4
+  exportedAt: string
+  note: string
+} & Record<SyncedTable, unknown[]>
+
+export async function exportSnapshot(): Promise<Snapshot> {
+  const tables = await Promise.all(syncedTables.map((t) => db.table(t).toArray()))
+  const data = Object.fromEntries(syncedTables.map((t, i) => [t, tables[i] ?? []])) as Record<
+    SyncedTable,
+    unknown[]
+  >
+  // Never export secrets: the AI key and the sync passphrase stay on this device.
+  data.settings = (data.settings as SettingsRow[]).map(({ ai, sync, ...rest }) => ({
+    ...rest,
+    ai: ai && { model: ai.model },
+    ...(sync ? { sync: { url: sync.url } } : {}),
+  }))
+  return {
+    app: 'vector',
+    version: 4,
+    exportedAt: new Date().toISOString(),
+    note: 'Il testo dei libri importati non è incluso: si ricollega dal PDF su ogni dispositivo.',
+    ...data,
+  }
+}
+
 export async function exportAll(): Promise<string> {
-  const [progress, rows, plan, focusLog, books, highlights, userConcepts, attempts, focusRecords] =
-    await Promise.all([
-      db.progress.toArray(),
-      db.settings.toArray(),
-      db.plan.toArray(),
-      db.focusLog.toArray(),
-      db.books.toArray(),
-      db.highlights.toArray(),
-      db.userConcepts.toArray(),
-      db.attempts.toArray(),
-      db.focusRecords.toArray(),
-    ])
-  // Never export the API key.
-  const settings = rows.map(({ ai, ...rest }) => ({ ...rest, ai: ai && { model: ai.model } }))
-  return JSON.stringify(
-    {
-      app: 'vector',
-      version: 3,
-      exportedAt: new Date(),
-      note: 'Il testo dei libri importati non è incluso: si reimporta dal PDF.',
-      progress,
-      settings,
-      plan,
-      focusLog,
-      books,
-      highlights,
-      userConcepts,
-      attempts,
-      focusRecords,
+  return JSON.stringify(await exportSnapshot(), null, 2)
+}
+
+export class SnapshotError extends Error {}
+
+/** Replaces local data with a snapshot. Keeps this device's secrets and book texts. */
+export async function importSnapshot(raw: unknown): Promise<void> {
+  const snap = raw as Partial<Snapshot> | null
+  if (snap?.app !== 'vector' || typeof snap.version !== 'number' || snap.version > 4)
+    throw new SnapshotError('Non è un backup di Vector, o è di una versione più recente.')
+  for (const t of syncedTables) {
+    const rows = snap[t]
+    if (rows !== undefined && !Array.isArray(rows))
+      throw new SnapshotError(`Dati non validi: ${t}.`)
+  }
+  const local = await db.settings.get('settings')
+  await db.transaction(
+    'rw',
+    [...syncedTables.map((t) => db.table(t)), db.bookPages, db.bookFiles],
+    async () => {
+      for (const t of syncedTables) {
+        await db.table(t).clear()
+        const rows = (snap[t] ?? []) as object[]
+        if (t === 'settings') {
+          const incoming = rows[0] as SettingsRow | undefined
+          if (incoming)
+            await db.settings.put({
+              ...incoming,
+              id: 'settings',
+              ai: {
+                ...incoming.ai,
+                apiKey: local?.ai?.apiKey ?? null,
+                model: incoming.ai?.model ?? local?.ai?.model ?? DEFAULT_MODEL,
+              },
+              ...(local?.sync ? { sync: local.sync } : {}),
+            })
+          else if (local) await db.settings.put(local)
+        } else if (rows.length > 0) {
+          await db.table(t).bulkPut(rows)
+        }
+      }
+      // Book texts of books no longer present are removed.
+      const keep = new Set(((snap.books ?? []) as Book[]).map((b) => b.id))
+      await db.bookPages.filter((p) => !keep.has(p.bookId)).delete()
+      await db.bookFiles.filter((f) => !keep.has(f.id)).delete()
     },
-    null,
-    2,
   )
+}
+
+/** Book ids whose text is on this device. */
+export async function booksWithText(): Promise<Set<string>> {
+  return new Set((await db.bookPages.orderBy('bookId').uniqueKeys()) as string[])
+}
+
+/** Attaches the text (and file) of an already known book on this device. */
+export async function relinkBook(book: Book, pages: string[], file: Blob | null): Promise<void> {
+  await db.transaction('rw', db.books, db.bookPages, db.bookFiles, async () => {
+    await db.bookPages.where('bookId').equals(book.id).delete()
+    await db.bookPages.bulkPut(pages.map((text, i) => ({ bookId: book.id, page: i + 1, text })))
+    if (file) await db.bookFiles.put({ id: book.id, blob: file })
+    await db.books.put(book)
+  })
 }
 
 export async function resetAll(): Promise<void> {

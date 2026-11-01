@@ -225,3 +225,10 @@ export function summarize(s: Session, course: Course): Summary {
     interruptions: s.interruptions,
   }
 }
+
+/** "I have N minutes": how many questions fit, from the learner's typical pace when known. */
+export function questionsForMinutes(minutes: number, medianSeconds: number | null): number {
+  // Answer time plus reading the feedback; never assume the learner is faster than 20 s.
+  const perQuestion = medianSeconds && medianSeconds > 0 ? Math.max(20, medianSeconds + 15) : 45
+  return Math.min(40, Math.max(3, Math.round((minutes * 60) / perQuestion)))
+}
