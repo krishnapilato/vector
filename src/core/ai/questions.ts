@@ -1,4 +1,5 @@
 import type { QuestionKind } from '../question-timer'
+import { type ExamContext, pplExam, tutor, writeIn } from './exam'
 
 /**
  * Question generation from the learner's own material.
@@ -35,6 +36,7 @@ export interface QuestionsPromptInput {
   subjects: readonly { id: string; name: string }[]
   count: number
   language: 'it' | 'en'
+  exam?: ExamContext
 }
 
 /** Keeps the prompt within the free tier's comfortable size. */
@@ -43,13 +45,13 @@ export const MAX_SOURCE_CHARS = 24_000
 export function buildQuestionsPrompt(i: QuestionsPromptInput): string {
   const text = i.text.length > MAX_SOURCE_CHARS ? i.text.slice(0, MAX_SOURCE_CHARS) : i.text
   return [
-    'Sei un istruttore che prepara uno studente all’esame teorico PPL(A) EASA in Italia.',
+    tutor(i.exam ?? pplExam),
     `Dal testo qui sotto (${i.bookTitle}, pagine ${i.fromPage}–${i.toPage}) estrai al massimo ${i.count} concetti importanti per l’esame e, per ciascuno, scrivi domande che verifichino la COMPRENSIONE, non la memoria.`,
     'Regole:',
     '- Usa SOLO informazioni presenti nel testo. Non aggiungere numeri o regole che il testo non contiene.',
-    '- Scrivi tutto in italiano.' +
-      (i.language === 'en'
-        ? ' Il testo è in inglese: la prima volta che usi un termine tecnico, metti il termine inglese tra parentesi.'
+    `- ${writeIn(i.exam ?? pplExam)}` +
+      (i.language !== (i.exam ?? pplExam).language
+        ? ' Il testo è in un’altra lingua: la prima volta che usi un termine tecnico, metti il termine originale tra parentesi.'
         : ''),
     '- Per ogni concetto 3 formulazioni diverse: una di richiamo ("recall"), una di ragionamento o scenario ("reasoning"), una formulata al contrario o in altro modo.',
     '- Ogni domanda ha una risposta corretta e almeno 4 distrattori plausibili, distinti tra loro e dalla risposta.',

@@ -1,4 +1,5 @@
 import type { Config } from '../config/config'
+import { msg } from './i18n'
 
 /**
  * Pomodoro as a pure state machine over timestamps: no intervals inside,
@@ -8,9 +9,9 @@ import type { Config } from '../config/config'
 export type PomodoroPhase = 'focus' | 'short-break' | 'long-break'
 
 export const phaseLabel: Record<PomodoroPhase, string> = {
-  focus: 'Concentrazione',
-  'short-break': 'Pausa breve',
-  'long-break': 'Pausa lunga',
+  focus: msg('Concentrazione'),
+  'short-break': msg('Pausa breve'),
+  'long-break': msg('Pausa lunga'),
 }
 
 export interface Pomodoro {

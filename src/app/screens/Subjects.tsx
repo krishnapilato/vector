@@ -1,6 +1,9 @@
-import { useState } from 'react'
+import { useId, useState } from 'react'
 import type { UserConcept } from '../../core/ai/questions'
+import { subjectId } from '../../core/content/course'
+import type { Subject } from '../../core/content/types'
 import { type Mastery, masteryLabel, masteryOf } from '../../core/progress'
+import { t } from '../i18n'
 import { hrefFor } from '../router'
 import { useStore } from '../state'
 import { LinkButton, Page, QuietButton, QuietLink } from '../ui'
@@ -8,16 +11,20 @@ import { LinkButton, Page, QuietButton, QuietLink } from '../ui'
 const order: Mastery[] = ['due', 'learning', 'new', 'consolidated']
 
 export function Subjects({ subjectId }: { subjectId: string | null }) {
-  const { course, progress, userConcepts } = useStore()
+  const { course, progress, userConcepts, exam } = useStore()
   const now = new Date()
   const subject = course.subjects.find((s) => s.id === subjectId)
 
   if (!subject) {
     return (
-      <Page title="Materie">
+      <Page title={t('Materie')}>
         <div className="flex flex-wrap gap-6">
-          <QuietLink href={hrefFor({ name: 'map', subjectId: null })}>Programma EASA</QuietLink>
-          <QuietLink href={hrefFor({ name: 'diary' })}>Diario degli errori</QuietLink>
+          {exam.aviation && (
+            <QuietLink href={hrefFor({ name: 'map', subjectId: null })}>
+              {t('Programma EASA')}
+            </QuietLink>
+          )}
+          <QuietLink href={hrefFor({ name: 'diary' })}>{t('Diario degli errori')}</QuietLink>
         </div>
         <ul className="flex flex-col">
           {course.subjects.map((s) => {
@@ -32,16 +39,18 @@ export function Subjects({ subjectId }: { subjectId: string | null }) {
                   href={hrefFor({ name: 'subjects', subjectId: s.id })}
                   className="flex min-h-16 items-center justify-between gap-4 py-4"
                 >
-                  <span className="text-lg">{s.name}</span>
+                  <span className="text-lg">{t(s.name)}</span>
                   <span className="text-sm text-[var(--fg-quiet)]">
-                    {done} di {concepts.length} consolidati{due > 0 ? ` · ${due} da ripassare` : ''}
+                    {done} {t('di')} {concepts.length} {t('consolidati')}
+                    {due > 0 ? t(' · {due} da ripassare', { due }) : ''}
                   </span>
                 </a>
               </li>
             )
           })}
         </ul>
-        <p className="text-xs text-[var(--fg-quiet)]">{course.sourceNote}</p>
+        {!exam.aviation && <SubjectEditor />}
+        <p className="text-xs text-[var(--fg-quiet)]">{t(course.sourceNote)}</p>
       </Page>
     )
   }
@@ -52,17 +61,21 @@ export function Subjects({ subjectId }: { subjectId: string | null }) {
     .sort((a, b) => order.indexOf(a.mastery) - order.indexOf(b.mastery))
 
   return (
-    <Page title={subject.name}>
+    <Page title={t(subject.name)}>
       <div className="flex flex-wrap items-center gap-6">
         <LinkButton href={hrefFor({ name: 'study', subjectId: subject.id, early: true })}>
-          Studia questa materia
+          {t('Studia questa materia')}
         </LinkButton>
         <QuietLink href={hrefFor({ name: 'open', subjectId: subject.id })}>
-          Spiega a parole
+          {t('Spiega a parole')}
         </QuietLink>
-        <QuietLink href={hrefFor({ name: 'map', subjectId: subject.id })}>Programma</QuietLink>
+        {exam.aviation && (
+          <QuietLink href={hrefFor({ name: 'map', subjectId: subject.id })}>
+            {t('Programma')}
+          </QuietLink>
+        )}
         <QuietLink href={hrefFor({ name: 'subjects', subjectId: null })}>
-          Tutte le materie
+          {t('Tutte le materie')}
         </QuietLink>
       </div>
       <div className="flex flex-col">
@@ -76,7 +89,7 @@ export function Subjects({ subjectId }: { subjectId: string | null }) {
               <span
                 className={`text-sm ${mastery === 'due' ? 'text-[var(--fg)] underline underline-offset-4' : 'text-[var(--fg-quiet)]'}`}
               >
-                {masteryLabel[mastery]}
+                {t(masteryLabel[mastery])}
               </span>
             </div>
             <p className="max-w-prose leading-relaxed">{concept.source}</p>
@@ -100,7 +113,8 @@ function Origin({ concept }: { concept: UserConcept | undefined }) {
         href={hrefFor({ name: 'reader', bookId: o.bookId, page: o.fromPage, view: 'text' })}
         className="underline-offset-4 hover:underline"
       >
-        Creato con l’IA da {o.bookTitle}, pagine {o.fromPage}–{o.toPage}
+        {t('Creato con l’IA da')} {o.bookTitle}
+        {t(', pagine')} {o.fromPage}–{o.toPage}
       </a>
       {armed ? (
         <>
@@ -108,13 +122,94 @@ function Origin({ concept }: { concept: UserConcept | undefined }) {
             className="text-[var(--fg)] underline"
             onClick={() => removeConcept(concept.id)}
           >
-            Conferma eliminazione
+            {t('Conferma eliminazione')}
           </QuietButton>
-          <QuietButton onClick={() => setArmed(false)}>Annulla</QuietButton>
+          <QuietButton onClick={() => setArmed(false)}>{t('Annulla')}</QuietButton>
         </>
       ) : (
-        <QuietButton onClick={() => setArmed(true)}>Elimina</QuietButton>
+        <QuietButton onClick={() => setArmed(true)}>{t('Elimina')}</QuietButton>
       )}
     </div>
+  )
+}
+
+/** Custom exams: the learner's own subjects. A subject with concepts can't be removed. */
+function SubjectEditor() {
+  const { prefs, updatePrefs, course } = useStore()
+  const [name, setName] = useState('')
+  const id = useId()
+  const subjects = prefs.course.subjects
+  const save = (next: Subject[]) =>
+    updatePrefs({ ...prefs, course: { ...prefs.course, subjects: next } })
+
+  return (
+    <section className="flex flex-col gap-3 border-t border-[var(--rule)] pt-6">
+      <h2 className="text-lg font-medium">{t('Le tue materie')}</h2>
+      {subjects.length === 0 && (
+        <p className="text-sm text-[var(--fg-quiet)]">
+          {t(
+            'Aggiungi le materie del tuo esame: le domande create dai libri verranno assegnate a queste.',
+          )}
+        </p>
+      )}
+      <ul className="flex flex-col gap-1">
+        {subjects.map((s) => {
+          const used = course.concepts.some((c) => c.subjectId === s.id)
+          return (
+            <li key={s.id} className="flex flex-wrap items-center gap-2">
+              <input
+                aria-label={t('Nome della materia')}
+                defaultValue={s.name}
+                onBlur={(e) => {
+                  const v = e.target.value.trim()
+                  if (v && v !== s.name)
+                    void save(subjects.map((x) => (x.id === s.id ? { ...x, name: v } : x)))
+                }}
+                className="min-h-11 flex-1 rounded-lg border border-[var(--rule)] bg-[var(--bg)] px-3"
+              />
+              <QuietButton
+                disabled={used}
+                title={used ? t('Ha dei concetti: eliminali prima') : undefined}
+                onClick={() => void save(subjects.filter((x) => x.id !== s.id))}
+              >
+                {t('Rimuovi')}
+              </QuietButton>
+            </li>
+          )
+        })}
+      </ul>
+      <form
+        className="flex flex-wrap items-end gap-2"
+        onSubmit={(e) => {
+          e.preventDefault()
+          const v = name.trim()
+          if (!v) return
+          void save([
+            ...subjects,
+            { id: subjectId(v, new Set(subjects.map((x) => x.id))), name: v },
+          ])
+          setName('')
+        }}
+      >
+        <div className="flex flex-1 flex-col gap-1">
+          <label htmlFor={id} className="text-sm">
+            {t('Nuova materia')}
+          </label>
+          <input
+            id={id}
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className="min-h-11 rounded-lg border border-[var(--rule)] bg-[var(--bg)] px-3"
+          />
+        </div>
+        <button
+          type="submit"
+          disabled={!name.trim()}
+          className="min-h-11 rounded-lg border border-[var(--fg)] px-4 text-sm disabled:opacity-40"
+        >
+          {t('Aggiungi')}
+        </button>
+      </form>
+    </section>
   )
 }

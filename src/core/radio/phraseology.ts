@@ -3,6 +3,7 @@
  * Every exercise is generated with fresh values, so it trains listening and readback,
  * not memory of a script.
  */
+import { italian, type Tr } from '../i18n'
 import { pick, type Rng, randomInt } from '../random'
 
 export const alphabet: Record<string, string> = {
@@ -177,13 +178,13 @@ export function freqText(f: string): string {
 }
 
 /** Generates one scenario with fresh callsign, runway, QNH, squawk and frequencies. */
-export function generateScenario(rng: Rng, kind?: string): Scenario {
+export function generateScenario(rng: Rng, kind?: string, tr: Tr = italian): Scenario {
   const cs = callsignFor(rng)
   const full = spell(cs)
   const short = spell(abbreviate(cs))
   const fullN = normalize(full)
   const shortN = normalize(short)
-  const callsign: Required = { label: 'Nominativo', accept: [fullN, shortN] }
+  const callsign: Required = { label: tr('Nominativo'), accept: [fullN, shortN] }
   const twr = pick(
     rng,
     stations.filter((s) => s.name.endsWith('Tower')),
@@ -212,25 +213,28 @@ export function generateScenario(rng: Rng, kind?: string): Scenario {
   const all: Record<string, () => Scenario> = {
     taxi: () => ({
       id: 'taxi',
-      title: 'Rullaggio per la partenza',
-      situation: `Sei ${cs} al parcheggio di ${twr.name.replace(' Tower', '')}, VFR. Hai chiesto il rullaggio.`,
+      title: tr('Rullaggio per la partenza'),
+      situation: tr('Sei {cs} al parcheggio di {place}, VFR. Hai chiesto il rullaggio.', {
+        cs,
+        place: twr.name.replace(' Tower', ''),
+      }),
       exchanges: [
         say(
           `${full}, taxi to holding point ${holding} runway ${rwy}, QNH ${qnh}.`,
           `${full}, taxi to holding point ${alphabet[holding]}, runway ${digits(rwy, true)}, Q N H ${digits(qnh, true)}.`,
           {
-            task: 'Collaziona (readback) l’autorizzazione al rullaggio.',
+            task: tr('Collaziona (readback) l’autorizzazione al rullaggio.'),
             model: `Taxi to holding point ${holding} runway ${rwy}, QNH ${qnh}, ${short}.`,
             required: [
               {
-                label: 'Punto attesa',
+                label: tr('Punto attesa'),
                 accept: [
                   normalize(`holding point ${alphabet[holding]}`),
                   `holding point ${holding.toLowerCase()}`,
                 ],
               },
-              { label: `Pista ${rwy}`, accept: [normalize(rwy)] },
-              { label: `QNH ${qnh}`, accept: [normalize(qnh)] },
+              { label: tr('Pista {rwy}', { rwy }), accept: [normalize(rwy)] },
+              { label: tr('QNH {qnh}', { qnh }), accept: [normalize(qnh)] },
               callsign,
             ],
           },
@@ -239,13 +243,16 @@ export function generateScenario(rng: Rng, kind?: string): Scenario {
     }),
     squawk: () => ({
       id: 'squawk',
-      title: 'Codice transponder',
-      situation: `Sei ${cs} in volo VFR, in contatto con ${info.name}.`,
+      title: tr('Codice transponder'),
+      situation: tr('Sei {cs} in volo VFR, in contatto con {name}.', { cs, name: info.name }),
       exchanges: [
         say(`${short}, squawk ${squawk}.`, `${short}, squawk ${digits(squawk, true)}.`, {
-          task: 'Collaziona il codice transponder.',
+          task: tr('Collaziona il codice transponder.'),
           model: `Squawk ${squawk}, ${short}.`,
-          required: [{ label: `Squawk ${squawk}`, accept: [normalize(squawk)] }, callsign],
+          required: [
+            { label: tr('Squawk {squawk}', { squawk }), accept: [normalize(squawk)] },
+            callsign,
+          ],
         }),
       ],
     }),
@@ -253,16 +260,19 @@ export function generateScenario(rng: Rng, kind?: string): Scenario {
       const f = freqText(info.freq)
       return {
         id: 'frequency',
-        title: 'Cambio di frequenza',
-        situation: `Sei ${cs} appena decollato da ${twr.name.replace(' Tower', '')}.`,
+        title: tr('Cambio di frequenza'),
+        situation: tr('Sei {cs} appena decollato da {place}.', {
+          cs,
+          place: twr.name.replace(' Tower', ''),
+        }),
         exchanges: [
           say(
             `${short}, contact ${info.name} ${f}.`,
             `${short}, contact ${info.name} ${digits(f, true)}.`,
             {
-              task: 'Collaziona il cambio di frequenza.',
+              task: tr('Collaziona il cambio di frequenza.'),
               model: `${info.name} ${f}, ${short}.`,
-              required: [{ label: `Frequenza ${f}`, accept: [normalize(f)] }, callsign],
+              required: [{ label: tr('Frequenza {f}', { f }), accept: [normalize(f)] }, callsign],
             },
           ),
         ],
@@ -270,22 +280,25 @@ export function generateScenario(rng: Rng, kind?: string): Scenario {
     },
     circuit: () => ({
       id: 'circuit',
-      title: 'Ingresso in circuito',
-      situation: `Sei ${cs} in arrivo VFR a ${twr.name.replace(' Tower', '')}.`,
+      title: tr('Ingresso in circuito'),
+      situation: tr('Sei {cs} in arrivo VFR a {place}.', {
+        cs,
+        place: twr.name.replace(' Tower', ''),
+      }),
       exchanges: [
         say(
           `${short}, join ${side} hand downwind runway ${rwy}, QNH ${qnh}, report downwind.`,
           `${short}, join ${side} hand downwind, runway ${digits(rwy, true)}, Q N H ${digits(qnh, true)}, report downwind.`,
           {
-            task: 'Collaziona l’istruzione di ingresso in circuito.',
+            task: tr('Collaziona l’istruzione di ingresso in circuito.'),
             model: `Join ${side} hand downwind runway ${rwy}, QNH ${qnh}, wilco, ${short}.`,
             required: [
               {
-                label: `Sottovento ${side === 'left' ? 'sinistro' : 'destro'}`,
+                label: side === 'left' ? tr('Sottovento sinistro') : tr('Sottovento destro'),
                 accept: [`${side} hand downwind`, `${side} downwind`],
               },
-              { label: `Pista ${rwy}`, accept: [normalize(rwy)] },
-              { label: `QNH ${qnh}`, accept: [normalize(qnh)] },
+              { label: tr('Pista {rwy}', { rwy }), accept: [normalize(rwy)] },
+              { label: tr('QNH {qnh}', { qnh }), accept: [normalize(qnh)] },
               callsign,
             ],
           },
@@ -294,18 +307,18 @@ export function generateScenario(rng: Rng, kind?: string): Scenario {
     }),
     landing: () => ({
       id: 'landing',
-      title: 'Autorizzazione all’atterraggio',
-      situation: `Sei ${cs} in finale per la pista ${rwy}.`,
+      title: tr('Autorizzazione all’atterraggio'),
+      situation: tr('Sei {cs} in finale per la pista {rwy}.', { cs, rwy }),
       exchanges: [
         say(
           `${short}, wind ${windDir} degrees ${windKt} knots, runway ${rwy} cleared to land.`,
           `${short}, wind ${digits(windDir, true)} degrees, ${digits(windKt, true)} knots, runway ${digits(rwy, true)}, cleared to land.`,
           {
-            task: 'Collaziona l’autorizzazione all’atterraggio (il vento non va ripetuto).',
+            task: tr('Collaziona l’autorizzazione all’atterraggio (il vento non va ripetuto).'),
             model: `Runway ${rwy} cleared to land, ${short}.`,
             required: [
-              { label: `Pista ${rwy}`, accept: [normalize(rwy)] },
-              { label: 'Autorizzato ad atterrare', accept: ['cleared to land'] },
+              { label: tr('Pista {rwy}', { rwy }), accept: [normalize(rwy)] },
+              { label: tr('Autorizzato ad atterrare'), accept: ['cleared to land'] },
               callsign,
             ],
           },
@@ -314,19 +327,19 @@ export function generateScenario(rng: Rng, kind?: string): Scenario {
     }),
     takeoff: () => ({
       id: 'takeoff',
-      title: 'Autorizzazione al decollo',
-      situation: `Sei ${cs} al punto attesa della pista ${rwy}, pronto.`,
+      title: tr('Autorizzazione al decollo'),
+      situation: tr('Sei {cs} al punto attesa della pista {rwy}, pronto.', { cs, rwy }),
       exchanges: [
         say(
           `${short}, runway ${rwy} cleared for take-off, wind ${windDir} degrees ${windKt} knots.`,
           `${short}, runway ${digits(rwy, true)}, cleared for take off, wind ${digits(windDir, true)} degrees, ${digits(windKt, true)} knots.`,
           {
-            task: 'Collaziona l’autorizzazione al decollo.',
+            task: tr('Collaziona l’autorizzazione al decollo.'),
             model: `Runway ${rwy} cleared for take-off, ${short}.`,
             required: [
-              { label: `Pista ${rwy}`, accept: [normalize(rwy)] },
+              { label: tr('Pista {rwy}', { rwy }), accept: [normalize(rwy)] },
               {
-                label: 'Autorizzato al decollo',
+                label: tr('Autorizzato al decollo'),
                 accept: ['cleared for take off', 'cleared for takeoff', 'cleared take off'],
               },
               callsign,
@@ -337,18 +350,21 @@ export function generateScenario(rng: Rng, kind?: string): Scenario {
     }),
     holdShort: () => ({
       id: 'holdShort',
-      title: 'Attesa prima della pista',
-      situation: `Sei ${cs} in rullaggio verso la pista ${rwy}; c’è traffico in finale.`,
+      title: tr('Attesa prima della pista'),
+      situation: tr('Sei {cs} in rullaggio verso la pista {rwy}; c’è traffico in finale.', {
+        cs,
+        rwy,
+      }),
       exchanges: [
         say(
           `${short}, hold short of runway ${rwy}, traffic on final.`,
           `${short}, hold short of runway ${digits(rwy, true)}, traffic on final.`,
           {
-            task: 'Collaziona l’istruzione di attesa (va sempre ripetuta).',
+            task: tr('Collaziona l’istruzione di attesa (va sempre ripetuta).'),
             model: `Holding short runway ${rwy}, ${short}.`,
             required: [
-              { label: 'Attesa prima della pista', accept: ['holding short', 'hold short'] },
-              { label: `Pista ${rwy}`, accept: [normalize(rwy)] },
+              { label: tr('Attesa prima della pista'), accept: ['holding short', 'hold short'] },
+              { label: tr('Pista {rwy}', { rwy }), accept: [normalize(rwy)] },
               callsign,
             ],
           },
@@ -357,18 +373,21 @@ export function generateScenario(rng: Rng, kind?: string): Scenario {
     }),
     firstCall: () => ({
       id: 'firstCall',
-      title: 'Prima chiamata',
-      situation: `Sei ${cs}, Cessna 172, 10 miglia a nord di ${twr.name.replace(' Tower', '')} a 2500 piedi, VFR, e vuoi atterrare.`,
+      title: tr('Prima chiamata'),
+      situation: tr(
+        'Sei {cs}, Cessna 172, 10 miglia a nord di {place} a 2500 piedi, VFR, e vuoi atterrare.',
+        { cs, place: twr.name.replace(' Tower', '') },
+      ),
       exchanges: [
         say('(Fai tu la prima chiamata.)', '', {
-          task: `Chiama ${twr.name}: chi chiami, chi sei, dove sei, cosa vuoi.`,
+          task: tr('Chiama {name}: chi chiami, chi sei, dove sei, cosa vuoi.', { name: twr.name }),
           model: `${twr.name}, ${full}, Cessna 172, 10 miles north, 2500 feet, VFR, request joining instructions for landing.`,
           required: [
-            { label: 'Ente chiamato', accept: [twr.name.toLowerCase()] },
-            { label: 'Nominativo completo', accept: [fullN] },
-            { label: 'Posizione', accept: ['north'] },
+            { label: tr('Ente chiamato'), accept: [twr.name.toLowerCase()] },
+            { label: tr('Nominativo completo'), accept: [fullN] },
+            { label: tr('Posizione'), accept: ['north'] },
             {
-              label: 'Quota',
+              label: tr('Quota'),
               accept: [
                 '2500',
                 '2 5 0 0',
@@ -376,25 +395,28 @@ export function generateScenario(rng: Rng, kind?: string): Scenario {
                 'two thousand five hundred',
               ],
             },
-            { label: 'Richiesta', accept: ['request', 'landing', 'joining'] },
+            { label: tr('Richiesta'), accept: ['request', 'landing', 'joining'] },
           ],
         }),
       ],
     }),
     opposite: () => ({
       id: 'opposite',
-      title: 'Cambio pista in uso',
-      situation: `Sei ${cs} sottovento; il vento è girato.`,
+      title: tr('Cambio pista in uso'),
+      situation: tr('Sei {cs} sottovento; il vento è girato.', { cs }),
       exchanges: [
         say(
           `${short}, runway in use now ${opposite(rwy)}, QNH ${qnh}, report final.`,
           `${short}, runway in use now ${digits(opposite(rwy), true)}, Q N H ${digits(qnh, true)}, report final.`,
           {
-            task: 'Collaziona la nuova pista e il QNH.',
+            task: tr('Collaziona la nuova pista e il QNH.'),
             model: `Runway ${opposite(rwy)}, QNH ${qnh}, wilco, ${short}.`,
             required: [
-              { label: `Pista ${opposite(rwy)}`, accept: [normalize(opposite(rwy))] },
-              { label: `QNH ${qnh}`, accept: [normalize(qnh)] },
+              {
+                label: tr('Pista {opposite}', { opposite: opposite(rwy) }),
+                accept: [normalize(opposite(rwy))],
+              },
+              { label: tr('QNH {qnh}', { qnh }), accept: [normalize(qnh)] },
               callsign,
             ],
           },

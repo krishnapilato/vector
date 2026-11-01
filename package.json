@@ -1,6 +1,6 @@
 {
   "name": "vector",
-  "version": "1.4.0",
+  "version": "2.0.0",
   "private": true,
   "description": "Vector — local-first study app: understand concepts, don't memorize answers.",
   "type": "module",
@@ -37,6 +37,7 @@
   "devDependencies": {
     "@axe-core/playwright": "^4.14.0",
     "@babel/core": "^7.29.0",
+    "@babel/parser": "7.29.11",
     "@biomejs/biome": "2.6.4",
     "@playwright/test": "1.63.0",
     "@rolldown/plugin-babel": "^0.2.4",

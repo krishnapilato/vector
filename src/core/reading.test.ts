@@ -159,7 +159,7 @@ describe('AI questions', () => {
       language: 'en',
     })
     expect(p).toContain('Usa SOLO informazioni presenti nel testo')
-    expect(p).toContain('termine inglese tra parentesi')
+    expect(p).toContain('termine originale tra parentesi')
     expect(p.length).toBeLessThan(MAX_SOURCE_CHARS + 3000)
   })
 

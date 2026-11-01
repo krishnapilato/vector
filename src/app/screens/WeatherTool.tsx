@@ -9,6 +9,7 @@ import {
   randomMetar,
   vfrHint,
 } from '../../core/weather/metar'
+import { t } from '../i18n'
 import { PrimaryButton, QuietButton } from '../ui'
 
 const rng = createRng(randomSeed())
@@ -22,7 +23,7 @@ export function WeatherTool() {
   const [mode, setMode] = useState<'decode' | 'practice'>('decode')
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex gap-1" role="tablist" aria-label="Meteo">
+      <div className="flex gap-1" role="tablist" aria-label={t('Meteo')}>
         {(['decode', 'practice'] as const).map((m) => (
           <button
             key={m}
@@ -32,7 +33,7 @@ export function WeatherTool() {
             onClick={() => setMode(m)}
             className={`min-h-11 rounded-lg px-3 text-sm ${mode === m ? 'border border-[var(--fg)]' : 'text-[var(--fg-quiet)]'}`}
           >
-            {m === 'decode' ? 'Decodifica' : 'Esercizio'}
+            {m === 'decode' ? t('Decodifica') : t('Esercizio')}
           </button>
         ))}
       </div>
@@ -50,30 +51,30 @@ function Decode() {
   const fetchReal = async () => {
     const code = icao.trim().toUpperCase()
     if (!/^[A-Z]{4}$/.test(code)) {
-      setStatus('Inserisci un codice ICAO di 4 lettere.')
+      setStatus(t('Inserisci un codice ICAO di 4 lettere.'))
       return
     }
     setStatus('Scarico…')
     try {
-      const [m, t] = await Promise.all(
+      const [metar, taf] = await Promise.all(
         ['metar', 'taf'].map((kind) =>
           fetch(`${API}/${kind}?ids=${code}&format=raw`, { cache: 'no-store' }).then((r) =>
             r.ok ? r.text() : '',
           ),
         ),
       )
-      const all = [m, t]
+      const all = [metar, taf]
         .map((x) => x?.trim())
         .filter(Boolean)
         .join('\n\n')
       if (!all) {
-        setStatus('Nessun bollettino per questo aeroporto in questo momento.')
+        setStatus(t('Nessun bollettino per questo aeroporto in questo momento.'))
         return
       }
       setText(all)
       setStatus(null)
     } catch {
-      setStatus('Non riesco a scaricare i dati: incolla tu il METAR o il TAF qui sotto.')
+      setStatus(t('Non riesco a scaricare i dati: incolla tu il METAR o il TAF qui sotto.'))
     }
   }
 
@@ -87,7 +88,7 @@ function Decode() {
       <div className="flex flex-wrap items-end gap-2">
         <div className="flex flex-col gap-1">
           <label htmlFor={ids.icao} className="text-sm">
-            Aeroporto (ICAO)
+            {t('Aeroporto (ICAO)')}
           </label>
           <input
             id={ids.icao}
@@ -97,15 +98,16 @@ function Decode() {
             className={`${inputClass} w-28 uppercase`}
           />
         </div>
-        <PrimaryButton onClick={fetchReal}>Scarica METAR e TAF</PrimaryButton>
+        <PrimaryButton onClick={fetchReal}>{t('Scarica METAR e TAF')}</PrimaryButton>
       </div>
       <p className="text-xs text-[var(--fg-quiet)]">
-        Dati da aviationweather.gov (NOAA): viene inviato solo il codice dell’aeroporto. Solo per
-        studio, non per pianificare un volo.
+        {t(
+          'Dati da aviationweather.gov (NOAA): viene inviato solo il codice dell’aeroporto. Solo per studio, non per pianificare un volo.',
+        )}
       </p>
       <div className="flex flex-col gap-1">
         <label htmlFor={ids.text} className="text-sm">
-          Oppure incolla un METAR o un TAF
+          {t('Oppure incolla un METAR o un TAF')}
         </label>
         <textarea
           id={ids.text}
@@ -129,14 +131,14 @@ function Decode() {
 
 function Decoded({ raw }: { raw: string }) {
   if (/^TAF\b/.test(raw)) {
-    const taf = parseTaf(raw)
+    const taf = parseTaf(raw, t)
     return (
       <section className="flex flex-col gap-3 border-t border-[var(--rule)] pt-4">
-        <h2 className="font-medium">TAF</h2>
+        <h2 className="font-medium">{t('TAF')}</h2>
         {taf.groups.map((g) => (
           <div key={g.label + g.body.raw} className="flex flex-col gap-1">
-            <p className="text-sm">{g.label}</p>
-            <Rows rows={describeMetar(g.body)} />
+            <p className="text-sm">{t(g.label)}</p>
+            <Rows rows={describeMetar(g.body, t)} />
           </div>
         ))}
       </section>
@@ -151,11 +153,11 @@ function Decoded({ raw }: { raw: string }) {
         {hint && (
           <span className="text-sm font-normal text-[var(--fg-quiet)]">
             {' '}
-            · indicativamente {hint}
+            {t('· indicativamente')} {hint}
           </span>
         )}
       </h2>
-      <Rows rows={describeMetar(m)} />
+      <Rows rows={describeMetar(m, t)} />
     </section>
   )
 }
@@ -165,7 +167,7 @@ function Rows({ rows }: { rows: { label: string; value: string }[] }) {
     <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm">
       {rows.map((r) => (
         <div key={`${r.label}-${r.value}`} className="contents">
-          <dt className="text-[var(--fg-quiet)]">{r.label}</dt>
+          <dt className="text-[var(--fg-quiet)]">{t(r.label)}</dt>
           <dd>{r.value}</dd>
         </div>
       ))}
@@ -176,7 +178,7 @@ function Rows({ rows }: { rows: { label: string; value: string }[] }) {
 function Practice() {
   const [raw, setRaw] = useState(() => randomMetar(rng))
   const [questions, setQuestions] = useState<MetarQuestion[]>(() =>
-    metarQuestions(parseMetar(raw), rng),
+    metarQuestions(parseMetar(raw), rng, t),
   )
   const [picked, setPicked] = useState<Record<number, string>>({})
   const done = Object.keys(picked).length === questions.length
@@ -185,7 +187,7 @@ function Practice() {
   const fresh = () => {
     const r = randomMetar(rng)
     setRaw(r)
-    setQuestions(metarQuestions(parseMetar(r), rng))
+    setQuestions(metarQuestions(parseMetar(r), rng, t))
     setPicked({})
   }
 
@@ -221,18 +223,20 @@ function Practice() {
       {done && (
         <div className="flex flex-col gap-3" aria-live="polite">
           <p>
-            {right} su {questions.length}.
+            {right} {t('su')} {questions.length}.
           </p>
           <details className="text-sm">
-            <summary className="cursor-pointer text-[var(--fg-quiet)]">Decodifica completa</summary>
+            <summary className="cursor-pointer text-[var(--fg-quiet)]">
+              {t('Decodifica completa')}
+            </summary>
             <div className="mt-2">
-              <Rows rows={describeMetar(parseMetar(raw))} />
+              <Rows rows={describeMetar(parseMetar(raw), t)} />
             </div>
           </details>
         </div>
       )}
       <QuietButton className="self-start" onClick={fresh}>
-        Nuovo METAR
+        {t('Nuovo METAR')}
       </QuietButton>
     </div>
   )

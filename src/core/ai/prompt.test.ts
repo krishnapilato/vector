@@ -25,6 +25,15 @@ describe('buildExplainPrompt', () => {
     )
   })
 
+  it('adapts to another exam and language', () => {
+    const p = buildExplainPrompt({
+      ...input,
+      exam: { name: 'Patente nautica', aviation: false, language: 'en' },
+    })
+    expect(p).toContain('«Patente nautica»')
+    expect(p).toContain('in inglese')
+  })
+
   it('handles "I don\'t know"', () => {
     expect(buildExplainPrompt({ ...input, chosenAnswer: null })).toContain('non lo sapeva')
   })
@@ -32,7 +41,19 @@ describe('buildExplainPrompt', () => {
 
 describe('buildContextPrompt', () => {
   it('asks for the Italian exam term when reading English', () => {
-    expect(buildContextPrompt('stall', 'The wing will stall.', 'en')).toContain('termine italiano')
-    expect(buildContextPrompt('stallo', 'L’ala stalla.', 'it')).not.toContain('termine italiano')
+    expect(buildContextPrompt('stall', 'The wing will stall.', 'en')).toContain(
+      'termine corrispondente in italiano',
+    )
+    expect(buildContextPrompt('stallo', 'L’ala stalla.', 'it')).not.toContain(
+      'termine corrispondente',
+    )
+    const custom = buildContextPrompt('tort', 'A tort is…', 'en', {
+      name: 'Bar exam',
+      aviation: false,
+      language: 'en',
+    })
+    expect(custom).toContain('«Bar exam»')
+    expect(custom).not.toContain('aeronautico')
+    expect(custom).not.toContain('termine corrispondente')
   })
 })

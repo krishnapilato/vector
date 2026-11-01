@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { t } from './i18n'
 
 /**
  * Dictation with the browser's speech recognition. In Chrome and Edge the audio is
@@ -55,7 +56,7 @@ export function useDictation(lang: string, onText: (text: string) => void): Dict
   const start = () => {
     const C = ctor()
     if (!C) {
-      setError('Questo browser non supporta la dettatura.')
+      setError(t('Questo browser non supporta la dettatura.'))
       return
     }
     const r = new C()
@@ -75,12 +76,12 @@ export function useDictation(lang: string, onText: (text: string) => void): Dict
     r.onerror = (e) =>
       setError(
         e.error === 'not-allowed'
-          ? 'Microfono non concesso.'
+          ? t('Microfono non concesso.')
           : e.error === 'network'
-            ? 'La dettatura richiede la connessione.'
+            ? t('La dettatura richiede la connessione.')
             : e.error === 'no-speech'
               ? null
-              : 'La dettatura si è interrotta.',
+              : t('La dettatura si è interrotta.'),
       )
     r.onend = () => {
       setListening(false)

@@ -10,6 +10,7 @@ import {
 import { paragraphs } from '../../core/reading/text'
 import { deleteHighlight, loadHighlights, loadPage, saveHighlight } from '../data/db'
 import { FocusLine, useFocus } from '../focus/useFocus'
+import { t } from '../i18n'
 import { hrefFor, navigate } from '../router'
 import { useStore } from '../state'
 import { QuietButton, QuietLink } from '../ui'
@@ -43,8 +44,8 @@ export function Reader({
   if (!book) {
     return (
       <main className="mx-auto flex min-h-dvh max-w-2xl flex-col justify-center gap-6 px-6">
-        <p>Libro non trovato.</p>
-        <QuietLink href={hrefFor({ name: 'library' })}>Torna alla libreria</QuietLink>
+        <p>{t('Libro non trovato.')}</p>
+        <QuietLink href={hrefFor({ name: 'library' })}>{t('Torna alla libreria')}</QuietLink>
       </main>
     )
   }
@@ -231,21 +232,21 @@ function ReaderBody({
           {chapter ? ` · ${chapter.title}` : ''}
         </h1>
         <FocusLine view={focus} />
-        <nav aria-label="Lettore" className="flex flex-wrap items-center">
+        <nav aria-label={t('Lettore')} className="flex flex-wrap items-center">
           <QuietButton onClick={() => setPanel('toc')} aria-expanded={panel === 'toc'}>
-            Indice
+            {t('Indice')}
           </QuietButton>
           <QuietButton onClick={() => setPanel('search')} aria-expanded={panel === 'search'}>
-            Cerca
+            {t('Cerca')}
           </QuietButton>
           <QuietButton onClick={() => setPanel('notes')} aria-expanded={panel === 'notes'}>
-            Note
+            {t('Note')}
           </QuietButton>
           <QuietButton onClick={() => setPanel('generate')} aria-expanded={panel === 'generate'}>
-            Crea domande
+            {t('Crea domande')}
           </QuietButton>
           <QuietButton onClick={() => setPanel('tools')} aria-expanded={panel === 'tools'}>
-            Strumenti
+            {t('Strumenti')}
           </QuietButton>
           {book.hasFile && (
             <QuietButton
@@ -258,18 +259,18 @@ function ReaderBody({
                 })
               }
             >
-              {view === 'page' ? 'Vista testo' : 'Vista pagina'}
+              {view === 'page' ? t('Vista testo') : t('Vista pagina')}
             </QuietButton>
           )}
           {view === 'text' && (
             <QuietButton
               onClick={() => setSize((size + 1) % sizes.length)}
-              aria-label="Cambia la dimensione del testo"
+              aria-label={t('Cambia la dimensione del testo')}
             >
-              Aa
+              {t('Aa')}
             </QuietButton>
           )}
-          <QuietButton onClick={exit}>Esci</QuietButton>
+          <QuietButton onClick={exit}>{t('Esci')}</QuietButton>
         </nav>
       </header>
 
@@ -280,17 +281,18 @@ function ReaderBody({
           </Suspense>
         ) : text === null ? null : missing ? (
           <p>
-            Il testo di questo libro non è su questo dispositivo (arriva da un backup o da un altro
-            dispositivo).{' '}
+            {t(
+              'Il testo di questo libro non è su questo dispositivo (arriva da un backup o da un altro dispositivo).',
+            )}{' '}
             <a href={hrefFor({ name: 'library' })} className="underline underline-offset-4">
-              Ricollega il PDF dalla Libreria
+              {t('Ricollega il PDF dalla Libreria')}
             </a>
             .
           </p>
         ) : text.trim() === '' ? (
           <p className="text-[var(--fg-quiet)]">
-            Questa pagina non contiene testo selezionabile
-            {book.hasFile ? ': aprila in vista pagina.' : '.'}
+            {t('Questa pagina non contiene testo selezionabile')}
+            {book.hasFile ? t(': aprila in vista pagina.') : '.'}
           </p>
         ) : (
           <article
@@ -334,28 +336,30 @@ function ReaderBody({
 
       <footer className="mx-auto flex w-full max-w-3xl items-center justify-between gap-4 px-6 pb-8">
         <QuietButton onClick={() => go(page - 1)} disabled={page <= 1}>
-          ‹ Pagina precedente
+          {t('‹ Pagina precedente')}
         </QuietButton>
         <PageJump page={page} total={book.pageCount} go={go} />
         <QuietButton onClick={() => go(page + 1)} disabled={page >= book.pageCount}>
-          Pagina successiva ›
+          {t('Pagina successiva ›')}
         </QuietButton>
       </footer>
 
       {selection && !panel && (
         <div
           role="toolbar"
-          aria-label="Selezione"
+          aria-label={t('Selezione')}
           className="fixed inset-x-0 bottom-24 z-10 mx-auto flex w-fit flex-wrap items-center gap-1 rounded-lg border border-[var(--rule)] bg-[var(--bg)] px-2"
         >
           <QuietButton className="text-[var(--fg)]" onClick={() => addHighlight(null)}>
-            Evidenzia
+            {t('Evidenzia')}
           </QuietButton>
-          <QuietButton onClick={() => addHighlight('')}>Nota</QuietButton>
+          <QuietButton onClick={() => addHighlight('')}>{t('Nota')}</QuietButton>
           {selection.quote.split(/\s+/).length <= 4 && (
-            <QuietButton onClick={() => openGlossary(selection.quote)}>Glossario</QuietButton>
+            <QuietButton onClick={() => openGlossary(selection.quote)}>
+              {t('Glossario')}
+            </QuietButton>
           )}
-          <QuietButton onClick={() => setSelection(null)}>Annulla</QuietButton>
+          <QuietButton onClick={() => setSelection(null)}>{t('Annulla')}</QuietButton>
         </div>
       )}
 
@@ -396,7 +400,7 @@ function PageJump({ page, total, go }: { page: number; total: number; go: (p: nu
       }}
     >
       <label className="sr-only" htmlFor="page-jump">
-        Vai alla pagina
+        {t('Vai alla pagina')}
       </label>
       <input
         id="page-jump"
@@ -405,7 +409,9 @@ function PageJump({ page, total, go }: { page: number; total: number; go: (p: nu
         onChange={(e) => setDraft(e.target.value)}
         className="min-h-11 w-16 rounded-lg border border-[var(--rule)] bg-transparent text-center tabular-nums text-[var(--fg)]"
       />
-      <span>di {total}</span>
+      <span>
+        {t('di')} {total}
+      </span>
     </form>
   )
 }

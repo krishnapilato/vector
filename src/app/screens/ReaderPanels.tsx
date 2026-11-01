@@ -7,27 +7,29 @@ import {
   type UserConcept,
 } from '../../core/ai/questions'
 import { type GlossaryEntry, lookup } from '../../core/content/glossary'
+import { msg } from '../../core/i18n'
 import type { Book, Highlight } from '../../core/reading/book'
 import { type SearchHit, searchPages } from '../../core/reading/text'
 import { AiError, generate } from '../ai/gemini'
 import { countLookup, type Drawing, loadAllPages, loadDrawings, loadPages } from '../data/db'
+import { t } from '../i18n'
 import { hrefFor } from '../router'
 import { useStore } from '../state'
 import { PrimaryButton, QuietButton, QuietLink } from '../ui'
 import type { PanelKind } from './Reader'
-import { tools } from './Tools'
+import { toolsFor } from './Tools'
 
 const inputClass =
   'min-h-11 w-full rounded-lg border border-[var(--rule)] bg-[var(--bg)] px-3 text-[var(--fg)]'
 
 const titles: Record<PanelKind, string> = {
-  toc: 'Indice',
-  search: 'Cerca nel libro',
-  glossary: 'Glossario',
-  notes: 'Evidenziazioni e note',
-  highlight: 'Evidenziazione',
-  generate: 'Crea domande',
-  tools: 'Strumenti',
+  toc: msg('Indice'),
+  search: msg('Cerca nel libro'),
+  glossary: msg('Glossario'),
+  notes: msg('Evidenziazioni e note'),
+  highlight: msg('Evidenziazione'),
+  generate: msg('Crea domande'),
+  tools: msg('Strumenti'),
 }
 
 export interface PanelProps {
@@ -55,13 +57,13 @@ export function ReaderPanels(props: PanelProps) {
   return (
     <aside
       ref={ref}
-      aria-label={titles[props.kind]}
+      aria-label={t(titles[props.kind])}
       className="fixed inset-y-0 right-0 z-20 flex w-full max-w-md flex-col gap-6 overflow-y-auto border-l border-[var(--rule)] bg-[var(--bg)] p-6"
     >
       <div className="flex items-center justify-between gap-4">
-        <h2 className="text-lg font-medium">{titles[props.kind]}</h2>
+        <h2 className="text-lg font-medium">{t(titles[props.kind])}</h2>
         <QuietButton data-close onClick={props.close}>
-          Chiudi (Esc)
+          {t('Chiudi (Esc)')}
         </QuietButton>
       </div>
       {props.kind === 'toc' && <Toc {...props} />}
@@ -77,7 +79,7 @@ export function ReaderPanels(props: PanelProps) {
 
 function Toc({ book, page, go }: PanelProps) {
   if (book.chapters.length === 0)
-    return <p className="text-[var(--fg-quiet)]">Questo libro non ha un indice.</p>
+    return <p className="text-[var(--fg-quiet)]">{t('Questo libro non ha un indice.')}</p>
   return (
     <ol className="flex flex-col">
       {book.chapters.map((c) => {
@@ -115,7 +117,7 @@ function Search({ book, go }: PanelProps) {
   return (
     <div className="flex flex-col gap-4">
       <label htmlFor={id} className="sr-only">
-        Testo da cercare
+        {t('Testo da cercare')}
       </label>
       <input
         id={id}
@@ -123,13 +125,16 @@ function Search({ book, go }: PanelProps) {
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         className={inputClass}
-        placeholder="Parola o frase"
+        placeholder={t('Parola o frase')}
       />
       {query.trim().length >= 2 && (
         <p className="text-sm text-[var(--fg-quiet)]" aria-live="polite">
           {hits.length === 0
-            ? 'Nessun risultato.'
-            : `${hits.length}${hits.length === 50 ? '+' : ''} risultati`}
+            ? t('Nessun risultato.')
+            : t('{length}{plus} risultati', {
+                length: hits.length,
+                plus: hits.length === 50 ? '+' : '',
+              })}
         </p>
       )}
       <ul className="flex flex-col">
@@ -140,7 +145,9 @@ function Search({ book, go }: PanelProps) {
               onClick={() => go(h.page)}
               className="flex w-full flex-col gap-1 border-t border-[var(--rule)] py-3 text-left"
             >
-              <span className="text-xs text-[var(--fg-quiet)]">Pagina {h.page}</span>
+              <span className="text-xs text-[var(--fg-quiet)]">
+                {t('Pagina')} {h.page}
+              </span>
               <span className="text-sm">
                 …{h.before}
                 <mark className="bg-[var(--rule)] text-[var(--fg)]">{h.match}</mark>
@@ -155,7 +162,7 @@ function Search({ book, go }: PanelProps) {
 }
 
 function Glossary({ book, glossaryTerm, glossaryContext }: PanelProps) {
-  const { prefs } = useStore()
+  const { prefs, exam } = useStore()
   const [term, setTerm] = useState(glossaryTerm)
   const [seen, setSeen] = useState<number | null>(null)
   const [ai, setAi] = useState<{ state: 'idle' | 'busy' | 'done' | 'error'; text: string }>({
@@ -163,7 +170,8 @@ function Glossary({ book, glossaryTerm, glossaryContext }: PanelProps) {
     text: '',
   })
   const id = useId()
-  const entries: GlossaryEntry[] = lookup(term)
+  // The built-in glossary is aviation-only; other exams rely on the explanation in context.
+  const entries: GlossaryEntry[] = exam.aviation ? lookup(term) : []
 
   useEffect(() => {
     if (glossaryTerm.trim()) void countLookup(glossaryTerm).then(setSeen)
@@ -176,7 +184,7 @@ function Glossary({ book, glossaryTerm, glossaryContext }: PanelProps) {
       const text = await generate(
         prefs.ai.apiKey,
         prefs.ai.model,
-        buildContextPrompt(term, glossaryContext, book.language),
+        buildContextPrompt(term, glossaryContext, book.language, exam),
         {
           maxOutputTokens: 300,
         },
@@ -185,7 +193,7 @@ function Glossary({ book, glossaryTerm, glossaryContext }: PanelProps) {
     } catch (e) {
       setAi({
         state: 'error',
-        text: e instanceof AiError ? e.message : 'Qualcosa non ha funzionato.',
+        text: e instanceof AiError ? e.message : t('Qualcosa non ha funzionato.'),
       })
     }
   }
@@ -193,7 +201,7 @@ function Glossary({ book, glossaryTerm, glossaryContext }: PanelProps) {
   return (
     <div className="flex flex-col gap-4">
       <label htmlFor={id} className="sr-only">
-        Termine
+        {t('Termine')}
       </label>
       <input
         id={id}
@@ -204,11 +212,12 @@ function Glossary({ book, glossaryTerm, glossaryContext }: PanelProps) {
       />
       {seen !== null && seen > 1 && (
         <p className="text-sm text-[var(--fg-quiet)]">
-          Hai cercato questo termine {seen} volte: lo aggiungo tra i punti da ripassare.
+          {t('Hai cercato questo termine')} {seen}{' '}
+          {t('volte: lo aggiungo tra i punti da ripassare.')}
         </p>
       )}
       {entries.length === 0 ? (
-        <p className="text-[var(--fg-quiet)]">Non è nel glossario.</p>
+        <p className="text-[var(--fg-quiet)]">{t('Non è nel glossario.')}</p>
       ) : (
         <dl className="flex flex-col gap-4">
           {entries.map((e) => (
@@ -233,10 +242,10 @@ function Glossary({ book, glossaryTerm, glossaryContext }: PanelProps) {
             disabled={ai.state === 'busy' || !term.trim()}
             className="self-start text-[var(--fg)] underline"
           >
-            {ai.state === 'busy' ? 'Chiedo…' : 'Spiega in questa frase (IA)'}
+            {ai.state === 'busy' ? 'Chiedo…' : t('Spiega in questa frase (IA)')}
           </QuietButton>
           <p className="text-xs text-[var(--fg-quiet)]">
-            Invia a Google solo il termine e la frase in cui compare.
+            {t('Invia a Google solo il termine e la frase in cui compare.')}
           </p>
           {ai.text && (
             <p
@@ -264,7 +273,7 @@ function Notes({ book, highlights, go }: PanelProps) {
   if (items.length === 0)
     return (
       <p className="text-[var(--fg-quiet)]">
-        Seleziona del testo e scegli Evidenzia o Nota, oppure scrivi a penna in vista pagina.
+        {t('Seleziona del testo e scegli Evidenzia o Nota, oppure scrivi a penna in vista pagina.')}
       </p>
     )
   return (
@@ -276,7 +285,9 @@ function Notes({ book, highlights, go }: PanelProps) {
             onClick={() => go(it.page)}
             className="flex w-full flex-col gap-1 border-t border-[var(--rule)] py-3 text-left"
           >
-            <span className="text-xs text-[var(--fg-quiet)]">Pagina {it.page}</span>
+            <span className="text-xs text-[var(--fg-quiet)]">
+              {t('Pagina')} {it.page}
+            </span>
             {it.kind === 'h' ? (
               <>
                 <span className="text-sm">
@@ -286,7 +297,8 @@ function Notes({ book, highlights, go }: PanelProps) {
               </>
             ) : (
               <span className="whitespace-pre-line text-sm">
-                {it.d.transcript ?? `Note a penna (${it.d.strokes.length} tratti)`}
+                {it.d.transcript ??
+                  t('Note a penna ({length} tratti)', { length: it.d.strokes.length })}
               </span>
             )}
           </button>
@@ -309,7 +321,7 @@ function HighlightEditor({
     <div className="flex flex-col gap-4">
       <blockquote className="border-l border-[var(--rule)] pl-4 text-sm">{h.quote}</blockquote>
       <label htmlFor={id} className="text-sm">
-        Nota
+        {t('Nota')}
       </label>
       <textarea
         id={id}
@@ -325,9 +337,11 @@ function HighlightEditor({
             close()
           }}
         >
-          Salva
+          {t('Salva')}
         </PrimaryButton>
-        <QuietButton onClick={() => removeHighlight(h.id)}>Rimuovi evidenziazione</QuietButton>
+        <QuietButton onClick={() => removeHighlight(h.id)}>
+          {t('Rimuovi evidenziazione')}
+        </QuietButton>
       </div>
     </div>
   )
@@ -335,13 +349,15 @@ function HighlightEditor({
 
 function ToolPicker() {
   const [toolId, setToolId] = useState('calcolatrice')
-  const tool = tools.find((t) => t.id === toolId) ?? tools[0]
+  const { exam } = useStore()
+  const tools = toolsFor(exam.aviation)
+  const tool = tools.find((x) => x.id === toolId) ?? (tools[0] as (typeof tools)[number])
   const Current = tool.component
   const id = useId()
   return (
     <div className="flex flex-col gap-6">
       <label htmlFor={id} className="sr-only">
-        Strumento
+        {t('Strumento')}
       </label>
       <select
         id={id}
@@ -349,9 +365,9 @@ function ToolPicker() {
         onChange={(e) => setToolId(e.target.value)}
         className={inputClass}
       >
-        {tools.map((t) => (
-          <option key={t.id} value={t.id}>
-            {t.name}
+        {tools.map((tool) => (
+          <option key={tool.id} value={tool.id}>
+            {t(tool.name)}
           </option>
         ))}
       </select>
@@ -368,7 +384,7 @@ type GenState =
   | { step: 'error'; message: string }
 
 function Generate({ book, page }: PanelProps) {
-  const { prefs, course, addConcepts } = useStore()
+  const { prefs, course, addConcepts, exam } = useStore()
   const chapter = book.chapters.find((c) => page >= c.startPage && page <= c.endPage)
   const [from, setFrom] = useState(chapter?.startPage ?? page)
   const [to, setTo] = useState(chapter ? Math.min(chapter.endPage, chapter.startPage + 9) : page)
@@ -379,8 +395,8 @@ function Generate({ book, page }: PanelProps) {
   if (!prefs.ai.apiKey) {
     return (
       <div className="flex flex-col gap-4">
-        <p>Per creare domande dal libro serve la tua chiave Google AI Studio.</p>
-        <QuietLink href={hrefFor({ name: 'settings' })}>Apri le impostazioni</QuietLink>
+        <p>{t('Per creare domande dal libro serve la tua chiave Google AI Studio.')}</p>
+        <QuietLink href={hrefFor({ name: 'settings' })}>{t('Apri le impostazioni')}</QuietLink>
       </div>
     )
   }
@@ -393,13 +409,14 @@ function Generate({ book, page }: PanelProps) {
       const pages = await loadPages(book.id, a, b)
       const text = pages.map((p) => p.text).join('\n\n')
       if (text.trim().length < 200) {
-        setState({ step: 'error', message: 'Queste pagine hanno troppo poco testo.' })
+        setState({ step: 'error', message: t('Queste pagine hanno troppo poco testo.') })
         return
       }
       const raw = await generate(
         prefs.ai.apiKey as string,
         prefs.ai.model,
         buildQuestionsPrompt({
+          exam,
           bookTitle: book.title,
           fromPage: a,
           toPage: b,
@@ -425,7 +442,7 @@ function Generate({ book, page }: PanelProps) {
       if (result.concepts.length === 0) {
         setState({
           step: 'error',
-          message: 'La risposta non conteneva domande valide. Riprova o scegli altre pagine.',
+          message: t('La risposta non conteneva domande valide. Riprova o scegli altre pagine.'),
         })
         return
       }
@@ -443,7 +460,7 @@ function Generate({ book, page }: PanelProps) {
             ? e.message
             : e instanceof Error
               ? e.message
-              : 'Qualcosa non ha funzionato.',
+              : t('Qualcosa non ha funzionato.'),
       })
     }
   }
@@ -458,8 +475,10 @@ function Generate({ book, page }: PanelProps) {
     return (
       <div className="flex flex-col gap-4">
         <p className="text-sm text-[var(--fg-quiet)]">
-          Controlla ogni concetto prima di aggiungerlo: l’IA può sbagliare.
-          {state.rejected > 0 ? ` Ho scartato ${state.rejected} domande incomplete.` : ''}
+          {t('Controlla ogni concetto prima di aggiungerlo: l’IA può sbagliare.')}
+          {state.rejected > 0
+            ? t(' Ho scartato {rejected} domande incomplete.', { rejected: state.rejected })
+            : ''}
         </p>
         <ul className="flex flex-col">
           {state.concepts.map((c) => (
@@ -474,18 +493,22 @@ function Generate({ book, page }: PanelProps) {
                 <span className="flex flex-col gap-1">
                   <span>{c.title}</span>
                   <span className="text-xs text-[var(--fg-quiet)]">
-                    {course.subjects.find((s) => s.id === c.subjectId)?.name} · {c.variants.length}{' '}
-                    formulazioni
+                    {t(course.subjects.find((s) => s.id === c.subjectId)?.name ?? '')} ·{' '}
+                    {c.variants.length} {t('formulazioni')}
                   </span>
                 </span>
               </label>
               <details className="pl-7 text-sm">
-                <summary className="cursor-pointer text-[var(--fg-quiet)]">Vedi le domande</summary>
+                <summary className="cursor-pointer text-[var(--fg-quiet)]">
+                  {t('Vedi le domande')}
+                </summary>
                 <ul className="mt-2 flex flex-col gap-3">
                   {c.variants.map((v) => (
                     <li key={v.id}>
                       <p>{v.prompt}</p>
-                      <p className="text-[var(--fg-quiet)]">Risposta: {v.answer}</p>
+                      <p className="text-[var(--fg-quiet)]">
+                        {t('Risposta:')} {v.answer}
+                      </p>
                     </li>
                   ))}
                 </ul>
@@ -502,9 +525,9 @@ function Generate({ book, page }: PanelProps) {
               setState({ step: 'saved', count: chosen.length })
             }}
           >
-            Aggiungi {state.chosen.size} al corso
+            {t('Aggiungi')} {state.chosen.size} {t('al corso')}
           </PrimaryButton>
-          <QuietButton onClick={() => setState({ step: 'form' })}>Scarta</QuietButton>
+          <QuietButton onClick={() => setState({ step: 'form' })}>{t('Scarta')}</QuietButton>
         </div>
       </div>
     )
@@ -513,9 +536,12 @@ function Generate({ book, page }: PanelProps) {
   if (state.step === 'saved') {
     return (
       <div className="flex flex-col gap-4" aria-live="polite">
-        <p>Aggiunti {state.count} concetti. Entreranno nelle prossime sessioni di studio.</p>
+        <p>
+          {t('Aggiunti')} {state.count}{' '}
+          {t('concetti. Entreranno nelle prossime sessioni di studio.')}
+        </p>
         <QuietButton className="self-start" onClick={() => setState({ step: 'form' })}>
-          Crea altre domande
+          {t('Crea altre domande')}
         </QuietButton>
       </div>
     )
@@ -524,13 +550,14 @@ function Generate({ book, page }: PanelProps) {
   return (
     <div className="flex flex-col gap-4">
       <p className="text-sm text-[var(--fg-quiet)]">
-        Il testo delle pagine scelte viene inviato a Google con la tua chiave. Le domande verificano
-        la comprensione, con più formulazioni per concetto.
+        {t(
+          'Il testo delle pagine scelte viene inviato a Google con la tua chiave. Le domande verificano la comprensione, con più formulazioni per concetto.',
+        )}
       </p>
       <div className="grid grid-cols-3 gap-3">
         <div className="flex flex-col gap-1">
           <label htmlFor={ids.from} className="text-sm">
-            Da pagina
+            {t('Da pagina')}
           </label>
           <input
             id={ids.from}
@@ -544,7 +571,7 @@ function Generate({ book, page }: PanelProps) {
         </div>
         <div className="flex flex-col gap-1">
           <label htmlFor={ids.to} className="text-sm">
-            A pagina
+            {t('A pagina')}
           </label>
           <input
             id={ids.to}
@@ -558,7 +585,7 @@ function Generate({ book, page }: PanelProps) {
         </div>
         <div className="flex flex-col gap-1">
           <label htmlFor={ids.count} className="text-sm">
-            Concetti
+            {t('Concetti')}
           </label>
           <input
             id={ids.count}
@@ -572,7 +599,7 @@ function Generate({ book, page }: PanelProps) {
         </div>
       </div>
       <PrimaryButton onClick={run} disabled={state.step === 'busy'} className="self-start">
-        {state.step === 'busy' ? 'Genero…' : 'Genera'}
+        {state.step === 'busy' ? t('Genero…') : t('Genera')}
       </PrimaryButton>
       {state.step === 'error' && (
         <p className="text-sm" aria-live="polite">

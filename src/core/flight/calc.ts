@@ -1,10 +1,30 @@
+import { fill, msg, type Vars } from '../i18n'
 /**
  * A small, safe calculator: a recursive-descent parser, never `eval`.
  * Supports + − × ÷ ^, parentheses, decimal comma or point, pi, and
  * sin cos tan asin acos atan (in DEGREES, as in navigation), sqrt abs ln log round.
  */
 
-export type CalcResult = { ok: true; value: number } | { ok: false; error: string }
+export type CalcResult =
+  | { ok: true; value: number }
+  | { ok: false; error: string; message: string; vars?: Vars }
+
+/** An error whose message can be translated: `message` is the template, `vars` fill it. */
+class CalcError extends Error {
+  constructor(
+    public template: string,
+    public vars?: Vars,
+  ) {
+    super(fill(template, vars))
+  }
+}
+
+const fail = (template: string, vars?: Vars): CalcResult => ({
+  ok: false,
+  error: fill(template, vars),
+  message: template,
+  ...(vars ? { vars } : {}),
+})
 
 const functions: Record<string, (x: number) => number> = {
   sin: (x) => Math.sin((x * Math.PI) / 180),
@@ -37,7 +57,8 @@ function tokenize(input: string): Token[] {
       let j = i
       while (j < s.length && /[0-9.,]/.test(s[j] as string)) j++
       const raw = s.slice(i, j).replace(',', '.')
-      if (!/^\d*\.?\d+$|^\d+\.$/.test(raw)) throw new Error(`Numero non valido: ${s.slice(i, j)}`)
+      if (!/^\d*\.?\d+$|^\d+\.$/.test(raw))
+        throw new CalcError(msg('Numero non valido: {x}'), { x: s.slice(i, j) })
       tokens.push({ kind: 'num', value: Number(raw) })
       i = j
     } else if (/[a-z]/i.test(c)) {
@@ -49,14 +70,14 @@ function tokenize(input: string): Token[] {
       tokens.push({ kind: 'op', value: c })
       i++
     } else {
-      throw new Error(`Carattere non valido: ${c}`)
+      throw new CalcError(msg('Carattere non valido: {x}'), { x: c })
     }
   }
   return tokens
 }
 
 export function evaluate(input: string): CalcResult {
-  if (!input.trim()) return { ok: false, error: 'Scrivi un calcolo.' }
+  if (!input.trim()) return fail(msg('Scrivi un calcolo.'))
   try {
     const tokens = tokenize(input)
     let pos = 0
@@ -81,7 +102,7 @@ export function evaluate(input: string): CalcResult {
       while (isOp('*') || isOp('/')) {
         const op = (tokens[pos++] as Token).value
         const r = unary()
-        if (op === '/' && r === 0) throw new Error('Divisione per zero.')
+        if (op === '/' && r === 0) throw new CalcError(msg('Divisione per zero.'))
         v = op === '*' ? v * r : v / r
       }
       return v
@@ -110,33 +131,33 @@ export function evaluate(input: string): CalcResult {
     // atom := number | pi | fn '(' expr ')' | '(' expr ')'
     const atom = (): number => {
       const t = tokens[pos++]
-      if (!t) throw new Error('Calcolo incompleto.')
+      if (!t) throw new CalcError(msg('Calcolo incompleto.'))
       if (t.kind === 'num') return t.value
       if (t.kind === 'id') {
         if (t.value === 'pi') return Math.PI
         const fn = functions[t.value]
-        if (!fn) throw new Error(`Funzione sconosciuta: ${t.value}`)
-        if (!isOp('(')) throw new Error(`Dopo ${t.value} serve una parentesi.`)
+        if (!fn) throw new CalcError(msg('Funzione sconosciuta: {x}'), { x: t.value })
+        if (!isOp('(')) throw new CalcError(msg('Dopo {x} serve una parentesi.'), { x: t.value })
         pos++
         const v = expr()
-        if (!isOp(')')) throw new Error('Manca una parentesi chiusa.')
+        if (!isOp(')')) throw new CalcError(msg('Manca una parentesi chiusa.'))
         pos++
         return fn(v)
       }
       if (t.value === '(') {
         const v = expr()
-        if (!isOp(')')) throw new Error('Manca una parentesi chiusa.')
+        if (!isOp(')')) throw new CalcError(msg('Manca una parentesi chiusa.'))
         pos++
         return v
       }
-      throw new Error(`Simbolo inatteso: ${t.value}`)
+      throw new CalcError(msg('Simbolo inatteso: {x}'), { x: t.value })
     }
 
     const value = expr()
-    if (pos < tokens.length) throw new Error('Calcolo non valido.')
-    if (!Number.isFinite(value)) return { ok: false, error: 'Risultato non definito.' }
+    if (pos < tokens.length) throw new CalcError(msg('Calcolo non valido.'))
+    if (!Number.isFinite(value)) return fail(msg('Risultato non definito.'))
     return { ok: true, value }
   } catch (e) {
-    return { ok: false, error: e instanceof Error ? e.message : 'Calcolo non valido.' }
+    return e instanceof CalcError ? fail(e.template, e.vars) : fail(msg('Calcolo non valido.'))
   }
 }

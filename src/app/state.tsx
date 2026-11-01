@@ -8,8 +8,9 @@ import {
   useRef,
   useState,
 } from 'react'
+import { type ExamContext, pplExam } from '../core/ai/exam'
 import type { UserConcept } from '../core/ai/questions'
-import { buildCourse } from '../core/content/course'
+import { buildCourse, isAviation } from '../core/content/course'
 import { pplSample } from '../core/content/ppl-sample'
 import type { Course } from '../core/content/types'
 import type { PlanItem } from '../core/plan'
@@ -45,6 +46,7 @@ import {
   saveProgress,
   saveUserConcepts,
 } from './data/db'
+import { loadLanguage, t } from './i18n'
 
 interface Store {
   course: Course
@@ -71,6 +73,7 @@ interface Store {
   addConcepts: (c: UserConcept[]) => void
   removeConcept: (id: string) => void
   logAttempt: (a: Attempt) => void
+  exam: ExamContext
 }
 
 const StoreContext = createContext<Store | null>(null)
@@ -106,6 +109,8 @@ async function loadState(): Promise<Loaded> {
       loadBooks(),
       loadUserConcepts(),
     ])
+  // The interface language comes from the profile and is ready before anything renders.
+  await loadLanguage(prefs.ui.language)
   return { prefs, progress, activeSession, srs, plan, pomodoro, focusLog, books, userConcepts }
 }
 
@@ -198,7 +203,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const course = useMemo(
     () =>
       loaded
-        ? buildCourse(pplSample, loaded.userConcepts, loaded.prefs.study.includeSample)
+        ? buildCourse(
+            pplSample,
+            loaded.userConcepts,
+            loaded.prefs.study.includeSample,
+            loaded.prefs.course,
+          )
         : pplSample,
     [loaded],
   )
@@ -233,7 +243,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       const { state, finished } = tick(l.pomodoro, Date.now(), l.prefs.config.pomodoro)
       if (!finished) return
       setPomodoro(state)
-      notify(`${phaseLabel[finished]} finita`, `Ora: ${phaseLabel[state.phase].toLowerCase()}.`)
+      notify(
+        t('{phase} finita', { phase: t(phaseLabel[finished]) }),
+        t('Ora: {phase}.', { phase: t(phaseLabel[state.phase]).toLowerCase() }),
+      )
       if (finished === 'focus') {
         const entry: FocusEntry = {
           id: crypto.randomUUID(),
@@ -247,10 +260,23 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     return () => clearInterval(id)
   }, [setPomodoro])
 
+  const exam = useMemo<ExamContext>(
+    () =>
+      loaded
+        ? {
+            name: loaded.prefs.course.examName,
+            aviation: isAviation(loaded.prefs.course),
+            language: loaded.prefs.ui.language,
+          }
+        : pplExam,
+    [loaded],
+  )
+
   const value = useMemo<Store | null>(
     () =>
       loaded && {
         course,
+        exam,
         ...loaded,
         updatePrefs,
         recordAnswer,
@@ -270,6 +296,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     [
       loaded,
       course,
+      exam,
       putBook,
       removeBook,
       addConcepts,
@@ -290,7 +317,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   if (error) {
     return (
       <main className="mx-auto max-w-xl px-6 py-24">
-        <p role="alert">Non riesco ad aprire i dati locali: {error}</p>
+        <p role="alert">
+          {t('Non riesco ad aprire i dati locali:')} {error}
+        </p>
       </main>
     )
   }

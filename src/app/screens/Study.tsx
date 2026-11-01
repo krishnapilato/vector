@@ -3,6 +3,7 @@ import { buildExplainPrompt, type ExplainInput } from '../../core/ai/prompt'
 import { minReadSeconds } from '../../core/content/question'
 import { distractionLabel } from '../../core/focus/focus'
 import { type Confidence, type Graded, grade, verdictLabel } from '../../core/grading'
+import { msg } from '../../core/i18n'
 import { remainingFraction, timeLimitFor } from '../../core/question-timer'
 import { createRng, randomSeed } from '../../core/random'
 import {
@@ -17,6 +18,7 @@ import {
 } from '../../core/session'
 import { AiError, generate } from '../ai/gemini'
 import { FocusLine, type FocusView, useFocus } from '../focus/useFocus'
+import { t, tn } from '../i18n'
 import { hrefFor, navigate } from '../router'
 import { useStore } from '../state'
 import { LinkButton, PrimaryButton, QuietButton, QuietLink } from '../ui'
@@ -26,9 +28,9 @@ const ToolsPanel = lazy(() => import('./ToolsPanel').then((m) => ({ default: m.T
 type Phase = 'think' | 'answer' | 'confidence' | 'why' | 'feedback'
 
 const confidenceOptions: { value: Confidence; label: string }[] = [
-  { value: 'sure', label: 'Sicuro' },
-  { value: 'unsure', label: 'Incerto' },
-  { value: 'guess', label: 'A caso' },
+  { value: 'sure', label: msg('Sicuro') },
+  { value: 'unsure', label: msg('Incerto') },
+  { value: 'guess', label: msg('A caso') },
 ]
 
 function exitFullscreen() {
@@ -80,12 +82,12 @@ export function Study({
   if (!session) {
     return (
       <Centered>
-        <p className="text-lg">Niente da ripassare adesso.</p>
+        <p className="text-lg">{t('Niente da ripassare adesso.')}</p>
         <div className="flex flex-wrap items-center gap-6">
           <LinkButton href={hrefFor({ name: 'study', subjectId, early: true })}>
-            Allenati comunque
+            {t('Allenati comunque')}
           </LinkButton>
-          <QuietLink href="#/">Torna all'inizio</QuietLink>
+          <QuietLink href="#/">{t("Torna all'inizio")}</QuietLink>
         </div>
       </Centered>
     )
@@ -110,13 +112,15 @@ function SessionEnd({ session }: { session: Session }) {
   useEffect(exitFullscreen, [])
   return (
     <Centered>
-      <h1 className="text-3xl font-medium tracking-tight">Sessione finita.</h1>
+      <h1 className="text-3xl font-medium tracking-tight">{t('Sessione finita.')}</h1>
       <p className="text-lg">
-        {s.known} su {s.total} {s.total === 1 ? 'concetto saputo' : 'concetti saputi'}.
+        {tn(s.total, '{known} su {n} concetto saputo.', '{known} su {n} concetti saputi.', {
+          known: s.known,
+        })}
       </p>
       {s.toReview.length > 0 && (
         <div className="flex flex-col gap-2">
-          <p className="text-sm text-[var(--fg-quiet)]">Da rivedere nelle materie:</p>
+          <p className="text-sm text-[var(--fg-quiet)]">{t('Da rivedere nelle materie:')}</p>
           <ul className="flex list-disc flex-col gap-1 pl-5">
             {s.toReview.map((t) => (
               <li key={t}>{t}</li>
@@ -126,11 +130,11 @@ function SessionEnd({ session }: { session: Session }) {
       )}
       {s.interruptions > 0 && (
         <p className="text-sm text-[var(--fg-quiet)]">
-          Sei uscito dall'app {s.interruptions} {s.interruptions === 1 ? 'volta' : 'volte'}.
+          {tn(s.interruptions, 'Sei uscito dall’app {n} volta.', 'Sei uscito dall’app {n} volte.')}
         </p>
       )}
       <div>
-        <LinkButton href="#/">Fine</LinkButton>
+        <LinkButton href="#/">{t('Fine')}</LinkButton>
       </div>
     </Centered>
   )
@@ -158,7 +162,7 @@ function Question({ session, setSession, rngSeed, focus }: QuestionProps) {
   const [graded, setGraded] = useState<Graded | null>(null)
   const [reported, setReported] = useState(false)
   const [paused, setPaused] = useState(false)
-  const [pauseReason, setPauseReason] = useState('sei uscito dall’app')
+  const [pauseReason, setPauseReason] = useState(t('sei uscito dall’app'))
   // Tools never pause the timer: they are part of studying.
   const [toolsOpen, setToolsOpen] = useState(false)
 
@@ -196,7 +200,7 @@ function Question({ session, setSession, rngSeed, focus }: QuestionProps) {
 
   useEffect(() => {
     const onVisibility = () => {
-      if (document.hidden) pause('sei uscito dall’app')
+      if (document.hidden) pause(t('sei uscito dall’app'))
     }
     document.addEventListener('visibilitychange', onVisibility)
     return () => document.removeEventListener('visibilitychange', onVisibility)
@@ -205,7 +209,7 @@ function Question({ session, setSession, rngSeed, focus }: QuestionProps) {
   // Camera: away from the desk, phone in hand or eyes closed for too long.
   useEffect(() => {
     if (focus.shouldPause && focus.distraction && focus.distraction !== 'left')
-      pause(distractionLabel[focus.distraction].toLowerCase())
+      pause(t(distractionLabel[focus.distraction]).toLowerCase())
   }, [focus.shouldPause, focus.distraction, pause])
 
   const resume = useCallback(() => {
@@ -344,10 +348,10 @@ function Question({ session, setSession, rngSeed, focus }: QuestionProps) {
           <FocusLine view={focus} />
         </div>
         <QuietButton onClick={() => setToolsOpen((o) => !o)} aria-expanded={toolsOpen}>
-          Strumenti
+          {t('Strumenti')}
         </QuietButton>
-        <QuietButton onClick={exit} aria-label="Esci e salva la sessione">
-          Esci
+        <QuietButton onClick={exit} aria-label={t('Esci e salva la sessione')}>
+          {t('Esci')}
         </QuietButton>
       </header>
       {toolsOpen && (
@@ -372,15 +376,19 @@ function Question({ session, setSession, rngSeed, focus }: QuestionProps) {
 
         {paused ? (
           <div className="flex flex-col items-start gap-4" role="alert">
-            <p className="text-lg">In pausa: {pauseReason}.</p>
-            <PrimaryButton onClick={resume}>Continua</PrimaryButton>
+            <p className="text-lg">
+              {t('In pausa:')} {pauseReason}.
+            </p>
+            <PrimaryButton onClick={resume}>{t('Continua')}</PrimaryButton>
           </div>
         ) : phase === 'think' ? (
           <div className="flex flex-col items-start gap-4">
             <p className="text-[var(--fg-quiet)]">
-              Pensa alla risposta prima di vedere le opzioni.
+              {t('Pensa alla risposta prima di vedere le opzioni.')}
             </p>
-            <PrimaryButton onClick={() => setPhase('answer')}>Mostra le opzioni</PrimaryButton>
+            <PrimaryButton onClick={() => setPhase('answer')}>
+              {t('Mostra le opzioni')}
+            </PrimaryButton>
           </div>
         ) : phase === 'answer' ? (
           <div className="flex flex-col gap-3">
@@ -390,24 +398,24 @@ function Question({ session, setSession, rngSeed, focus }: QuestionProps) {
               </ChoiceButton>
             ))}
             <QuietButton className="self-start" onClick={dontKnow}>
-              Non lo so (0)
+              {t('Non lo so (0)')}
             </QuietButton>
           </div>
         ) : phase === 'confidence' ? (
           <div className="flex flex-col gap-3">
             <p className="text-[var(--fg-quiet)]">
-              Hai scelto: <span className="text-[var(--fg)]">{optionText(chosen)}</span>. Quanto ne
-              sei sicuro?
+              {t('Hai scelto:')} <span className="text-[var(--fg)]">{optionText(chosen)}</span>
+              {t('. Quanto ne sei sicuro?')}
             </p>
             {confidenceOptions.map((c, i) => (
               <ChoiceButton key={c.value} index={i + 1} onClick={() => pickConfidence(c.value)}>
-                {c.label}
+                {t(c.label)}
               </ChoiceButton>
             ))}
           </div>
         ) : phase === 'why' && q.why ? (
           <div className="flex flex-col gap-3">
-            <p className="text-[var(--fg-quiet)]">Perché?</p>
+            <p className="text-[var(--fg-quiet)]">{t('Perché?')}</p>
             {q.why.options.map((o, i) => (
               <ChoiceButton key={o.id} index={i + 1} onClick={() => pickWhy(o.id)}>
                 {o.text}
@@ -417,26 +425,28 @@ function Question({ session, setSession, rngSeed, focus }: QuestionProps) {
         ) : (
           graded && (
             <div className="flex flex-col gap-6" aria-live="polite">
-              <p className="text-xl font-medium">{verdictLabel[graded.verdict]}</p>
+              <p className="text-xl font-medium">{t(verdictLabel[graded.verdict])}</p>
               <dl className="flex flex-col gap-2">
                 {chosen && chosen !== q.correctOptionId && (
                   <div>
-                    <dt className="text-xs text-[var(--fg-quiet)]">La tua risposta</dt>
+                    <dt className="text-xs text-[var(--fg-quiet)]">{t('La tua risposta')}</dt>
                     <dd className="line-through">{optionText(chosen)}</dd>
                   </div>
                 )}
                 <div>
-                  <dt className="text-xs text-[var(--fg-quiet)]">Risposta corretta</dt>
+                  <dt className="text-xs text-[var(--fg-quiet)]">{t('Risposta corretta')}</dt>
                   <dd className="font-medium">{optionText(q.correctOptionId)}</dd>
                 </div>
               </dl>
               <p className="leading-relaxed">{q.explanation}</p>
               {!graded.counts && concept && (
                 <blockquote className="border-l border-[var(--fg)] pl-4">
-                  <p className="text-xs text-[var(--fg-quiet)]">Dal testo · {concept.title}</p>
+                  <p className="text-xs text-[var(--fg-quiet)]">
+                    {t('Dal testo ·')} {concept.title}
+                  </p>
                   <p className="mt-2 leading-relaxed">{concept.source}</p>
                   <p className="mt-2 text-xs text-[var(--fg-quiet)]">
-                    Lo rivedrai tra qualche domanda, con parole diverse.
+                    {t('Lo rivedrai tra qualche domanda, con parole diverse.')}
                   </p>
                 </blockquote>
               )}
@@ -455,12 +465,12 @@ function Question({ session, setSession, rngSeed, focus }: QuestionProps) {
               )}
               <div className="flex flex-wrap items-center justify-between gap-4">
                 <PrimaryButton onClick={next} autoFocus>
-                  Avanti
+                  {t('Avanti')}
                 </PrimaryButton>
                 {!q.generated &&
                   (reported ? (
                     <span className="text-sm text-[var(--fg-quiet)]">
-                      Segnalata: non te la riproporrò.
+                      {t('Segnalata: non te la riproporrò.')}
                     </span>
                   ) : (
                     <QuietButton
@@ -469,7 +479,7 @@ function Question({ session, setSession, rngSeed, focus }: QuestionProps) {
                         setReported(true)
                       }}
                     >
-                      Questa domanda è sbagliata
+                      {t('Questa domanda è sbagliata')}
                     </QuietButton>
                   ))}
               </div>
@@ -483,7 +493,7 @@ function Question({ session, setSession, rngSeed, focus }: QuestionProps) {
 
 /** Optional: a different explanation from Gemini, only on request and only with the learner's key. */
 function ExplainAgain({ input }: { input: ExplainInput }) {
-  const { prefs, course } = useStore()
+  const { prefs, course, exam } = useStore()
   const [state, setState] = useState<
     | { kind: 'idle' }
     | { kind: 'loading' }
@@ -509,12 +519,16 @@ function ExplainAgain({ input }: { input: ExplainInput }) {
         ])
         hints = profileHints(buildProfile(attempts, focus, lookups, course))
       }
-      const text = await generate(apiKey, prefs.ai.model, buildExplainPrompt({ ...input, hints }))
+      const text = await generate(
+        apiKey,
+        prefs.ai.model,
+        buildExplainPrompt({ ...input, hints, exam }),
+      )
       setState({ kind: 'done', text })
     } catch (e) {
       setState({
         kind: 'error',
-        text: e instanceof AiError ? e.message : 'Qualcosa non ha funzionato.',
+        text: e instanceof AiError ? e.message : t('Qualcosa non ha funzionato.'),
       })
     }
   }
@@ -522,17 +536,17 @@ function ExplainAgain({ input }: { input: ExplainInput }) {
   if (state.kind === 'idle') {
     return (
       <QuietButton className="self-start" onClick={ask}>
-        Spiegamelo in un altro modo
+        {t('Spiegamelo in un altro modo')}
       </QuietButton>
     )
   }
   return (
     <div className="flex flex-col gap-2 border-l border-[var(--rule)] pl-4" aria-live="polite">
       <p className="text-xs text-[var(--fg-quiet)]">
-        Spiegazione generata dall'AI · verificala con il testo
+        {t("Spiegazione generata dall'AI · verificala con il testo")}
       </p>
       {state.kind === 'loading' && (
-        <p className="text-[var(--fg-quiet)]">Sto preparando una spiegazione…</p>
+        <p className="text-[var(--fg-quiet)]">{t('Sto preparando una spiegazione…')}</p>
       )}
       {state.kind === 'done' && <p className="whitespace-pre-line leading-relaxed">{state.text}</p>}
       {state.kind === 'error' && <p role="alert">{state.text}</p>}

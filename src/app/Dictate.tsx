@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { t } from './i18n'
 import { speechSupported, useDictation } from './speech'
 import { useStore } from './state'
 import { QuietButton } from './ui'
@@ -14,8 +15,9 @@ export function Dictate({ lang, onText }: { lang: string; onText: (t: string) =>
     return (
       <div className="flex flex-col gap-2 border-l border-[var(--rule)] pl-4 text-sm">
         <p>
-          La dettatura usa il riconoscimento vocale del browser: in Chrome ed Edge l’audio viene
-          trascritto dai server di Google o Microsoft. Vector non lo registra.
+          {t(
+            'La dettatura usa il riconoscimento vocale del browser: in Chrome ed Edge l’audio viene trascritto dai server di Google o Microsoft. Vector non lo registra.',
+          )}
         </p>
         <div className="flex gap-2">
           <QuietButton
@@ -26,9 +28,9 @@ export function Dictate({ lang, onText }: { lang: string; onText: (t: string) =>
               dictation.start()
             }}
           >
-            Ho capito, detta
+            {t('Ho capito, detta')}
           </QuietButton>
-          <QuietButton onClick={() => setAsking(false)}>No, scrivo</QuietButton>
+          <QuietButton onClick={() => setAsking(false)}>{t('No, scrivo')}</QuietButton>
         </div>
       </div>
     )
@@ -38,13 +40,13 @@ export function Dictate({ lang, onText }: { lang: string; onText: (t: string) =>
     <div className="flex flex-wrap items-center gap-2 text-sm">
       {dictation.listening ? (
         <QuietButton className="text-[var(--fg)] underline" onClick={dictation.stop}>
-          Smetti di dettare
+          {t('Smetti di dettare')}
         </QuietButton>
       ) : (
         <QuietButton
           onClick={() => (prefs.study.voiceConsent ? dictation.start() : setAsking(true))}
         >
-          Rispondi a voce
+          {t('Rispondi a voce')}
         </QuietButton>
       )}
       {dictation.interim && <span className="text-[var(--fg-quiet)]">{dictation.interim}…</span>}

@@ -1,4 +1,5 @@
 import { useEffect, useId, useState } from 'react'
+import { msg } from '../../core/i18n'
 import {
   checkReadback,
   generateScenario,
@@ -8,40 +9,41 @@ import {
 } from '../../core/radio/phraseology'
 import { createRng, randomSeed } from '../../core/random'
 import { Dictate } from '../Dictate'
+import { t } from '../i18n'
 import { Page, PrimaryButton, QuietButton } from '../ui'
 import { speak, stopSpeaking, ttsSupported } from '../voice'
 
 const rng = createRng(randomSeed())
 
 const kindLabel: Record<(typeof scenarioKinds)[number], string> = {
-  firstCall: 'Prima chiamata',
-  taxi: 'Rullaggio',
-  holdShort: 'Attesa',
-  takeoff: 'Decollo',
-  frequency: 'Cambio frequenza',
-  squawk: 'Transponder',
-  circuit: 'Circuito',
-  opposite: 'Cambio pista',
-  landing: 'Atterraggio',
+  firstCall: msg('Prima chiamata'),
+  taxi: msg('Rullaggio'),
+  holdShort: msg('Attesa'),
+  takeoff: msg('Decollo'),
+  frequency: msg('Cambio frequenza'),
+  squawk: msg('Transponder'),
+  circuit: msg('Circuito'),
+  opposite: msg('Cambio pista'),
+  landing: msg('Atterraggio'),
 }
 
 /** Radio in English: listen to ATC, answer aloud or in writing, check the readback. */
 export function Radio() {
   const [kind, setKind] = useState<string | null>(null)
-  const [scenario, setScenario] = useState<Scenario>(() => generateScenario(rng))
+  const [scenario, setScenario] = useState<Scenario>(() => generateScenario(rng, undefined, t))
   const [score, setScore] = useState({ done: 0, ok: 0 })
-  const next = (k: string | null = kind) => setScenario(generateScenario(rng, k ?? undefined))
+  const next = (k: string | null = kind) => setScenario(generateScenario(rng, k ?? undefined, t))
 
   useEffect(() => stopSpeaking, [])
 
   return (
-    <Page title="Radio">
+    <Page title={t('Radio')}>
       <p className="text-sm text-[var(--fg-quiet)]">
-        Fraseologia VFR in inglese (ICAO). Ogni esercizio ha nominativo, pista, QNH e codici nuovi:
-        si allena l’ascolto e la collazione, non la memoria. La voce ATC è sintetizzata dal tuo
-        sistema; la risposta a voce usa il riconoscimento del browser.
+        {t(
+          'Fraseologia VFR in inglese (ICAO). Ogni esercizio ha nominativo, pista, QNH e codici nuovi: si allena l’ascolto e la collazione, non la memoria. La voce ATC è sintetizzata dal tuo sistema; la risposta a voce usa il riconoscimento del browser.',
+        )}
       </p>
-      <nav aria-label="Tipo di esercizio">
+      <nav aria-label={t('Tipo di esercizio')}>
         <ul className="flex flex-wrap gap-1">
           {[null, ...scenarioKinds].map((k) => (
             <li key={k ?? 'all'}>
@@ -56,7 +58,7 @@ export function Radio() {
                   kind === k ? 'border border-[var(--fg)]' : 'text-[var(--fg-quiet)]'
                 }`}
               >
-                {k ? kindLabel[k] : 'Tutti'}
+                {k ? t(kindLabel[k]) : t('Tutti')}
               </button>
             </li>
           ))}
@@ -70,7 +72,7 @@ export function Radio() {
       />
       {score.done > 0 && (
         <p className="text-sm text-[var(--fg-quiet)]">
-          Collazioni complete in questa sessione: {score.ok} su {score.done}
+          {t('Collazioni complete in questa sessione:')} {score.ok} {t('su')} {score.done}
         </p>
       )}
     </Page>
@@ -114,11 +116,11 @@ function Exercise({
           <div className="flex flex-wrap items-center gap-2">
             {tts && (
               <PrimaryButton onClick={play} disabled={playing}>
-                {playing ? 'ATC parla…' : 'Ascolta ATC'}
+                {playing ? t('ATC parla…') : t('Ascolta ATC')}
               </PrimaryButton>
             )}
             <QuietButton onClick={() => setShowText((s) => !s)} aria-expanded={showText}>
-              {showText ? 'Nascondi il testo' : 'Mostra il testo'}
+              {showText ? t('Nascondi il testo') : t('Mostra il testo')}
             </QuietButton>
           </div>
           {(showText || !tts) && (
@@ -155,11 +157,11 @@ function Exercise({
             onDone(r.ok)
           }}
         >
-          Controlla
+          {t('Controlla')}
         </PrimaryButton>
       ) : (
         <div className="flex flex-col gap-3" aria-live="polite">
-          <p className="text-lg">{result.ok ? 'Collazione completa.' : 'Manca qualcosa.'}</p>
+          <p className="text-lg">{result.ok ? t('Collazione completa.') : t('Manca qualcosa.')}</p>
           <ul className="flex flex-col gap-1">
             {result.items.map((i) => (
               <li key={i.label} className="flex gap-3">
@@ -167,8 +169,8 @@ function Exercise({
                   {i.ok ? '✓' : '✗'}
                 </span>
                 <span>
-                  {i.label}
-                  <span className="sr-only">{i.ok ? ': presente' : ': mancante'}</span>
+                  {t(i.label)}
+                  <span className="sr-only">{i.ok ? t(': presente') : t(': mancante')}</span>
                 </span>
               </li>
             ))}
@@ -176,21 +178,21 @@ function Exercise({
           <div className="flex flex-col gap-1 text-sm">
             {ex.atcSpeech && (
               <p>
-                <span className="text-[var(--fg-quiet)]">ATC: </span>
+                <span className="text-[var(--fg-quiet)]">{t('ATC:')} </span>
                 <span lang="en" className="font-mono">
                   {ex.atc}
                 </span>
               </p>
             )}
             <p>
-              <span className="text-[var(--fg-quiet)]">Esempio di risposta: </span>
+              <span className="text-[var(--fg-quiet)]">{t('Esempio di risposta:')} </span>
               <span lang="en" className="font-mono">
                 {ex.model}
               </span>
             </p>
           </div>
           <PrimaryButton className="self-start" onClick={next} autoFocus>
-            Prossimo
+            {t('Prossimo')}
           </PrimaryButton>
         </div>
       )}

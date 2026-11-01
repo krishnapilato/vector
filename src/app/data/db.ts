@@ -2,6 +2,7 @@ import Dexie, { type EntityTable } from 'dexie'
 import { type Config, configSchema, defaultConfig } from '../../config/config'
 import type { UserConcept } from '../../core/ai/questions'
 import type { CardState } from '../../core/cards'
+import { type CourseSettings, pplCourseSettings } from '../../core/content/course'
 import { defaultFocusSettings, type FocusSettings } from '../../core/focus/focus'
 import type { Stroke } from '../../core/ink'
 import type { PlanItem } from '../../core/plan'
@@ -10,6 +11,7 @@ import type { ConceptProgress } from '../../core/progress'
 import type { Book, BookPage, Highlight } from '../../core/reading/book'
 import { defaultSettings, type Session, type StudySettings } from '../../core/session'
 import { DEFAULT_MODEL } from '../ai/model'
+import { activeDatabase } from './profiles'
 
 /** Everything lives in this browser's IndexedDB. Only the optional AI explanations reach Google, with the learner's own key. */
 
@@ -32,6 +34,8 @@ interface SettingsRow {
   plan?: PlanSettings
   focus?: FocusSettings
   sync?: SyncSettings
+  course?: CourseSettings
+  ui?: UiSettings
 }
 
 /** One completed focus period: the honest "minutes studied". */
@@ -122,8 +126,8 @@ class VectorDb extends Dexie {
   drawings!: EntityTable<Drawing, 'id'>
   cards!: EntityTable<CardState, 'term'>
 
-  constructor() {
-    super('vector')
+  constructor(name = 'vector') {
+    super(name)
     this.version(1).stores({
       progress: 'conceptId',
       settings: 'id',
@@ -149,7 +153,10 @@ class VectorDb extends Dexie {
   }
 }
 
-export const db = new VectorDb()
+/** Each profile has its own database; the first one keeps the original name. */
+export const db = new VectorDb(activeDatabase())
+
+export { VectorDb }
 
 export interface Preferences {
   config: Config
@@ -158,6 +165,12 @@ export interface Preferences {
   plan: PlanSettings
   focus: FocusSettings
   sync: SyncSettings
+  course: CourseSettings
+  ui: UiSettings
+}
+
+export interface UiSettings {
+  language: 'it' | 'en'
 }
 
 /** Optional encrypted sync through the learner's own server. */
@@ -188,6 +201,8 @@ export async function loadPreferences(): Promise<Preferences> {
     plan: { examDate: null, ...row?.plan },
     focus: { ...defaultFocusSettings, ...row?.focus },
     sync: { ...defaultSync, ...row?.sync },
+    course: { ...pplCourseSettings, ...row?.course },
+    ui: { language: 'it', ...row?.ui },
   }
 }
 
@@ -200,6 +215,8 @@ export async function savePreferences(p: Preferences): Promise<void> {
     plan: p.plan,
     focus: p.focus,
     sync: p.sync,
+    course: p.course,
+    ui: p.ui,
   })
 }
 

@@ -1,11 +1,12 @@
+import { msg } from '../i18n'
 /** Imported study material: books, chapters and manual highlights. */
 
 export type Reliability = 'official' | 'textbook' | 'notes'
 
 export const reliabilityLabel: Record<Reliability, string> = {
-  official: 'Fonte ufficiale',
-  textbook: 'Libro di testo',
-  notes: 'Appunti',
+  official: msg('Fonte ufficiale'),
+  textbook: msg('Libro di testo'),
+  notes: msg('Appunti'),
 }
 
 export interface Chapter {

@@ -16,6 +16,7 @@ import { createRng, randomSeed } from '../../core/random'
 import { AiError, generate } from '../ai/gemini'
 import { Dictate } from '../Dictate'
 import { FocusLine, useFocus } from '../focus/useFocus'
+import { t, tn } from '../i18n'
 import { hrefFor, navigate } from '../router'
 import { useStore } from '../state'
 import { PrimaryButton, QuietButton, QuietLink } from '../ui'
@@ -50,8 +51,8 @@ export function OpenQuestion({ subjectId }: { subjectId: string | null }) {
   if (!concept) {
     return (
       <main className="mx-auto flex min-h-dvh max-w-2xl flex-col justify-center gap-6 px-6">
-        <p className="text-lg">Nessun concetto da spiegare in questa materia.</p>
-        <QuietLink href="#/">Torna all’inizio</QuietLink>
+        <p className="text-lg">{t('Nessun concetto da spiegare in questa materia.')}</p>
+        <QuietLink href="#/">{t('Torna all’inizio')}</QuietLink>
       </main>
     )
   }
@@ -62,7 +63,7 @@ export function OpenQuestion({ subjectId }: { subjectId: string | null }) {
         <div className="mr-auto">
           <FocusLine view={focus} />
         </div>
-        <QuietButton onClick={exit}>Esci</QuietButton>
+        <QuietButton onClick={exit}>{t('Esci')}</QuietButton>
       </header>
       <Explain
         key={`${concept.id}-${round}`}
@@ -96,7 +97,7 @@ function Explain({
   const store = useStore()
   const { prefs } = store
   const points = keyPointsFor(concept)
-  const [prompt] = useState(() => openPrompt(concept.title, rng))
+  const [prompt] = useState(() => openPrompt(concept.title, rng, t))
   const [answers, setAnswers] = useState<string[]>([''])
   const [rounds, setRounds] = useState<boolean[][]>([])
   const [phase, setPhase] = useState<Phase>({ step: 'answer' })
@@ -151,6 +152,7 @@ function Explain({
         apiKey,
         prefs.ai.model,
         buildOpenPrompt({
+          exam: store.exam,
           title: concept.title,
           source: concept.source,
           keyPoints: points,
@@ -169,7 +171,7 @@ function Explain({
       }
     } catch (e) {
       setError(
-        e instanceof AiError || e instanceof Error ? e.message : 'Qualcosa non ha funzionato.',
+        e instanceof AiError || e instanceof Error ? e.message : t('Qualcosa non ha funzionato.'),
       )
       setPhase({ step: 'answer' })
     }
@@ -181,14 +183,17 @@ function Explain({
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-8 px-6 pb-10 pt-6">
       <div className="flex flex-col gap-3">
         <p className="text-xs text-[var(--fg-quiet)]">
-          {store.course.subjects.find((s) => s.id === concept.subjectId)?.name} · domanda aperta
+          {t(store.course.subjects.find((s) => s.id === concept.subjectId)?.name ?? '')}{' '}
+          {t('· domanda aperta')}
         </p>
         <h1 className="text-2xl leading-snug">{prompt}</h1>
         {phase.step === 'answer' && (
           <p className="text-xs tabular-nums text-[var(--fg-quiet)]">
             {elapsed < limit
-              ? `Prenditi il tempo che serve · consigliati ${Math.round(limit / 60)} min`
-              : 'Tempo consigliato superato: chiudi il ragionamento.'}
+              ? t('Prenditi il tempo che serve · consigliati {min} min', {
+                  min: Math.round(limit / 60),
+                })
+              : t('Tempo consigliato superato: chiudi il ragionamento.')}
           </p>
         )}
       </div>
@@ -202,12 +207,18 @@ function Explain({
       {phase.step === 'feedback' && (
         <section className="flex flex-col gap-3" aria-live="polite">
           <p>
-            Hai centrato {covered.filter(Boolean).length}{' '}
-            {covered.filter(Boolean).length === 1 ? 'punto' : 'punti'} su {points.length}.
+            {tn(
+              covered.filter(Boolean).length,
+              'Hai centrato {n} punto su {total}.',
+              'Hai centrato {n} punti su {total}.',
+              {
+                total: points.length,
+              },
+            )}
           </p>
           {phase.feedback.mistakes.length > 0 && (
             <div className="flex flex-col gap-1">
-              <p className="text-sm text-[var(--fg-quiet)]">Da correggere:</p>
+              <p className="text-sm text-[var(--fg-quiet)]">{t('Da correggere:')}</p>
               <ul className="flex list-disc flex-col gap-1 pl-5">
                 {phase.feedback.mistakes.map((m) => (
                   <li key={m}>{m}</li>
@@ -224,11 +235,11 @@ function Explain({
                   setPhase({ step: 'answer' })
                 }}
               >
-                Completa la risposta
+                {t('Completa la risposta')}
               </PrimaryButton>
             )}
             <QuietButton onClick={() => finish(gradeOpen(rounds, phase.feedback.mistakes.length))}>
-              Mostra i punti chiave
+              {t('Mostra i punti chiave')}
             </QuietButton>
           </div>
         </section>
@@ -237,7 +248,7 @@ function Explain({
       {(phase.step === 'answer' || phase.step === 'checking') && (
         <section className="flex flex-col gap-3">
           <label htmlFor={id} className="sr-only">
-            La tua spiegazione
+            {t('La tua spiegazione')}
           </label>
           <textarea
             id={id}
@@ -246,24 +257,27 @@ function Explain({
             onChange={(e) => setCurrent(e.target.value)}
             placeholder={
               answers.length > 1
-                ? 'Aggiungi quello che manca…'
-                : 'Scrivi o detta la tua spiegazione…'
+                ? t('Aggiungi quello che manca…')
+                : t('Scrivi o detta la tua spiegazione…')
             }
             className="w-full rounded-lg border border-[var(--rule)] bg-[var(--bg)] p-4 text-lg leading-relaxed text-[var(--fg)]"
           />
-          <Dictate lang="it-IT" onText={(t) => setCurrent(current ? `${current} ${t}` : t)} />
+          <Dictate
+            lang={store.exam.language === 'en' ? 'en-GB' : 'it-IT'}
+            onText={(x) => setCurrent(current ? `${current} ${x}` : x)}
+          />
           <div className="flex flex-wrap items-center gap-2">
             <PrimaryButton
               onClick={check}
               disabled={current.trim().length < 10 || phase.step === 'checking'}
             >
               {phase.step === 'checking'
-                ? 'Controllo…'
+                ? t('Controllo…')
                 : prefs.ai.apiKey
-                  ? 'Correggi'
-                  : 'Confronta con i punti chiave'}
+                  ? t('Correggi')
+                  : t('Confronta con i punti chiave')}
             </PrimaryButton>
-            <QuietButton onClick={() => finish(gradeOpen([], 0))}>Non lo so</QuietButton>
+            <QuietButton onClick={() => finish(gradeOpen([], 0))}>{t('Non lo so')}</QuietButton>
           </div>
           {error && <p role="alert">{error}</p>}
         </section>
@@ -271,7 +285,7 @@ function Explain({
 
       {phase.step === 'self' && (
         <section className="flex flex-col gap-3">
-          <p>Segna con onestà i punti che hai espresso davvero:</p>
+          <p>{t('Segna con onestà i punti che hai espresso davvero:')}</p>
           {points.map((p, i) => (
             <label key={p} className="flex min-h-11 items-start gap-3">
               <input
@@ -286,16 +300,16 @@ function Explain({
             </label>
           ))}
           <PrimaryButton className="self-start" onClick={() => finish(gradeOpen([selfChecked], 0))}>
-            Fatto
+            {t('Fatto')}
           </PrimaryButton>
         </section>
       )}
 
       {phase.step === 'done' && (
         <section className="flex flex-col gap-4" aria-live="polite">
-          <p className="text-lg">{verdictLabel[phase.graded.verdict]}</p>
+          <p className="text-lg">{t(verdictLabel[phase.graded.verdict])}</p>
           <div className="flex flex-col gap-2">
-            <p className="text-sm text-[var(--fg-quiet)]">Punti chiave</p>
+            <p className="text-sm text-[var(--fg-quiet)]">{t('Punti chiave')}</p>
             <ul className="flex flex-col gap-2">
               {points.map((p, i) => (
                 <li key={p} className="flex gap-3">
@@ -309,17 +323,17 @@ function Explain({
           </div>
           <details className="text-sm">
             <summary className="cursor-pointer text-[var(--fg-quiet)]">
-              Testo di riferimento
+              {t('Testo di riferimento')}
             </summary>
             <p className="mt-2 leading-relaxed">{concept.source}</p>
           </details>
           <div className="flex flex-wrap gap-2">
             <PrimaryButton onClick={next} autoFocus>
-              Un altro concetto
+              {t('Un altro concetto')}
             </PrimaryButton>
-            <QuietButton onClick={exit}>Fine</QuietButton>
+            <QuietButton onClick={exit}>{t('Fine')}</QuietButton>
             <QuietLink href={hrefFor({ name: 'subjects', subjectId: concept.subjectId })}>
-              Rileggi la materia
+              {t('Rileggi la materia')}
             </QuietLink>
           </div>
         </section>

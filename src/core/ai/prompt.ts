@@ -4,6 +4,8 @@
  * never personal data, never anything from the camera or microphone.
  */
 
+import { type ExamContext, languageName, pplExam, tutor } from './exam'
+
 export interface ExplainInput {
   conceptTitle: string
   source: string
@@ -14,15 +16,16 @@ export interface ExplainInput {
   mistake: string
   /** Neutral study-pattern notes from the learner profile, to adapt the style. */
   hints?: readonly string[]
+  exam?: ExamContext
 }
 
 export function buildExplainPrompt(i: ExplainInput): string {
   return [
-    'Sei un istruttore di volo che prepara uno studente all’esame teorico PPL(A) EASA.',
+    tutor(i.exam ?? pplExam),
     'Spiega di nuovo il concetto qui sotto in modo DIVERSO dalla spiegazione del testo: usa un’analogia concreta o un piccolo esempio pratico di volo.',
     'Regole:',
     '- Usa solo le informazioni del testo di riferimento. Se non bastano, dillo invece di inventare.',
-    '- Massimo 120 parole, in italiano, frasi brevi, nessun elenco puntato, nessun titolo.',
+    `- Massimo 120 parole, in ${languageName(i.exam ?? pplExam)}, frasi brevi, nessun elenco puntato, nessun titolo.`,
     '- Chiudi con una domanda di verifica a cui lo studente possa rispondere tra sé.',
     '',
     `Concetto: ${i.conceptTitle}`,
@@ -38,13 +41,19 @@ export function buildExplainPrompt(i: ExplainInput): string {
 }
 
 /** Meaning of a word or phrase in the exact sentence where the learner met it. */
-export function buildContextPrompt(term: string, context: string, language: 'it' | 'en'): string {
+export function buildContextPrompt(
+  term: string,
+  context: string,
+  language: 'it' | 'en',
+  exam: ExamContext = pplExam,
+): string {
+  const foreign = language !== exam.language
   return [
-    'Sei un istruttore di volo. Uno studente PPL(A) sta leggendo un testo' +
-      (language === 'en' ? ' in inglese' : '') +
-      ' e non capisce un termine.',
-    'Spiega in italiano, in massimo 80 parole, cosa significa il termine IN QUESTA FRASE, nel contesto aeronautico.',
-    language === 'en' ? 'Indica anche il termine italiano corrispondente usato all’esame.' : '',
+    `${tutor(exam)} Lo studente sta leggendo un testo${language === 'en' ? ' in inglese' : ' in italiano'} e non capisce un termine.`,
+    `Spiega in ${languageName(exam)}, in massimo 80 parole, cosa significa il termine IN QUESTA FRASE${exam.aviation ? ', nel contesto aeronautico' : ''}.`,
+    foreign
+      ? `Indica anche il termine corrispondente in ${languageName(exam)} usato all’esame.`
+      : '',
     'Non inventare: se il contesto non basta, dillo.',
     '',
     `Termine: ${term}`,

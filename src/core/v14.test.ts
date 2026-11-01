@@ -195,3 +195,46 @@ describe('flashcards', () => {
     )
   })
 })
+
+import { buildCourse, subjectId } from './content/course'
+import { pplSample } from './content/ppl-sample'
+
+describe('course templates', () => {
+  const concept = {
+    id: 'u1',
+    subjectId: 'storia',
+    title: 'T',
+    source: 'S',
+    variants: [],
+    origin: { bookId: 'b', bookTitle: 'B', fromPage: 1, toPage: 1, createdAt: '' },
+  }
+
+  it('builds the PPL course with or without the sample', () => {
+    expect(buildCourse(pplSample, [], true).concepts.length).toBe(pplSample.concepts.length)
+    expect(buildCourse(pplSample, [concept], false).concepts.map((c) => c.id)).toEqual(['u1'])
+  })
+
+  it('builds a custom exam from the learner’s subjects only', () => {
+    const c = buildCourse(pplSample, [concept, { ...concept, id: 'u2', subjectId: 'gone' }], true, {
+      template: 'custom',
+      examName: 'Esame di Stato',
+      subjects: [
+        { id: 'storia', name: 'Storia' },
+        { id: 'arte', name: 'Arte' },
+      ],
+    })
+    expect(c.name).toBe('Esame di Stato')
+    expect(c.subjects.map((s) => s.id)).toEqual(['storia', 'arte'])
+    expect(c.concepts.map((x) => x.subjectId)).toEqual(['storia', 'storia'])
+    expect(
+      buildCourse(pplSample, [], true, { template: 'custom', examName: 'X', subjects: [] })
+        .subjects,
+    ).toEqual([{ id: 'general', name: 'X' }])
+  })
+
+  it('makes subject ids', () => {
+    expect(subjectId('Diritto Pubblico è', new Set())).toBe('diritto-pubblico-e')
+    expect(subjectId('Storia', new Set(['storia', 'storia-2']))).toBe('storia-3')
+    expect(subjectId('!!!', new Set())).toBe('materia')
+  })
+})

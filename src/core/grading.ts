@@ -1,3 +1,4 @@
+import { msg } from './i18n'
 /**
  * Grading turns one answer into a verdict and a spaced-repetition rating.
  * The rules exist to stop memorization: a lucky guess, a right answer for the
@@ -50,11 +51,11 @@ export function grade(a: AnswerInput): Graded {
 }
 
 export const verdictLabel: Record<Verdict, string> = {
-  solid: 'Giusta.',
-  shaky: 'Giusta, ma non eri sicuro.',
-  recognized: 'Giusta, ma troppo veloce: l’hai riconosciuta, non ragionata.',
-  guessed: 'Giusta per caso: non conta come saputa.',
-  'reason-wrong': 'Risposta giusta, motivazione sbagliata: non conta come saputa.',
-  wrong: 'Sbagliata.',
-  unknown: 'Non saputa.',
+  solid: msg('Giusta.'),
+  shaky: msg('Giusta, ma non eri sicuro.'),
+  recognized: msg('Giusta, ma troppo veloce: l’hai riconosciuta, non ragionata.'),
+  guessed: msg('Giusta per caso: non conta come saputa.'),
+  'reason-wrong': msg('Risposta giusta, motivazione sbagliata: non conta come saputa.'),
+  wrong: msg('Sbagliata.'),
+  unknown: msg('Non saputa.'),
 }

@@ -1,7 +1,10 @@
 import { lazy, Suspense, useEffect, useState } from 'react'
+import { msg } from '../core/i18n'
+import { activeDatabase, listProfiles } from './data/profiles'
+import { t } from './i18n'
 import { hrefFor, type Route, useRoute } from './router'
 import { Home } from './screens/Home'
-import { StoreProvider } from './state'
+import { StoreProvider, useStore } from './state'
 
 // Screens beyond the home page load on demand: the startup bundle stays small.
 const Study = lazy(() => import('./screens/Study').then((m) => ({ default: m.Study })))
@@ -19,20 +22,21 @@ const Diary = lazy(() => import('./screens/Diary').then((m) => ({ default: m.Dia
 const ProgramMap = lazy(() =>
   import('./screens/ProgramMap').then((m) => ({ default: m.ProgramMap })),
 )
+const Profiles = lazy(() => import('./screens/Profiles').then((m) => ({ default: m.Profiles })))
 const Radio = lazy(() => import('./screens/Radio').then((m) => ({ default: m.Radio })))
 const PomodoroScreen = lazy(() =>
   import('./screens/PomodoroScreen').then((m) => ({ default: m.PomodoroScreen })),
 )
 
 const nav: { label: string; route: Route }[] = [
-  { label: 'Studia', route: { name: 'home' } },
-  { label: 'Libreria', route: { name: 'library' } },
-  { label: 'Radio', route: { name: 'radio' } },
-  { label: 'Piano', route: { name: 'plan' } },
-  { label: 'Strumenti', route: { name: 'tools', tool: null } },
-  { label: 'Materie', route: { name: 'subjects', subjectId: null } },
-  { label: 'Profilo', route: { name: 'profile' } },
-  { label: 'Impostazioni', route: { name: 'settings' } },
+  { label: msg('Studia'), route: { name: 'home' } },
+  { label: msg('Libreria'), route: { name: 'library' } },
+  { label: msg('Radio'), route: { name: 'radio' } },
+  { label: msg('Piano'), route: { name: 'plan' } },
+  { label: msg('Strumenti'), route: { name: 'tools', tool: null } },
+  { label: msg('Materie'), route: { name: 'subjects', subjectId: null } },
+  { label: msg('Profilo'), route: { name: 'profile' } },
+  { label: msg('Impostazioni'), route: { name: 'settings' } },
 ]
 
 export function App() {
@@ -51,6 +55,16 @@ function Shell() {
   useEffect(() => {
     if (href) setMenuOpen(false)
   }, [href])
+  const { exam } = useStore()
+  const [profile, setProfile] = useState<{ name: string; many: boolean } | null>(null)
+  useEffect(() => {
+    void listProfiles()
+      .then((all) => {
+        const active = all.find((p) => p.database === activeDatabase())
+        setProfile(active ? { name: active.name, many: all.length > 1 } : null)
+      })
+      .catch(() => setProfile(null))
+  }, [])
 
   // Study state: no menu, no footer.
   if (route.name === 'pomodoro') {
@@ -95,7 +109,7 @@ function Shell() {
             <circle cx="24" cy="76" r="11" fill="currentColor" />
             <line x1="42" y1="58" x2="84" y2="16" stroke="currentColor" strokeWidth="15" />
           </svg>
-          vector
+          {t('vector')}
         </a>
         <button
           type="button"
@@ -104,34 +118,37 @@ function Shell() {
           aria-controls="main-nav"
           className="min-h-11 rounded-lg px-3 text-sm text-[var(--fg-quiet)] sm:hidden"
         >
-          {menuOpen ? 'Chiudi' : 'Menu'}
+          {menuOpen ? t('Chiudi') : t('Menu')}
         </button>
         <nav
           id="main-nav"
-          aria-label="Principale"
+          aria-label={t('Principale')}
           className={`${menuOpen ? 'block' : 'hidden'} w-full sm:block sm:w-auto`}
         >
           <ul className="flex flex-col gap-1 sm:flex-row sm:flex-wrap">
-            {nav.map((item) => {
-              const current =
-                item.route.name === route.name ||
-                (item.route.name === 'subjects' && (route.name === 'diary' || route.name === 'map'))
-              return (
-                <li key={item.label}>
-                  <a
-                    href={hrefFor(item.route)}
-                    aria-current={current ? 'page' : undefined}
-                    className={`inline-flex min-h-11 items-center rounded-lg px-3 text-sm ${
-                      current
-                        ? 'text-[var(--fg)] underline underline-offset-8'
-                        : 'text-[var(--fg-quiet)]'
-                    }`}
-                  >
-                    {item.label}
-                  </a>
-                </li>
-              )
-            })}
+            {nav
+              .filter((item) => exam.aviation || item.route.name !== 'radio')
+              .map((item) => {
+                const current =
+                  item.route.name === route.name ||
+                  (item.route.name === 'subjects' &&
+                    (route.name === 'diary' || route.name === 'map'))
+                return (
+                  <li key={item.label}>
+                    <a
+                      href={hrefFor(item.route)}
+                      aria-current={current ? 'page' : undefined}
+                      className={`inline-flex min-h-11 items-center rounded-lg px-3 text-sm ${
+                        current
+                          ? 'text-[var(--fg)] underline underline-offset-8'
+                          : 'text-[var(--fg-quiet)]'
+                      }`}
+                    >
+                      {t(item.label)}
+                    </a>
+                  </li>
+                )
+              })}
           </ul>
         </nav>
       </header>
@@ -146,14 +163,28 @@ function Shell() {
           {route.name === 'profile' && <Profile />}
           {route.name === 'diary' && <Diary />}
           {route.name === 'radio' && <Radio />}
+          {route.name === 'profiles' && <Profiles />}
           {route.name === 'map' && <ProgramMap subjectId={route.subjectId} />}
           {route.name === 'tools' && <Tools tool={route.tool} />}
         </Suspense>
       </main>
 
       <footer className="flex flex-wrap justify-between gap-2 py-6 text-xs text-[var(--fg-quiet)]">
-        <span>vector v1.4</span>
-        <span>I tuoi dati restano su questo dispositivo.</span>
+        <span>
+          vector v2.0
+          {profile?.many && (
+            <>
+              {' · '}
+              <a
+                href={hrefFor({ name: 'profiles' })}
+                className="underline-offset-4 hover:underline"
+              >
+                {profile.name}
+              </a>
+            </>
+          )}
+        </span>
+        <span>{t('I tuoi dati restano su questo dispositivo.')}</span>
       </footer>
     </div>
   )

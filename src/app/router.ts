@@ -17,6 +17,7 @@ export type Route =
   | { name: 'open'; subjectId: string | null }
   | { name: 'diary' }
   | { name: 'radio' }
+  | { name: 'profiles' }
   | { name: 'map'; subjectId: string | null }
   | { name: 'reader'; bookId: string; page: number | null; view: 'text' | 'page' }
 
@@ -52,6 +53,8 @@ export function parseRoute(hash: string): Route {
       return { name: 'diary' }
     case 'radio':
       return { name: 'radio' }
+    case 'profili':
+      return { name: 'profiles' }
     case 'programma':
       return { name: 'map', subjectId: second || null }
     case 'libreria': {
@@ -103,6 +106,8 @@ export function hrefFor(route: Route): string {
       return '#/errori'
     case 'radio':
       return '#/radio'
+    case 'profiles':
+      return '#/profili'
     case 'map':
       return route.subjectId ? `#/programma/${route.subjectId}` : '#/programma'
     case 'reader': {

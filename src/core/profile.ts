@@ -4,6 +4,7 @@
  */
 import type { Course } from './content/types'
 import type { Verdict } from './grading'
+import { msg } from './i18n'
 
 export interface AttemptLike {
   at: string
@@ -56,10 +57,10 @@ export interface Profile {
 
 export type DayPart = 'morning' | 'afternoon' | 'evening' | 'night'
 export const dayPartLabel: Record<DayPart, string> = {
-  morning: 'mattina',
-  afternoon: 'pomeriggio',
-  evening: 'sera',
-  night: 'notte',
+  morning: msg('mattina'),
+  afternoon: msg('pomeriggio'),
+  evening: msg('sera'),
+  night: msg('notte'),
 }
 
 const KNOWN: readonly string[] = ['solid', 'shaky'] satisfies Verdict[]
@@ -122,7 +123,7 @@ export function buildProfile(
     .slice(0, 5)
     .map(([conceptId, n]) => ({
       conceptId,
-      title: conceptById.get(conceptId)?.title ?? 'Concetto rimosso',
+      title: conceptById.get(conceptId)?.title ?? msg('Concetto rimosso'),
       misses: n,
     }))
 

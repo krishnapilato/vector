@@ -8,6 +8,7 @@ import {
   reliabilityLabel,
 } from '../../core/reading/book'
 import { addBook, booksWithText, relinkBook } from '../data/db'
+import { t } from '../i18n'
 import { hrefFor } from '../router'
 import { useStore } from '../state'
 import { Page, PrimaryButton, QuietButton } from '../ui'
@@ -16,7 +17,7 @@ const inputClass =
   'min-h-11 w-full rounded-lg border border-[var(--rule)] bg-[var(--bg)] px-3 text-[var(--fg)]'
 
 export function Library() {
-  const { books, course } = useStore()
+  const { books, course, exam } = useStore()
   const sorted = [...books].sort((a, b) => b.importedAt.localeCompare(a.importedAt))
   const [withText, setWithText] = useState<Set<string> | null>(null)
   // biome-ignore lint/correctness/useExhaustiveDependencies: re-check when the books change
@@ -25,7 +26,7 @@ export function Library() {
   }, [books])
 
   return (
-    <Page title="Libreria">
+    <Page title={t('Libreria')}>
       {sorted.length > 0 ? (
         <ul className="flex flex-col">
           {sorted.map((b) => (
@@ -39,37 +40,43 @@ export function Library() {
         </ul>
       ) : (
         <p className="text-[var(--fg-quiet)]">
-          Nessun libro ancora. Scarica una delle fonti gratuite qui sotto e importala: il testo
-          resta solo su questo dispositivo.
+          {t(
+            exam.aviation
+              ? 'Nessun libro ancora. Scarica una delle fonti gratuite qui sotto e importala: il testo resta solo su questo dispositivo.'
+              : 'Nessun libro ancora. Importa i PDF o gli appunti del tuo esame: il testo resta solo su questo dispositivo.',
+          )}
         </p>
       )}
 
       <ImportForm />
 
-      <section className="flex flex-col gap-4 border-t border-[var(--rule)] pt-6">
-        <h2 className="text-lg font-medium">Fonti ufficiali gratuite</h2>
-        <p className="text-sm text-[var(--fg-quiet)]">
-          Si aprono in una nuova scheda: scarica il PDF e importalo qui sopra. ENAC non pubblica un
-          manuale PPL e le domande d’esame ufficiali sono riservate.
-        </p>
-        <ul className="flex flex-col gap-4">
-          {freeSources.map((s) => (
-            <li key={s.url} className="flex flex-col gap-1">
-              <a
-                href={s.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="underline underline-offset-4"
-              >
-                {s.title}
-              </a>
-              <span className="text-sm text-[var(--fg-quiet)]">
-                {s.publisher} · {s.language === 'it' ? 'italiano' : 'inglese'} · {s.note}
-              </span>
-            </li>
-          ))}
-        </ul>
-      </section>
+      {exam.aviation && (
+        <section className="flex flex-col gap-4 border-t border-[var(--rule)] pt-6">
+          <h2 className="text-lg font-medium">{t('Fonti ufficiali gratuite')}</h2>
+          <p className="text-sm text-[var(--fg-quiet)]">
+            {t(
+              'Si aprono in una nuova scheda: scarica il PDF e importalo qui sopra. ENAC non pubblica un manuale PPL e le domande d’esame ufficiali sono riservate.',
+            )}
+          </p>
+          <ul className="flex flex-col gap-4">
+            {freeSources.map((s) => (
+              <li key={s.url} className="flex flex-col gap-1">
+                <a
+                  href={s.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline underline-offset-4"
+                >
+                  {s.title}
+                </a>
+                <span className="text-sm text-[var(--fg-quiet)]">
+                  {s.publisher} · {s.language === 'it' ? 'italiano' : 'inglese'} · {s.note}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
     </Page>
   )
 }
@@ -87,17 +94,23 @@ function BookRow({
   const [relink, setRelink] = useState<string | null>(null)
   const fileId = useId()
   const attach = async (file: File) => {
-    setRelink('Leggo il file…')
+    setRelink(t('Leggo il file…'))
     try {
       const isPdf = file.name.toLowerCase().endsWith('.pdf')
       const { importPdf, importText } = await import('../reading/pdf')
       const pages = isPdf
-        ? (await importPdf(await file.arrayBuffer(), (d, t) => setRelink(`Pagina ${d} di ${t}…`)))
-            .pages
+        ? (
+            await importPdf(await file.arrayBuffer(), (d, total) =>
+              setRelink(t('Pagina {d} di {total}…', { d, total })),
+            )
+          ).pages
         : importText(await file.text()).pages
       if (pages.length !== book.pageCount) {
         setRelink(
-          `Questo file ha ${pages.length} pagine, il libro ${book.pageCount}: probabilmente è un altro file.`,
+          t(
+            'Questo file ha {length} pagine, il libro {pageCount}: probabilmente è un altro file.',
+            { length: pages.length, pageCount: book.pageCount },
+          ),
         )
         return
       }
@@ -106,7 +119,7 @@ function BookRow({
       putBook(next)
       setRelink('Collegato.')
     } catch (e) {
-      setRelink(`Non riuscito: ${e instanceof Error ? e.message : String(e)}`)
+      setRelink(t('Non riuscito: {error}', { error: e instanceof Error ? e.message : String(e) }))
     }
   }
   const [armed, setArmed] = useState(false)
@@ -120,17 +133,20 @@ function BookRow({
         >
           {book.title}
         </a>
-        <span className="text-sm text-[var(--fg-quiet)]">letto {progress}%</span>
+        <span className="text-sm text-[var(--fg-quiet)]">
+          {t('letto')} {progress}%
+        </span>
       </div>
       <p className="text-sm text-[var(--fg-quiet)]">
-        {reliabilityLabel[book.reliability]} · {book.language === 'it' ? 'italiano' : 'inglese'} ·{' '}
-        {book.pageCount} pagine · {book.chapters.length} capitoli
+        {t(reliabilityLabel[book.reliability])} ·{' '}
+        {book.language === 'it' ? t('italiano') : t('inglese')} · {book.pageCount} {t('pagine ·')}{' '}
+        {book.chapters.length} {t('capitoli')}
         {subjectName ? ` · ${subjectName}` : ''}
       </p>
       {missing && (
         <div className="flex flex-col gap-1 text-sm">
           <label htmlFor={fileId}>
-            Il testo non è su questo dispositivo: ricollega lo stesso file.
+            {t('Il testo non è su questo dispositivo: ricollega lo stesso file.')}
           </label>
           <input
             id={fileId}
@@ -150,17 +166,19 @@ function BookRow({
           href={hrefFor({ name: 'reader', bookId: book.id, page: book.lastPage, view: 'text' })}
           className="inline-flex min-h-11 items-center pr-3 text-sm underline underline-offset-4"
         >
-          {book.lastPage > 1 ? `Riprendi da pagina ${book.lastPage}` : 'Inizia a leggere'}
+          {book.lastPage > 1
+            ? t('Riprendi da pagina {lastPage}', { lastPage: book.lastPage })
+            : t('Inizia a leggere')}
         </a>
         {armed ? (
           <>
             <QuietButton className="text-[var(--fg)] underline" onClick={() => removeBook(book.id)}>
-              Conferma: elimina il libro e le sue evidenziazioni
+              {t('Conferma: elimina il libro e le sue evidenziazioni')}
             </QuietButton>
-            <QuietButton onClick={() => setArmed(false)}>Annulla</QuietButton>
+            <QuietButton onClick={() => setArmed(false)}>{t('Annulla')}</QuietButton>
           </>
         ) : (
-          <QuietButton onClick={() => setArmed(true)}>Elimina</QuietButton>
+          <QuietButton onClick={() => setArmed(true)}>{t('Elimina')}</QuietButton>
         )}
       </div>
     </li>
@@ -181,7 +199,7 @@ function ImportForm() {
   const run = async () => {
     if (!file) return
     setBusy(true)
-    setStatus('Leggo il file…')
+    setStatus(t('Leggo il file…'))
     try {
       const id = crypto.randomUUID()
       const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')
@@ -191,7 +209,7 @@ function ImportForm() {
       let detectedTitle: string | null = null
       if (isPdf) {
         const r = await importPdf(await file.arrayBuffer(), (done, total) =>
-          setStatus(`Importo la pagina ${done} di ${total}…`),
+          setStatus(t('Importo la pagina {done} di {total}…', { done, total })),
         )
         pages = r.pages
         chapters = r.chapters
@@ -217,15 +235,24 @@ function ImportForm() {
       await addBook(book, pages, isPdf ? file : null)
       putBook(book)
       setStatus(
-        `Importato: ${book.pageCount} pagine, ${book.chapters.length} capitoli.` +
+        t('Importato: {pageCount} pagine, {length} capitoli.', {
+          pageCount: book.pageCount,
+          length: book.chapters.length,
+        }) +
           (empty > pages.length / 2
-            ? ' Molte pagine sono senza testo: probabilmente il PDF è scansionato. Puoi leggerlo in vista pagina.'
+            ? t(
+                ' Molte pagine sono senza testo: probabilmente il PDF è scansionato. Puoi leggerlo in vista pagina.',
+              )
             : ''),
       )
       setFile(null)
       setTitle('')
     } catch (e) {
-      setStatus(`Importazione non riuscita: ${e instanceof Error ? e.message : String(e)}`)
+      setStatus(
+        t('Importazione non riuscita: {error}', {
+          error: e instanceof Error ? e.message : String(e),
+        }),
+      )
     } finally {
       setBusy(false)
     }
@@ -233,10 +260,10 @@ function ImportForm() {
 
   return (
     <section className="flex flex-col gap-4 border-t border-[var(--rule)] pt-6">
-      <h2 className="text-lg font-medium">Importa un libro</h2>
+      <h2 className="text-lg font-medium">{t('Importa un libro')}</h2>
       <div className="flex flex-col gap-1">
         <label htmlFor={ids.file} className="text-sm">
-          File PDF, testo o Markdown
+          {t('File PDF, testo o Markdown')}
         </label>
         <input
           id={ids.file}
@@ -249,7 +276,7 @@ function ImportForm() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="flex flex-col gap-1">
           <label htmlFor={ids.title} className="text-sm">
-            Titolo (facoltativo)
+            {t('Titolo (facoltativo)')}
           </label>
           <input
             id={ids.title}
@@ -260,7 +287,7 @@ function ImportForm() {
         </div>
         <div className="flex flex-col gap-1">
           <label htmlFor={ids.lang} className="text-sm">
-            Lingua
+            {t('Lingua')}
           </label>
           <select
             id={ids.lang}
@@ -268,13 +295,13 @@ function ImportForm() {
             onChange={(e) => setLanguage(e.target.value as 'it' | 'en')}
             className={inputClass}
           >
-            <option value="en">Inglese</option>
-            <option value="it">Italiano</option>
+            <option value="en">{t('Inglese')}</option>
+            <option value="it">{t('Italiano')}</option>
           </select>
         </div>
         <div className="flex flex-col gap-1">
           <label htmlFor={ids.rel} className="text-sm">
-            Affidabilità
+            {t('Affidabilità')}
           </label>
           <select
             id={ids.rel}
@@ -284,14 +311,14 @@ function ImportForm() {
           >
             {(Object.keys(reliabilityLabel) as Reliability[]).map((r) => (
               <option key={r} value={r}>
-                {reliabilityLabel[r]}
+                {t(reliabilityLabel[r])}
               </option>
             ))}
           </select>
         </div>
         <div className="flex flex-col gap-1">
           <label htmlFor={ids.subj} className="text-sm">
-            Materia
+            {t('Materia')}
           </label>
           <select
             id={ids.subj}
@@ -299,10 +326,10 @@ function ImportForm() {
             onChange={(e) => setSubjectId(e.target.value)}
             className={inputClass}
           >
-            <option value="">Più materie</option>
+            <option value="">{t('Più materie')}</option>
             {course.subjects.map((s) => (
               <option key={s.id} value={s.id}>
-                {s.name}
+                {t(s.name)}
               </option>
             ))}
           </select>
@@ -310,7 +337,7 @@ function ImportForm() {
       </div>
       <div className="flex flex-wrap items-center gap-4">
         <PrimaryButton onClick={run} disabled={!file || busy}>
-          Importa
+          {t('Importa')}
         </PrimaryButton>
         {status && (
           <p className="text-sm" aria-live="polite">

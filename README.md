@@ -4,7 +4,7 @@ Studia i concetti, non le risposte.
 
 Vector è una web app di studio **local-first**, open source e gratuita. Nasce per preparare la teoria del PPL(A) EASA, ma è costruita per qualsiasi esame. Obiettivo: capire davvero, non memorizzare le risposte dei quiz.
 
-> Stato: **v1.4 — radio, METAR/TAF, glossario a schede**. Importi i tuoi libri, li leggi e li sottolinei, generi domande di comprensione e studi con un monitoraggio dell'attenzione che resta sul tuo computer.
+> Stato: **v2.0** — italiano e inglese, un profilo per persona, qualsiasi esame. Le versioni precedenti sono descritte nei commit. Importi i tuoi libri, li leggi e li sottolinei, generi domande di comprensione e studi con un monitoraggio dell'attenzione che resta sul tuo computer.
 
 ## Cosa fa già
 
@@ -36,6 +36,9 @@ Vector è una web app di studio **local-first**, open source e gratuita. Nasce p
 - **Radio in inglese**: nove tipi di scambio VFR (prima chiamata, rullaggio, attesa, decollo, cambio frequenza, transponder, circuito, cambio pista, atterraggio) con nominativo, pista, QNH, squawk e frequenze sempre nuovi. La voce ATC è sintetizzata dal sistema (spesso in locale); rispondi scritto o a voce, e Vector controlla gli elementi della collazione, non le parole esatte.
 - **METAR e TAF**: scarica i bollettini reali da aviationweather.gov (viene inviato solo il codice ICAO) o incollali, e leggi la decodifica in italiano con una valutazione VFR indicativa. In più, esercizi su METAR generati con domande su vento, QNH, ceiling e punto di rugiada.
 - **Glossario a schede** italiano-inglese con ripasso a scatole (Leitner): prima i termini che cerchi più spesso nel lettore.
+- **Profili**: più persone sullo stesso dispositivo, ognuna con progressi, libri, esame e lingua propri, partendo da zero.
+- **Qualsiasi esame**: oltre al PPL(A) EASA, un profilo può preparare un altro esame con materie proprie e domande create dai propri libri; gli strumenti di volo, la radio e il programma EASA compaiono solo per il PPL.
+- **Interfaccia in italiano o in inglese** (il corso di esempio PPL, il glossario e la fraseologia restano nella loro lingua).
 - Tastiera: `1`–`4` rispondi, `0` non lo so, `Spazio`/`Invio` avanti, `Esc` esci.
 
 ## Principi

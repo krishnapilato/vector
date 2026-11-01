@@ -1,3 +1,4 @@
+import { msg } from '../i18n'
 import { pick, randomInt } from '../random'
 import type { Course } from './types'
 
@@ -16,8 +17,9 @@ function distinct(answer: string, candidates: string[]): string[] {
 export const pplSample: Course = {
   id: 'ppl-sample',
   name: 'PPL(A) — corso di esempio',
-  sourceNote:
+  sourceNote: msg(
     'Contenuti di esempio scritti a mano per provare Vector: verificali sempre con il materiale del tuo corso.',
+  ),
   subjects: [
     { id: 'pof', name: 'Principi del volo' },
     { id: 'met', name: 'Meteorologia' },

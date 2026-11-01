@@ -4,17 +4,19 @@ import { phaseLabel } from '../../core/pomodoro'
 import { masteryOf, scores } from '../../core/progress'
 import { isFinished, nextDue, questionsForMinutes } from '../../core/session'
 import { loadAttempts } from '../data/db'
+import { locale, t, tn } from '../i18n'
 import { hrefFor } from '../router'
 import { useStore } from '../state'
 import { LinkButton, percent, QuietLink } from '../ui'
 
-const dateFmt = new Intl.DateTimeFormat('it-IT', {
-  weekday: 'long',
-  day: 'numeric',
-  month: 'long',
-  hour: '2-digit',
-  minute: '2-digit',
-})
+const dateFmt = () =>
+  new Intl.DateTimeFormat(locale(), {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
 
 /** Navigation state: one obvious action, the honest numbers, nothing else. */
 export function Home() {
@@ -33,77 +35,87 @@ export function Home() {
   const todayMinutes = focusLog
     .filter((e) => sameDay(new Date(e.endedAt), now))
     .reduce((sum, e) => sum + e.minutes, 0)
-  const timeFmt = new Intl.DateTimeFormat('it-IT', { hour: '2-digit', minute: '2-digit' })
+  const timeFmt = () => new Intl.DateTimeFormat(locale(), { hour: '2-digit', minute: '2-digit' })
 
   return (
     <div className="flex flex-col gap-12">
       <section className="flex flex-col gap-6">
-        <h1 className="text-4xl font-medium tracking-tight">Studia i concetti, non le risposte.</h1>
+        <h1 className="text-4xl font-medium tracking-tight">
+          {t('Studia i concetti, non le risposte.')}
+        </h1>
 
         {resume ? (
           <div className="flex flex-col items-start gap-3">
             <LinkButton
               href={hrefFor({ name: 'study', subjectId: resume.subjectId, early: false })}
             >
-              Riprendi da dove eri
+              {t('Riprendi da dove eri')}
             </LinkButton>
             <p className="text-sm text-[var(--fg-quiet)]">
-              Domanda {resume.index + 1} di {resume.items.length}
+              {t('Domanda')} {resume.index + 1} {t('di')} {resume.items.length}
             </p>
           </div>
         ) : due + fresh > 0 ? (
           <div className="flex flex-col items-start gap-3">
             <LinkButton href={hrefFor({ name: 'study', subjectId: null, early: false })}>
-              Inizia a studiare
+              {t('Inizia a studiare')}
             </LinkButton>
             <p className="text-sm text-[var(--fg-quiet)]">
-              {due > 0 && `${due} ${due === 1 ? 'concetto' : 'concetti'} da ripassare`}
+              {due > 0 && tn(due, '{n} concetto da ripassare', '{n} concetti da ripassare')}
               {due > 0 && fresh > 0 && ' · '}
-              {fresh > 0 && `${fresh} ${fresh === 1 ? 'nuovo' : 'nuovi'}`}
+              {fresh > 0 && tn(fresh, '{n} nuovo', '{n} nuovi')}
             </p>
           </div>
         ) : (
           <div className="flex flex-col items-start gap-3">
-            <p className="text-lg">Sei in pari.</p>
+            <p className="text-lg">{t('Sei in pari.')}</p>
             {upcoming && (
               <p className="text-sm text-[var(--fg-quiet)]">
-                Prossimo ripasso: {dateFmt.format(upcoming)}
+                {t('Prossimo ripasso:')} {dateFmt().format(upcoming)}
               </p>
             )}
             <QuietLink href={hrefFor({ name: 'study', subjectId: null, early: true })}>
-              Allenati comunque
+              {t('Allenati comunque')}
             </QuietLink>
           </div>
         )}
         {!resume && <FewMinutes />}
         <QuietLink href={hrefFor({ name: 'open', subjectId: null })}>
-          Oppure spiega un concetto a parole tue
+          {t('Oppure spiega un concetto a parole tue')}
         </QuietLink>
       </section>
 
       {(planned || pomodoro || (daysLeft !== null && daysLeft > 0) || todayMinutes > 0) && (
         <section aria-labelledby="today" className="flex flex-col gap-2">
           <h2 id="today" className="text-sm text-[var(--fg-quiet)]">
-            Oggi
+            {t('Oggi')}
           </h2>
           <ul className="flex flex-col gap-1">
             {pomodoro && (
               <li>
                 <a href={hrefFor({ name: 'pomodoro' })} className="underline underline-offset-4">
-                  Pomodoro in corso: {phaseLabel[pomodoro.phase].toLowerCase()}
+                  {t('Pomodoro in corso:')} {t(phaseLabel[pomodoro.phase]).toLowerCase()}
                 </a>
               </li>
             )}
             {planned && (
               <li>
-                Prossima sessione: {planKindLabel[planned.kind].toLowerCase()}
+                {t('Prossima sessione:')} {t(planKindLabel[planned.kind]).toLowerCase()}
                 {sameDay(new Date(planned.start), now)
-                  ? ` alle ${timeFmt.format(new Date(planned.start))}`
-                  : ` ${dateFmt.format(new Date(planned.start))}`}
+                  ? t(' alle {time}', { time: timeFmt().format(new Date(planned.start)) })
+                  : ` ${dateFmt().format(new Date(planned.start))}`}
               </li>
             )}
-            {todayMinutes > 0 && <li>{todayMinutes} minuti di concentrazione</li>}
-            {daysLeft !== null && daysLeft > 0 && <li>Esame tra {daysLeft} giorni</li>}
+            {todayMinutes > 0 && (
+              <li>
+                {todayMinutes} {t('minuti di concentrazione')}
+              </li>
+            )}
+            {daysLeft !== null && daysLeft > 0 && (
+              <li>
+                {t('Esame tra')} {daysLeft} {t('giorni')}
+              </li>
+            )}
           </ul>
         </section>
       )}
@@ -111,32 +123,33 @@ export function Home() {
       {s.answered > 0 && (
         <section aria-labelledby="scores" className="flex flex-col gap-3">
           <h2 id="scores" className="text-sm text-[var(--fg-quiet)]">
-            Come stai andando
+            {t('Come stai andando')}
           </h2>
           <dl className="grid grid-cols-2 gap-6 sm:max-w-md">
             <div>
-              <dt className="text-sm text-[var(--fg-quiet)]">Comprensione</dt>
+              <dt className="text-sm text-[var(--fg-quiet)]">{t('Comprensione')}</dt>
               <dd className="text-2xl">{percent(s.comprehension)}</dd>
-              <dd className="text-xs text-[var(--fg-quiet)]">domande mai viste prima</dd>
+              <dd className="text-xs text-[var(--fg-quiet)]">{t('domande mai viste prima')}</dd>
             </div>
             <div>
-              <dt className="text-sm text-[var(--fg-quiet)]">Riconoscimento</dt>
+              <dt className="text-sm text-[var(--fg-quiet)]">{t('Riconoscimento')}</dt>
               <dd className="text-2xl">{percent(s.recognition)}</dd>
-              <dd className="text-xs text-[var(--fg-quiet)]">domande già viste</dd>
+              <dd className="text-xs text-[var(--fg-quiet)]">{t('domande già viste')}</dd>
             </div>
           </dl>
           {s.comprehension !== null &&
             s.recognition !== null &&
             s.recognition - s.comprehension > 0.2 && (
               <p className="text-sm">
-                Rispondi meglio alle domande che hai già visto: forse le stai ricordando, non
-                ragionando. Rileggi i paragrafi segnati nelle materie.
+                {t(
+                  'Rispondi meglio alle domande che hai già visto: forse le stai ricordando, non ragionando. Rileggi i paragrafi segnati nelle materie.',
+                )}
               </p>
             )}
         </section>
       )}
 
-      <p className="text-xs text-[var(--fg-quiet)]">{course.sourceNote}</p>
+      <p className="text-xs text-[var(--fg-quiet)]">{t(course.sourceNote)}</p>
     </div>
   )
 }
@@ -152,8 +165,8 @@ function FewMinutes() {
     })
   }, [])
   return (
-    <nav aria-label="Ho pochi minuti" className="flex flex-wrap items-center gap-1 text-sm">
-      <span className="pr-2 text-[var(--fg-quiet)]">Ho</span>
+    <nav aria-label={t('Ho pochi minuti')} className="flex flex-wrap items-center gap-1 text-sm">
+      <span className="pr-2 text-[var(--fg-quiet)]">{t('Ho')}</span>
       {[5, 10, 20, 30].map((m) => (
         <a
           key={m}
@@ -165,7 +178,7 @@ function FewMinutes() {
           })}
           className="inline-flex min-h-11 items-center rounded-lg border border-[var(--rule)] px-3"
         >
-          {m} min
+          {m} {t('min')}
         </a>
       ))}
     </nav>

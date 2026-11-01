@@ -4,6 +4,7 @@
  * by design, enough to see what is still blank.
  */
 import type { Concept } from './content/types'
+import { msg } from './i18n'
 
 export interface Topic {
   id: string
@@ -14,14 +15,14 @@ export interface Topic {
 
 export const syllabus: Record<string, readonly Topic[]> = {
   law: [
-    t('law-icao', 'ICAO e Convenzione di Chicago', [
+    topic('law-icao', msg('ICAO e Convenzione di Chicago'), [
       'icao',
       'chicago',
       'annesso',
       'annex',
       'convenzione',
     ]),
-    t('law-eu', 'Regolamenti europei: Basic Regulation, Part-FCL, Part-MED', [
+    topic('law-eu', msg('Regolamenti europei: Basic Regulation, Part-FCL, Part-MED'), [
       'easa',
       'part-fcl',
       'licenz',
@@ -32,7 +33,7 @@ export const syllabus: Record<string, readonly Topic[]> = {
       'abilitazion',
       'rating',
     ]),
-    t('law-sera', 'Regole dell’aria (SERA)', [
+    topic('law-sera', msg('Regole dell’aria (SERA)'), [
       'sera',
       'regole dell',
       'rules of the air',
@@ -43,7 +44,7 @@ export const syllabus: Record<string, readonly Topic[]> = {
       'quota minima',
       'minimum height',
     ]),
-    t('law-airspace', 'Spazi aerei e servizi ATS', [
+    topic('law-airspace', msg('Spazi aerei e servizi ATS'), [
       'spazio aereo',
       'airspace',
       'classe',
@@ -53,7 +54,7 @@ export const syllabus: Record<string, readonly Topic[]> = {
       'servizi del traffico',
       'ats',
     ]),
-    t('law-atc', 'Procedure ATC e transponder', [
+    topic('law-atc', msg('Procedure ATC e transponder'), [
       'atc',
       'squawk',
       'transponder',
@@ -63,8 +64,8 @@ export const syllabus: Record<string, readonly Topic[]> = {
       'autorizzazione',
       'clearance',
     ]),
-    t('law-ais', 'Informazioni aeronautiche (AIP, NOTAM)', ['aip', 'notam', 'ais', 'aic']),
-    t('law-aerodromes', 'Aerodromi, piste e segnali', [
+    topic('law-ais', msg('Informazioni aeronautiche (AIP, NOTAM)'), ['aip', 'notam', 'ais', 'aic']),
+    topic('law-aerodromes', msg('Aerodromi, piste e segnali'), [
       'aerodrom',
       'aeroporto',
       'airport',
@@ -77,7 +78,7 @@ export const syllabus: Record<string, readonly Topic[]> = {
       'lda',
       'toda',
     ]),
-    t('law-sar', 'Ricerca e soccorso, security, incidenti', [
+    topic('law-sar', msg('Ricerca e soccorso, security, incidenti'), [
       'soccorso',
       'search and rescue',
       'sar',
@@ -88,13 +89,13 @@ export const syllabus: Record<string, readonly Topic[]> = {
     ]),
   ],
   hpl: [
-    t('hpl-basics', 'Fattore umano e sicurezza', [
+    topic('hpl-basics', msg('Fattore umano e sicurezza'), [
       'fattore umano',
       'human factor',
       'human performance',
       'shell',
     ]),
-    t('hpl-physiology', 'Fisiologia: atmosfera, ipossia, iperventilazione', [
+    topic('hpl-physiology', msg('Fisiologia: atmosfera, ipossia, iperventilazione'), [
       'ipossia',
       'hypoxia',
       'iperventilazion',
@@ -105,7 +106,7 @@ export const syllabus: Record<string, readonly Topic[]> = {
       'barotrauma',
       'decompress',
     ]),
-    t('hpl-senses', 'Vista, udito e illusioni', [
+    topic('hpl-senses', msg('Vista, udito e illusioni'), [
       'vista',
       'vision',
       'udito',
@@ -116,7 +117,7 @@ export const syllabus: Record<string, readonly Topic[]> = {
       'vestibular',
       'otolit',
     ]),
-    t('hpl-health', 'Salute: alcol, farmaci, fatica', [
+    topic('hpl-health', msg('Salute: alcol, farmaci, fatica'), [
       'alcol',
       'alcohol',
       'farmac',
@@ -128,7 +129,7 @@ export const syllabus: Record<string, readonly Topic[]> = {
       'immersion',
       'diving',
     ]),
-    t('hpl-psychology', 'Psicologia: errore, decisione, stress', [
+    topic('hpl-psychology', msg('Psicologia: errore, decisione, stress'), [
       'errore',
       'error',
       'decision',
@@ -142,7 +143,7 @@ export const syllabus: Record<string, readonly Topic[]> = {
     ]),
   ],
   met: [
-    t('met-atmosphere', 'Atmosfera e ISA', [
+    topic('met-atmosphere', msg('Atmosfera e ISA'), [
       'atmosfera',
       'atmosphere',
       'isa',
@@ -152,7 +153,7 @@ export const syllabus: Record<string, readonly Topic[]> = {
       'gradiente termico',
       'lapse rate',
     ]),
-    t('met-pressure', 'Pressione, altimetria e sistemi barici', [
+    topic('met-pressure', msg('Pressione, altimetria e sistemi barici'), [
       'pressione',
       'pressure',
       'qnh',
@@ -163,7 +164,7 @@ export const syllabus: Record<string, readonly Topic[]> = {
       'depression',
       'altimetr',
     ]),
-    t('met-wind', 'Vento', [
+    topic('met-wind', msg('Vento'), [
       'vento',
       'wind',
       'brezza',
@@ -173,7 +174,7 @@ export const syllabus: Record<string, readonly Topic[]> = {
       'raffic',
       'gust',
     ]),
-    t('met-thermo', 'Umidità e stabilità', [
+    topic('met-thermo', msg('Umidità e stabilità'), [
       'umidit',
       'humidity',
       'punto di rugiada',
@@ -182,7 +183,7 @@ export const syllabus: Record<string, readonly Topic[]> = {
       'instabil',
       'adiabatic',
     ]),
-    t('met-clouds', 'Nubi, nebbia e precipitazioni', [
+    topic('met-clouds', msg('Nubi, nebbia e precipitazioni'), [
       'nub',
       'cloud',
       'nebbia',
@@ -195,8 +196,14 @@ export const syllabus: Record<string, readonly Topic[]> = {
       'cumul',
       'strat',
     ]),
-    t('met-fronts', 'Masse d’aria e fronti', ['fronte', 'front', 'massa d', 'air mass', 'occlus']),
-    t('met-hazards', 'Fenomeni pericolosi: ghiaccio, turbolenza, temporali', [
+    topic('met-fronts', msg('Masse d’aria e fronti'), [
+      'fronte',
+      'front',
+      'massa d',
+      'air mass',
+      'occlus',
+    ]),
+    topic('met-hazards', msg('Fenomeni pericolosi: ghiaccio, turbolenza, temporali'), [
       'ghiaccio',
       'icing',
       'turbolenz',
@@ -207,7 +214,7 @@ export const syllabus: Record<string, readonly Topic[]> = {
       'microburst',
       'grandine',
     ]),
-    t('met-info', 'Informazioni meteo: METAR, TAF, carte', [
+    topic('met-info', msg('Informazioni meteo: METAR, TAF, carte'), [
       'metar',
       'taf',
       'sigmet',
@@ -219,7 +226,7 @@ export const syllabus: Record<string, readonly Topic[]> = {
     ]),
   ],
   com: [
-    t('com-terms', 'Definizioni, abbreviazioni, alfabeto', [
+    topic('com-terms', msg('Definizioni, abbreviazioni, alfabeto'), [
       'alfabeto',
       'alphabet',
       'abbreviazion',
@@ -227,7 +234,7 @@ export const syllabus: Record<string, readonly Topic[]> = {
       'codice q',
       'definizion',
     ]),
-    t('com-general', 'Procedure generali e numeri', [
+    topic('com-general', msg('Procedure generali e numeri'), [
       'chiamata',
       'call sign',
       'nominativo',
@@ -237,7 +244,7 @@ export const syllabus: Record<string, readonly Topic[]> = {
       'orario',
       'utc',
     ]),
-    t('com-phrases', 'Fraseologia di partenza, arrivo e circuito', [
+    topic('com-phrases', msg('Fraseologia di partenza, arrivo e circuito'), [
       'fraseolog',
       'phraseology',
       'circuito',
@@ -249,13 +256,13 @@ export const syllabus: Record<string, readonly Topic[]> = {
       'taxi',
       'rullaggio',
     ]),
-    t('com-failure', 'Avaria radio', [
+    topic('com-failure', msg('Avaria radio'), [
       'avaria radio',
       'radio failure',
       'communication failure',
       '7600',
     ]),
-    t('com-emergency', 'Emergenza e urgenza', [
+    topic('com-emergency', msg('Emergenza e urgenza'), [
       'mayday',
       'pan pan',
       'emergenza',
@@ -263,10 +270,10 @@ export const syllabus: Record<string, readonly Topic[]> = {
       'urgenza',
       'urgency',
     ]),
-    t('com-vhf', 'Propagazione VHF', ['vhf', 'propagazion', 'portata', 'line of sight']),
+    topic('com-vhf', msg('Propagazione VHF'), ['vhf', 'propagazion', 'portata', 'line of sight']),
   ],
   pof: [
-    t('pof-air', 'Flusso d’aria, portanza e resistenza', [
+    topic('pof-air', msg('Flusso d’aria, portanza e resistenza'), [
       'portanza',
       'lift',
       'resistenza',
@@ -276,7 +283,7 @@ export const syllabus: Record<string, readonly Topic[]> = {
       'airflow',
       'coefficiente',
     ]),
-    t('pof-airfoil', 'Profilo alare e angolo d’attacco', [
+    topic('pof-airfoil', msg('Profilo alare e angolo d’attacco'), [
       'profilo',
       'airfoil',
       'aerofoil',
@@ -286,16 +293,16 @@ export const syllabus: Record<string, readonly Topic[]> = {
       'chord',
       'incidenza',
     ]),
-    t('pof-stall', 'Stallo e vite', ['stallo', 'stall', 'vite', 'spin']),
-    t('pof-flaps', 'Ipersostentatori', ['flap', 'ipersostentator', 'slat', 'high lift']),
-    t('pof-stability', 'Stabilità', [
+    topic('pof-stall', msg('Stallo e vite'), ['stallo', 'stall', 'vite', 'spin']),
+    topic('pof-flaps', msg('Ipersostentatori'), ['flap', 'ipersostentator', 'slat', 'high lift']),
+    topic('pof-stability', msg('Stabilità'), [
       'stabilit',
       'stability',
       'diedro',
       'dihedral',
       'centro di pressione',
     ]),
-    t('pof-controls', 'Comandi di volo e trim', [
+    topic('pof-controls', msg('Comandi di volo e trim'), [
       'alettone',
       'aileron',
       'timone',
@@ -310,7 +317,7 @@ export const syllabus: Record<string, readonly Topic[]> = {
       'beccheggio',
       'pitch',
     ]),
-    t('pof-limits', 'Limitazioni: fattore di carico, inviluppo', [
+    topic('pof-limits', msg('Limitazioni: fattore di carico, inviluppo'), [
       'fattore di carico',
       'load factor',
       'inviluppo',
@@ -320,7 +327,7 @@ export const syllabus: Record<string, readonly Topic[]> = {
       'va ',
       'manovra',
     ]),
-    t('pof-propeller', 'Elica', [
+    topic('pof-propeller', msg('Elica'), [
       'elica',
       'propeller',
       'passo',
@@ -328,7 +335,7 @@ export const syllabus: Record<string, readonly Topic[]> = {
       'torque',
       'effetto giroscop',
     ]),
-    t('pof-mechanics', 'Meccanica del volo: virata, salita, planata', [
+    topic('pof-mechanics', msg('Meccanica del volo: virata, salita, planata'), [
       'virata',
       'turn',
       'salita',
@@ -341,21 +348,21 @@ export const syllabus: Record<string, readonly Topic[]> = {
     ]),
   ],
   ops: [
-    t('ops-general', 'Procedure operative generali', [
+    topic('ops-general', msg('Procedure operative generali'), [
       'procedur',
       'checklist',
       'briefing',
       'rumore',
       'noise',
     ]),
-    t('ops-wake', 'Turbolenza di scia', ['scia', 'wake', 'vortic']),
-    t('ops-windshear', 'Wind shear e microburst', [
+    topic('ops-wake', msg('Turbolenza di scia'), ['scia', 'wake', 'vortic']),
+    topic('ops-windshear', msg('Wind shear e microburst'), [
       'wind shear',
       'windshear',
       'microburst',
       'gradiente del vento',
     ]),
-    t('ops-runway', 'Piste contaminate', [
+    topic('ops-runway', msg('Piste contaminate'), [
       'contaminat',
       'neve',
       'snow',
@@ -364,7 +371,7 @@ export const syllabus: Record<string, readonly Topic[]> = {
       'aquaplaning',
       'hydroplan',
     ]),
-    t('ops-emergency', 'Emergenze: fuoco, fumo, atterraggio forzato, ammaraggio', [
+    topic('ops-emergency', msg('Emergenze: fuoco, fumo, atterraggio forzato, ammaraggio'), [
       'fuoco',
       'fire',
       'fumo',
@@ -377,7 +384,7 @@ export const syllabus: Record<string, readonly Topic[]> = {
     ]),
   ],
   fpp: [
-    t('fpp-mass', 'Massa e centraggio', [
+    topic('fpp-mass', msg('Massa e centraggio'), [
       'massa',
       'mass',
       'peso',
@@ -389,7 +396,7 @@ export const syllabus: Record<string, readonly Topic[]> = {
       'center of gravity',
       'momento',
     ]),
-    t('fpp-performance', 'Prestazioni: decollo, atterraggio, salita, crociera', [
+    topic('fpp-performance', msg('Prestazioni: decollo, atterraggio, salita, crociera'), [
       'prestazion',
       'performance',
       'decollo',
@@ -402,7 +409,7 @@ export const syllabus: Record<string, readonly Topic[]> = {
       'quota densit',
       'density altitude',
     ]),
-    t('fpp-planning', 'Pianificazione del volo VFR', [
+    topic('fpp-planning', msg('Pianificazione del volo VFR'), [
       'pianificazion',
       'planning',
       'log di navigazione',
@@ -410,7 +417,7 @@ export const syllabus: Record<string, readonly Topic[]> = {
       'rotta',
       'route',
     ]),
-    t('fpp-fuel', 'Carburante e riserve', [
+    topic('fpp-fuel', msg('Carburante e riserve'), [
       'carburante',
       'fuel',
       'riserva',
@@ -419,10 +426,10 @@ export const syllabus: Record<string, readonly Topic[]> = {
       'endurance',
       'consumo',
     ]),
-    t('fpp-flightplan', 'Piano di volo ATS', ['piano di volo', 'flight plan', 'fpl']),
+    topic('fpp-flightplan', msg('Piano di volo ATS'), ['piano di volo', 'flight plan', 'fpl']),
   ],
   agk: [
-    t('agk-airframe', 'Cellula e carrello', [
+    topic('agk-airframe', msg('Cellula e carrello'), [
       'cellula',
       'airframe',
       'carrello',
@@ -431,7 +438,7 @@ export const syllabus: Record<string, readonly Topic[]> = {
       'brake',
       'pneumatic',
     ]),
-    t('agk-engine', 'Motore a pistoni e miscela', [
+    topic('agk-engine', msg('Motore a pistoni e miscela'), [
       'motore',
       'engine',
       'pistoni',
@@ -445,7 +452,7 @@ export const syllabus: Record<string, readonly Topic[]> = {
       'detonazion',
       'cilindr',
     ]),
-    t('agk-systems', 'Carburante, olio ed elettrico', [
+    topic('agk-systems', msg('Carburante, olio ed elettrico'), [
       'olio',
       'oil',
       'alternator',
@@ -456,7 +463,7 @@ export const syllabus: Record<string, readonly Topic[]> = {
       'serbatoi',
       'tank',
     ]),
-    t('agk-pitot', 'Strumenti a pressione: anemometro, altimetro, variometro', [
+    topic('agk-pitot', msg('Strumenti a pressione: anemometro, altimetro, variometro'), [
       'anemometro',
       'airspeed indicator',
       'altimetro',
@@ -470,7 +477,7 @@ export const syllabus: Record<string, readonly Topic[]> = {
       'tas',
       'cas',
     ]),
-    t('agk-gyro', 'Strumenti giroscopici', [
+    topic('agk-gyro', msg('Strumenti giroscopici'), [
       'giroscop',
       'gyro',
       'orizzonte artificiale',
@@ -480,7 +487,7 @@ export const syllabus: Record<string, readonly Topic[]> = {
       'virosbandometro',
       'turn coordinator',
     ]),
-    t('agk-compass', 'Bussola magnetica', [
+    topic('agk-compass', msg('Bussola magnetica'), [
       'bussola',
       'compass',
       'deviazion',
@@ -489,7 +496,7 @@ export const syllabus: Record<string, readonly Topic[]> = {
       'turning error',
       'acceleration error',
     ]),
-    t('agk-avionics', 'Avionica e transponder', [
+    topic('agk-avionics', msg('Avionica e transponder'), [
       'avionic',
       'transponder',
       'radio',
@@ -498,7 +505,7 @@ export const syllabus: Record<string, readonly Topic[]> = {
     ]),
   ],
   nav: [
-    t('nav-basics', 'La Terra: coordinate, distanze, direzioni', [
+    topic('nav-basics', msg('La Terra: coordinate, distanze, direzioni'), [
       'latitudin',
       'latitude',
       'longitudin',
@@ -512,7 +519,7 @@ export const syllabus: Record<string, readonly Topic[]> = {
       'lossodromi',
       'rhumb',
     ]),
-    t('nav-magnetism', 'Magnetismo: declinazione e deviazione', [
+    topic('nav-magnetism', msg('Magnetismo: declinazione e deviazione'), [
       'declinazion',
       'variation',
       'nord magnetico',
@@ -521,7 +528,7 @@ export const syllabus: Record<string, readonly Topic[]> = {
       'true north',
       'isogon',
     ]),
-    t('nav-charts', 'Carte aeronautiche', [
+    topic('nav-charts', msg('Carte aeronautiche'), [
       'carta',
       'chart',
       'scala',
@@ -530,7 +537,7 @@ export const syllabus: Record<string, readonly Topic[]> = {
       'mercator',
       'icao 1:500',
     ]),
-    t('nav-dr', 'Navigazione stimata e triangolo del vento', [
+    topic('nav-dr', msg('Navigazione stimata e triangolo del vento'), [
       'triangolo del vento',
       'wind triangle',
       'deriva',
@@ -544,7 +551,7 @@ export const syllabus: Record<string, readonly Topic[]> = {
       'stimata',
       'dead reckoning',
     ]),
-    t('nav-inflight', 'Navigazione in volo', [
+    topic('nav-inflight', msg('Navigazione in volo'), [
       'orientamento',
       'punto di riporto',
       'reporting point',
@@ -552,7 +559,7 @@ export const syllabus: Record<string, readonly Topic[]> = {
       '1 in 60',
       'deviazione dalla rotta',
     ]),
-    t('nav-radio', 'Radionavigazione: VOR, ADF, DME', [
+    topic('nav-radio', msg('Radionavigazione: VOR, ADF, DME'), [
       'vor',
       'adf',
       'ndb',
@@ -563,11 +570,11 @@ export const syllabus: Record<string, readonly Topic[]> = {
       'qdr',
       'cdi',
     ]),
-    t('nav-gnss', 'GNSS', ['gnss', 'gps', 'raim', 'egnos']),
+    topic('nav-gnss', msg('GNSS'), ['gnss', 'gps', 'raim', 'egnos']),
   ],
 }
 
-function t(id: string, title: string, keywords: string[]): Topic {
+function topic(id: string, title: string, keywords: string[]): Topic {
   return { id, title, keywords }
 }
 

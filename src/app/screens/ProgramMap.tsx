@@ -1,5 +1,6 @@
 import { masteryOf } from '../../core/progress'
 import { coverage } from '../../core/syllabus'
+import { t, tn } from '../i18n'
 import { hrefFor } from '../router'
 import { useStore } from '../state'
 import { Page, percent, QuietLink } from '../ui'
@@ -15,13 +16,16 @@ export function ProgramMap({ subjectId }: { subjectId: string | null }) {
   const subjects = course.subjects.filter((s) => !subjectId || s.id === subjectId)
 
   return (
-    <Page title="Programma EASA">
+    <Page title={t('Programma EASA')}>
       <p className="text-sm text-[var(--fg-quiet)]">
-        Gli argomenti del programma PPL(A) (AMC1 FCL.210). Concetti e capitoli sono collegati per
-        parole chiave: è una mappa approssimativa per vedere cosa è ancora scoperto.
+        {t(
+          'Gli argomenti del programma PPL(A) (AMC1 FCL.210). Concetti e capitoli sono collegati per parole chiave: è una mappa approssimativa per vedere cosa è ancora scoperto.',
+        )}
       </p>
       {subjectId && (
-        <QuietLink href={hrefFor({ name: 'map', subjectId: null })}>Tutte le materie</QuietLink>
+        <QuietLink href={hrefFor({ name: 'map', subjectId: null })}>
+          {t('Tutte le materie')}
+        </QuietLink>
       )}
       {subjects.map((s) => {
         const topics = coverage(s.id, course.concepts, isKnown, books)
@@ -34,13 +38,13 @@ export function ProgramMap({ subjectId }: { subjectId: string | null }) {
                   href={hrefFor({ name: 'map', subjectId: s.id })}
                   className="underline-offset-4 hover:underline"
                 >
-                  {s.name}
+                  {t(s.name)}
                 </a>
               </h2>
               <span className="text-sm text-[var(--fg-quiet)]">
                 {blank === 0
-                  ? 'tutti gli argomenti hanno materiale'
-                  : `${blank} di ${topics.length} senza materiale`}
+                  ? t('tutti gli argomenti hanno materiale')
+                  : t('{blank} di {length} senza materiale', { blank, length: topics.length })}
               </span>
             </div>
             <ul className="flex flex-col">
@@ -48,12 +52,19 @@ export function ProgramMap({ subjectId }: { subjectId: string | null }) {
                 <li key={c.topic.id} className="flex flex-col gap-1 py-2">
                   <div className="flex flex-wrap items-baseline justify-between gap-2">
                     <span className={c.concepts.length === 0 ? 'text-[var(--fg-quiet)]' : ''}>
-                      {c.topic.title}
+                      {t(c.topic.title)}
                     </span>
                     <span className="text-sm tabular-nums text-[var(--fg-quiet)]">
                       {c.concepts.length === 0
-                        ? 'scoperto'
-                        : `${c.concepts.length} ${c.concepts.length === 1 ? 'concetto' : 'concetti'} · ${percent(c.known)} saputo`}
+                        ? t('scoperto')
+                        : tn(
+                            c.concepts.length,
+                            '{n} concetto · {known} saputo',
+                            '{n} concetti · {known} saputo',
+                            {
+                              known: percent(c.known),
+                            },
+                          )}
                     </span>
                   </div>
                   <div className="h-px w-full bg-[var(--rule)]" aria-hidden="true">
@@ -61,7 +72,7 @@ export function ProgramMap({ subjectId }: { subjectId: string | null }) {
                   </div>
                   {c.chapters.length > 0 && (
                     <p className="text-xs text-[var(--fg-quiet)]">
-                      Da leggere:{' '}
+                      {t('Da leggere:')}{' '}
                       {c.chapters.map((ch, i) => (
                         <span key={`${ch.bookId}-${ch.page}`}>
                           {i > 0 && ' · '}

@@ -11,3 +11,4 @@ Ogni decisione importante ha un file breve: contesto, alternative, decisione, co
 | 0005 | [Zero animazioni come regola verificata](0005-zero-animazioni.md)                |
 | 0006 | [Chiave AI dell'utente, solo sul dispositivo](0006-chiave-ai-sul-dispositivo.md) |
 | 0007 | [Sincronizzazione cifrata, server dell'utente](0007-sync-cifrata.md)             |
+| 0008 | [Lingue, profili ed esami diversi](0008-lingue-e-profili.md)                     |

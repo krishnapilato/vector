@@ -1,18 +1,21 @@
 import { type ReactNode, useId, useState } from 'react'
 import { type Config, configSchema } from '../../config/config'
+import { msg } from '../../core/i18n'
 import type { QuestionKind } from '../../core/question-timer'
 import { generatePassphrase, passphraseProblem, WrongPassphrase } from '../../core/sync/crypto'
 import { AiError, DEFAULT_MODEL, listModels } from '../ai/gemini'
 import { exportAll, loadPreferences, type Preferences, savePreferences } from '../data/db'
+import { type Language, languageLabel, locale, t } from '../i18n'
+import { hrefFor } from '../router'
 import { useStore } from '../state'
 import { download, encryptedBackup, pull, push, restoreBackup, SyncConflict } from '../sync/sync'
 import { Page, PrimaryButton, QuietButton } from '../ui'
 
 const timerLabels: Record<QuestionKind, string> = {
-  recall: 'Richiamo veloce',
-  reasoning: 'Ragionamento',
-  calculation: 'Calcolo',
-  open: 'Domanda aperta',
+  recall: msg('Richiamo veloce'),
+  reasoning: msg('Ragionamento'),
+  calculation: msg('Calcolo'),
+  open: msg('Domanda aperta'),
 }
 
 export function Settings() {
@@ -23,7 +26,7 @@ export function Settings() {
   const save = async (next: Preferences) => {
     const parsed = configSchema.safeParse(next.config)
     if (!parsed.success) {
-      setError(parsed.error.issues[0]?.message ?? 'Valore non valido.')
+      setError(parsed.error.issues[0]?.message ?? t('Valore non valido.'))
       return
     }
     setError(null)
@@ -35,38 +38,38 @@ export function Settings() {
   const setConfig = (fn: (c: Config) => Config) => save({ ...prefs, config: fn(prefs.config) })
 
   return (
-    <Page title="Impostazioni">
+    <Page title={t('Impostazioni')}>
       <p className="text-sm text-[var(--fg-quiet)]" aria-live="polite">
         {error ? (
           <span role="alert">{error}</span>
         ) : saved ? (
-          'Salvato su questo dispositivo.'
+          t('Salvato su questo dispositivo.')
         ) : (
-          'Le modifiche si salvano da sole.'
+          t('Le modifiche si salvano da sole.')
         )}
       </p>
 
-      <Section title="Studio">
-        <Field label="Modalità">
+      <Section title={t('Studio')}>
+        <Field label={t('Modalità')}>
           <div className="flex flex-col gap-2">
             <Radio
               name="mode"
               checked={prefs.study.mode === 'practice'}
               onChange={() => setStudy({ mode: 'practice' })}
-              label="Allenamento"
-              hint="con un timer per ogni domanda"
+              label={t('Allenamento')}
+              hint={t('con un timer per ogni domanda')}
             />
             <Radio
               name="mode"
               checked={prefs.study.mode === 'understand'}
               onChange={() => setStudy({ mode: 'understand' })}
-              label="Capire"
-              hint="senza timer, per i capitoli nuovi"
+              label={t('Capire')}
+              hint={t('senza timer, per i capitoli nuovi')}
             />
           </div>
         </Field>
         <NumberField
-          label="Domande per sessione"
+          label={t('Domande per sessione')}
           value={prefs.study.sessionLength}
           min={1}
           max={50}
@@ -75,34 +78,36 @@ export function Settings() {
           }}
         />
         <NumberField
-          label="Concetti nuovi per sessione"
+          label={t('Concetti nuovi per sessione')}
           value={prefs.study.newConcepts}
           min={0}
           max={20}
           onChange={(v) => setStudy({ newConcepts: v })}
         />
         <Checkbox
-          label="Schermo intero durante lo studio"
+          label={t('Schermo intero durante lo studio')}
           checked={prefs.study.fullscreen}
           onChange={(v) => setStudy({ fullscreen: v })}
         />
         <Checkbox
-          label="Adatta le spiegazioni dell’IA a come studio"
+          label={t('Adatta le spiegazioni dell’IA a come studio')}
           checked={prefs.study.personalize}
           onChange={(v) => setStudy({ personalize: v })}
         />
-        <Checkbox
-          label="Includi i concetti di esempio scritti a mano"
-          checked={prefs.study.includeSample}
-          onChange={(v) => setStudy({ includeSample: v })}
-        />
+        {prefs.course.template === 'ppl-easa' && (
+          <Checkbox
+            label={t('Includi i concetti di esempio scritti a mano')}
+            checked={prefs.study.includeSample}
+            onChange={(v) => setStudy({ includeSample: v })}
+          />
+        )}
       </Section>
 
-      <Section title="Timer (secondi, modalità Allenamento)">
+      <Section title={t('Timer (secondi, modalità Allenamento)')}>
         {(Object.keys(timerLabels) as QuestionKind[]).map((kind) => (
           <NumberField
             key={kind}
-            label={timerLabels[kind]}
+            label={t(timerLabels[kind])}
             value={prefs.config.timers[kind]}
             min={5}
             max={3600}
@@ -110,14 +115,14 @@ export function Settings() {
           />
         ))}
         <NumberField
-          label="Pausa per pensare prima delle opzioni"
+          label={t('Pausa per pensare prima delle opzioni')}
           value={prefs.config.quiz.thinkFirstSeconds}
           min={0}
           max={30}
           onChange={(v) => setConfig((c) => ({ ...c, quiz: { ...c.quiz, thinkFirstSeconds: v } }))}
         />
         <NumberField
-          label="Domande «Perché?» (% delle risposte giuste)"
+          label={t('Domande «Perché?» (% delle risposte giuste)')}
           value={Math.round(prefs.config.quiz.whyProbability * 100)}
           min={0}
           max={100}
@@ -127,6 +132,8 @@ export function Settings() {
         />
       </Section>
 
+      <ExamSection />
+
       <FocusSection prefs={prefs} save={save} setConfig={setConfig} />
 
       <AiSection />
@@ -135,6 +142,89 @@ export function Settings() {
 
       <DataSection />
     </Page>
+  )
+}
+
+function ExamSection() {
+  const { prefs, updatePrefs } = useStore()
+  const [examName, setExamName] = useState(prefs.course.examName)
+  const ids = { lang: useId(), exam: useId() }
+  const setCourse = (patch: Partial<Preferences['course']>) =>
+    updatePrefs({ ...prefs, course: { ...prefs.course, ...patch } })
+
+  return (
+    <Section title={t('Esame e lingua')}>
+      <div className="flex flex-col gap-1">
+        <label htmlFor={ids.lang} className="text-sm">
+          {t('Lingua dell’interfaccia')}
+        </label>
+        <select
+          id={ids.lang}
+          value={prefs.ui.language}
+          onChange={async (e) => {
+            await updatePrefs({ ...prefs, ui: { language: e.target.value as Language } })
+            location.reload()
+          }}
+          className="min-h-11 rounded-lg border border-[var(--rule)] bg-[var(--bg)] px-3"
+        >
+          {(Object.keys(languageLabel) as Language[]).map((l) => (
+            <option key={l} value={l}>
+              {languageLabel[l]}
+            </option>
+          ))}
+        </select>
+        <p className="text-xs text-[var(--fg-quiet)]">
+          {t('Il corso PPL di esempio, il glossario e la fraseologia restano nella loro lingua.')}
+        </p>
+      </div>
+      <Field label={t('Esame')}>
+        <Radio
+          name="template"
+          checked={prefs.course.template === 'ppl-easa'}
+          onChange={() => {
+            setExamName('PPL(A) EASA')
+            void setCourse({ template: 'ppl-easa', examName: 'PPL(A) EASA' })
+          }}
+          label={t('PPL(A) EASA')}
+          hint={t('materie, radio, meteo e strumenti di volo')}
+        />
+        <Radio
+          name="template"
+          checked={prefs.course.template === 'custom'}
+          onChange={() => {
+            const name =
+              examName === 'PPL(A) EASA' || !examName.trim() ? t('Il mio esame') : examName
+            setExamName(name)
+            void setCourse({ template: 'custom', examName: name })
+          }}
+          label={t('Un altro esame')}
+          hint={t('materie tue, domande dai tuoi libri')}
+        />
+      </Field>
+      {prefs.course.template === 'custom' && (
+        <div className="flex flex-col gap-1">
+          <label htmlFor={ids.exam} className="text-sm">
+            {t('Nome dell’esame')}
+          </label>
+          <input
+            id={ids.exam}
+            value={examName}
+            onChange={(e) => setExamName(e.target.value)}
+            onBlur={() => examName.trim() && setCourse({ examName: examName.trim() })}
+            className={inputClass}
+          />
+          <p className="text-xs text-[var(--fg-quiet)]">
+            {t('Le materie si aggiungono dalla pagina Materie.')}
+          </p>
+        </div>
+      )}
+      <a
+        href={hrefFor({ name: 'profiles' })}
+        className="self-start text-sm underline underline-offset-4"
+      >
+        {t('Profili: più persone su questo dispositivo')}
+      </a>
+    </Section>
   )
 }
 
@@ -164,51 +254,50 @@ function FocusSection({
     } catch {
       setNote(
         kind === 'camera'
-          ? 'Il browser non ha concesso la fotocamera.'
-          : 'Il browser non ha concesso il microfono.',
+          ? t('Il browser non ha concesso la fotocamera.')
+          : t('Il browser non ha concesso il microfono.'),
       )
     }
   }
 
   return (
-    <Section title="Concentrazione">
+    <Section title={t('Concentrazione')}>
       <p className="text-sm text-[var(--fg-quiet)]">
-        L’uscita dall’app viene sempre contata. Fotocamera e microfono sono facoltativi: le immagini
-        e l’audio vengono analizzati in memoria su questo dispositivo e scartati subito, mai salvati
-        né inviati. Vector non ascolta cosa si dice: capisce solo se c’è una voce e se è la tua. I
-        modelli di analisi si scaricano una volta da Google e poi restano in cache.
+        {t(
+          'L’uscita dall’app viene sempre contata. Fotocamera e microfono sono facoltativi: le immagini e l’audio vengono analizzati in memoria su questo dispositivo e scartati subito, mai salvati né inviati. Vector non ascolta cosa si dice: capisce solo se c’è una voce e se è la tua. I modelli di analisi si scaricano una volta da Google e poi restano in cache.',
+        )}
       </p>
       <Checkbox
-        label="Usa la fotocamera"
+        label={t('Usa la fotocamera')}
         checked={prefs.focus.camera}
         onChange={(v) => void enable('camera', v)}
       />
       {prefs.focus.camera && (
         <Checkbox
-          label="Accorgiti del telefono in mano"
+          label={t('Accorgiti del telefono in mano')}
           checked={prefs.focus.phone}
           onChange={(v) => set({ phone: v })}
         />
       )}
       <Checkbox
-        label="Usa il microfono"
+        label={t('Usa il microfono')}
         checked={prefs.focus.mic}
         onChange={(v) => void enable('mic', v)}
       />
       {prefs.focus.mic && (
         <Checkbox
-          label="Studio ad alta voce: la mia voce non è una distrazione"
+          label={t('Studio ad alta voce: la mia voce non è una distrazione')}
           checked={prefs.focus.aloud}
           onChange={(v) => set({ aloud: v })}
         />
       )}
       <Checkbox
-        label="Suono quando mi distraggo"
+        label={t('Suono quando mi distraggo')}
         checked={prefs.focus.sound}
         onChange={(v) => set({ sound: v })}
       />
       <NumberField
-        label="Ignora distrazioni più brevi di (secondi)"
+        label={t('Ignora distrazioni più brevi di (secondi)')}
         value={prefs.config.focus.ignoreDistractionSeconds}
         min={0}
         max={60}
@@ -217,7 +306,7 @@ function FocusSection({
         }
       />
       <NumberField
-        label="Metti in pausa dopo (secondi lontano)"
+        label={t('Metti in pausa dopo (secondi lontano)')}
         value={prefs.config.focus.pauseAfterSeconds}
         min={1}
         max={600}
@@ -236,7 +325,9 @@ const inputClass =
   'min-h-11 w-full rounded-lg border border-[var(--rule)] bg-transparent px-3 text-[var(--fg)]'
 
 const errorText = (e: unknown) =>
-  e instanceof WrongPassphrase || e instanceof Error ? e.message : 'Qualcosa non ha funzionato.'
+  e instanceof WrongPassphrase || e instanceof Error
+    ? t(e.message)
+    : t('Qualcosa non ha funzionato.')
 
 function SyncSection() {
   const { prefs, updatePrefs, reload } = useStore()
@@ -254,7 +345,7 @@ function SyncSection() {
 
   const run = async (what: 'push' | 'pull') => {
     setBusy(true)
-    setStatus(what === 'push' ? 'Cifro e invio…' : 'Ricevo e decifro…')
+    setStatus(what === 'push' ? t('Cifro e invio…') : t('Ricevo e decifro…'))
     try {
       const s = { ...prefs.sync, url: url.trim(), passphrase: phrase.trim() }
       if (what === 'push') {
@@ -265,7 +356,7 @@ function SyncSection() {
         await saveSync(s)
         const r = await pull(s)
         if (!r) {
-          setStatus('Sul server non c’è ancora niente: invia da questo dispositivo.')
+          setStatus(t('Sul server non c’è ancora niente: invia da questo dispositivo.'))
         } else {
           const fresh = await loadPreferences()
           await savePreferences({
@@ -273,7 +364,7 @@ function SyncSection() {
             sync: { ...s, version: r.version, lastSyncedAt: new Date().toISOString() },
           })
           await reload()
-          setStatus('Ricevuto: i dati di questo dispositivo sono stati sostituiti.')
+          setStatus(t('Ricevuto: i dati di questo dispositivo sono stati sostituiti.'))
         }
       }
     } catch (e) {
@@ -284,22 +375,22 @@ function SyncSection() {
   }
 
   return (
-    <Section title="Sincronizzazione tra dispositivi">
+    <Section title={t('Sincronizzazione tra dispositivi')}>
       <p className="text-sm text-[var(--fg-quiet)]">
-        Facoltativa, con un server tuo (istruzioni in <code>worker/README.md</code> nel repository).
-        Tutto viene cifrato qui con la frase segreta prima di partire: il server non può leggere
-        niente. Usa la stessa frase su ogni dispositivo. Se la perdi, i dati sul server sono
-        irrecuperabili. Il testo dei libri non viene sincronizzato.
+        {t('Facoltativa, con un server tuo (istruzioni in')} <code>{t('worker/README.md')}</code>{' '}
+        {t(
+          'nel repository). Tutto viene cifrato qui con la frase segreta prima di partire: il server non può leggere niente. Usa la stessa frase su ogni dispositivo. Se la perdi, i dati sul server sono irrecuperabili. Il testo dei libri non viene sincronizzato.',
+        )}
       </p>
       <div className="flex flex-col gap-1">
         <label htmlFor={ids.url} className="text-sm">
-          Indirizzo del server
+          {t('Indirizzo del server')}
         </label>
         <input
           id={ids.url}
           type="url"
           inputMode="url"
-          placeholder="https://vector-sync.tuonome.workers.dev"
+          placeholder={t('https://vector-sync.tuonome.workers.dev')}
           value={url}
           onChange={(e) => setUrl(e.target.value)}
           className={inputClass}
@@ -307,7 +398,7 @@ function SyncSection() {
       </div>
       <div className="flex flex-col gap-1">
         <label htmlFor={ids.phrase} className="text-sm">
-          Frase segreta
+          {t('Frase segreta')}
         </label>
         <div className="flex flex-wrap gap-2">
           <input
@@ -318,33 +409,34 @@ function SyncSection() {
             onChange={(e) => setPhrase(e.target.value)}
             className={`${inputClass} flex-1 font-mono text-sm`}
           />
-          <QuietButton onClick={() => setPhrase(generatePassphrase())}>Genera</QuietButton>
+          <QuietButton onClick={() => setPhrase(generatePassphrase())}>{t('Genera')}</QuietButton>
         </div>
-        {problem && <p className="text-sm">{problem}</p>}
+        {problem && <p className="text-sm">{t(problem)}</p>}
       </div>
       <div className="flex flex-wrap items-center gap-2">
         <PrimaryButton
           disabled={busy || !url.trim() || !phrase.trim() || problem !== null}
           onClick={() => run('push')}
         >
-          Invia da qui
+          {t('Invia da qui')}
         </PrimaryButton>
         <QuietButton
           disabled={busy || !url.trim() || !phrase.trim() || problem !== null}
           onClick={() => run('pull')}
         >
-          Ricevi (sostituisce i dati qui)
+          {t('Ricevi (sostituisce i dati qui)')}
         </QuietButton>
         {changed && !busy && (
           <span className="text-xs text-[var(--fg-quiet)]">
-            Si salvano al primo invio o ricezione.
+            {t('Si salvano al primo invio o ricezione.')}
           </span>
         )}
       </div>
       {prefs.sync.lastSyncedAt && (
         <p className="text-xs text-[var(--fg-quiet)]">
-          Ultima sincronizzazione: {new Date(prefs.sync.lastSyncedAt).toLocaleString('it-IT')} ·
-          versione {prefs.sync.version}
+          {t('Ultima sincronizzazione:')}{' '}
+          {new Date(prefs.sync.lastSyncedAt).toLocaleString(locale())} {t('· versione')}{' '}
+          {prefs.sync.version}
         </p>
       )}
       {status && (
@@ -365,14 +457,15 @@ function DataSection() {
   const date = () => new Date().toISOString().slice(0, 10)
 
   return (
-    <Section title="I tuoi dati">
+    <Section title={t('I tuoi dati')}>
       <p className="text-sm text-[var(--fg-quiet)]">
-        Progressi e impostazioni sono salvati solo in questo browser. I backup non contengono la
-        chiave API né il testo dei libri.
+        {t(
+          'Progressi e impostazioni sono salvati solo in questo browser. I backup non contengono la chiave API né il testo dei libri.',
+        )}
       </p>
       <div className="flex flex-col gap-1">
         <label htmlFor={ids.phrase} className="text-sm">
-          Frase segreta per il backup cifrato
+          {t('Frase segreta per il backup cifrato')}
         </label>
         <div className="flex flex-wrap gap-2">
           <input
@@ -383,7 +476,7 @@ function DataSection() {
             onChange={(e) => setPhrase(e.target.value)}
             className={`${inputClass} flex-1 font-mono text-sm`}
           />
-          <QuietButton onClick={() => setPhrase(generatePassphrase())}>Genera</QuietButton>
+          <QuietButton onClick={() => setPhrase(generatePassphrase())}>{t('Genera')}</QuietButton>
         </div>
       </div>
       <div className="flex flex-wrap gap-2">
@@ -392,10 +485,10 @@ function DataSection() {
           onClick={async () => {
             setStatus('Cifro…')
             download(await encryptedBackup(phrase.trim()), `vector-backup-cifrato-${date()}.json`)
-            setStatus('Backup cifrato scaricato. Conserva la frase: senza non si apre.')
+            setStatus(t('Backup cifrato scaricato. Conserva la frase: senza non si apre.'))
           }}
         >
-          Scarica un backup cifrato
+          {t('Scarica un backup cifrato')}
         </QuietButton>
         <QuietButton
           onClick={async () =>
@@ -405,12 +498,12 @@ function DataSection() {
             )
           }
         >
-          Scarica un backup leggibile
+          {t('Scarica un backup leggibile')}
         </QuietButton>
       </div>
       <div className="flex flex-col gap-2">
         <label htmlFor={ids.file} className="text-sm">
-          Ripristina da un backup (sostituisce i dati qui)
+          {t('Ripristina da un backup (sostituisce i dati qui)')}
         </label>
         <input
           id={ids.file}
@@ -428,13 +521,15 @@ function DataSection() {
               setStatus('Ripristino…')
               await restoreBackup(await file.text(), phrase.trim() || null)
               await reload()
-              setStatus('Backup ripristinato. Ricollega i PDF dalla Libreria per leggere i libri.')
+              setStatus(
+                t('Backup ripristinato. Ricollega i PDF dalla Libreria per leggere i libri.'),
+              )
             } catch (e) {
               setStatus(errorText(e))
             }
           }}
         >
-          Ripristina
+          {t('Ripristina')}
         </QuietButton>
       </div>
       {status && (
@@ -461,27 +556,27 @@ function AiSection() {
     updatePrefs({ ...prefs, ai: { ...prefs.ai, ...patch } })
 
   const test = async () => {
-    setStatus('Verifico la chiave…')
+    setStatus(t('Verifico la chiave…'))
     try {
       const found = await listModels(key.trim())
       await saveAi({ apiKey: key.trim() })
       setModels(found)
-      setStatus(`Chiave valida. ${found.length} modelli disponibili.`)
+      setStatus(t('Chiave valida. {length} modelli disponibili.', { length: found.length }))
     } catch (e) {
-      setStatus(e instanceof AiError ? e.message : 'Verifica non riuscita.')
+      setStatus(e instanceof AiError ? e.message : t('Verifica non riuscita.'))
     }
   }
 
   return (
-    <Section title="Intelligenza artificiale (Gemini)">
+    <Section title={t('Intelligenza artificiale (Gemini)')}>
       <p className="text-sm text-[var(--fg-quiet)]">
-        Facoltativa. Serve per rispiegare un concetto dopo un errore, creare domande dai tuoi libri,
-        correggere le risposte a parole e spiegare un termine nella frase. Riceve solo il testo
-        necessario, mai dati personali. La chiave resta su questo dispositivo.
+        {t(
+          'Facoltativa. Serve per rispiegare un concetto dopo un errore, creare domande dai tuoi libri, correggere le risposte a parole e spiegare un termine nella frase. Riceve solo il testo necessario, mai dati personali. La chiave resta su questo dispositivo.',
+        )}
       </p>
       <div className="flex flex-col gap-2">
         <label htmlFor={keyId} className="text-sm">
-          Chiave API di Google AI Studio
+          {t('Chiave API di Google AI Studio')}
         </label>
         <div className="flex flex-wrap gap-3">
           <input
@@ -494,7 +589,7 @@ function AiSection() {
             className="min-h-11 flex-1 rounded-lg border border-[var(--rule)] bg-transparent px-3 font-mono text-sm"
           />
           <PrimaryButton onClick={test} disabled={key.trim().length < 10}>
-            Verifica e salva
+            {t('Verifica e salva')}
           </PrimaryButton>
         </div>
         {status && (
@@ -505,7 +600,7 @@ function AiSection() {
       </div>
       <div className="flex flex-col gap-2">
         <label htmlFor={modelId} className="text-sm">
-          Modello
+          {t('Modello')}
         </label>
         <select
           id={modelId}
@@ -526,10 +621,10 @@ function AiSection() {
           onClick={async () => {
             await saveAi({ apiKey: null })
             setKey('')
-            setStatus('Chiave rimossa da questo dispositivo.')
+            setStatus(t('Chiave rimossa da questo dispositivo.'))
           }}
         >
-          Rimuovi la chiave
+          {t('Rimuovi la chiave')}
         </QuietButton>
       )}
     </Section>
@@ -538,7 +633,8 @@ function AiSection() {
 
 function ResetButton({ onReset }: { onReset: () => Promise<void> }) {
   const [armed, setArmed] = useState(false)
-  if (!armed) return <QuietButton onClick={() => setArmed(true)}>Cancella tutti i dati</QuietButton>
+  if (!armed)
+    return <QuietButton onClick={() => setArmed(true)}>{t('Cancella tutti i dati')}</QuietButton>
   return (
     <span className="flex flex-wrap items-center gap-2">
       <QuietButton
@@ -548,9 +644,9 @@ function ResetButton({ onReset }: { onReset: () => Promise<void> }) {
           setArmed(false)
         }}
       >
-        Conferma: cancella tutto
+        {t('Conferma: cancella tutto')}
       </QuietButton>
-      <QuietButton onClick={() => setArmed(false)}>Annulla</QuietButton>
+      <QuietButton onClick={() => setArmed(false)}>{t('Annulla')}</QuietButton>
     </span>
   )
 }

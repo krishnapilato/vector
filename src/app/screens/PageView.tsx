@@ -1,5 +1,6 @@
 import type React from 'react'
 import { useEffect, useRef, useState } from 'react'
+import { msg } from '../../core/i18n'
 import {
   bounds,
   buildTranscribePrompt,
@@ -13,6 +14,7 @@ import {
 } from '../../core/ink'
 import { AiError, generate } from '../ai/gemini'
 import { type Drawing, loadBookFile, loadDrawing, saveDrawing } from '../data/db'
+import { t } from '../i18n'
 import type { OpenPdf } from '../reading/pdf'
 import { useStore } from '../state'
 import { QuietButton } from '../ui'
@@ -42,9 +44,9 @@ function openBook(bookId: string): Promise<OpenPdf | null> {
 type Tool = 'none' | 'pen' | 'marker' | 'eraser'
 
 const toolLabel: Record<Exclude<Tool, 'none'>, string> = {
-  pen: 'Penna',
-  marker: 'Evidenziatore',
-  eraser: 'Gomma',
+  pen: msg('Penna'),
+  marker: msg('Evidenziatore'),
+  eraser: msg('Gomma'),
 }
 
 export function PageView({
@@ -56,7 +58,7 @@ export function PageView({
   page: number
   language: 'it' | 'en'
 }) {
-  const { prefs } = useStore()
+  const { prefs, exam } = useStore()
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const wrapRef = useRef<HTMLDivElement>(null)
   const [error, setError] = useState<string | null>(null)
@@ -80,7 +82,7 @@ export function PageView({
         const pdf = await openBook(bookId)
         if (cancelled) return
         if (!pdf) {
-          setError('Il file originale non è salvato su questo dispositivo.')
+          setError(t('Il file originale non è salvato su questo dispositivo.'))
           return
         }
         const canvas = canvasRef.current
@@ -170,14 +172,14 @@ export function PageView({
     const apiKey = prefs.ai.apiKey
     const box = bounds(strokes)
     if (!apiKey || !box) return
-    setTranscribing('Leggo la tua scrittura…')
+    setTranscribing(t('Leggo la tua scrittura…'))
     try {
       const W = 1400
       const c = document.createElement('canvas')
       c.width = Math.ceil((box.right - box.x) * W)
       c.height = Math.ceil((box.bottom - box.y) * W)
       const ctx = c.getContext('2d')
-      if (!ctx) throw new Error('Canvas non disponibile.')
+      if (!ctx) throw new Error(t('Canvas non disponibile.'))
       ctx.fillStyle = '#fff'
       ctx.fillRect(0, 0, c.width, c.height)
       ctx.translate(-box.x * W, -box.y * W)
@@ -186,15 +188,20 @@ export function PageView({
         ctx.fill(new Path2D(strokePath(s, W)))
       }
       const base64 = c.toDataURL('image/png').split(',')[1] ?? ''
-      const text = await generate(apiKey, prefs.ai.model, buildTranscribePrompt(language), {
-        inline: { mimeType: 'image/png', base64 },
-        maxOutputTokens: 1200,
-        temperature: 0,
-      })
+      const text = await generate(
+        apiKey,
+        prefs.ai.model,
+        buildTranscribePrompt(language, exam.name),
+        {
+          inline: { mimeType: 'image/png', base64 },
+          maxOutputTokens: 1200,
+          temperature: 0,
+        },
+      )
       commit(strokes, text)
       setTranscribing(null)
     } catch (e) {
-      setTranscribing(e instanceof AiError ? e.message : 'Trascrizione non riuscita.')
+      setTranscribing(e instanceof AiError ? e.message : t('Trascrizione non riuscita.'))
     }
   }
 
@@ -204,17 +211,17 @@ export function PageView({
       {!error && (
         <div
           role="toolbar"
-          aria-label="Note a penna"
+          aria-label={t('Note a penna')}
           className="flex flex-wrap items-center gap-1 text-sm"
         >
-          {(Object.keys(toolLabel) as (keyof typeof toolLabel)[]).map((t) => (
+          {(Object.keys(toolLabel) as (keyof typeof toolLabel)[]).map((tl) => (
             <QuietButton
-              key={t}
-              aria-pressed={tool === t}
-              className={tool === t ? 'text-[var(--fg)] underline' : ''}
-              onClick={() => setTool(tool === t ? 'none' : t)}
+              key={tl}
+              aria-pressed={tool === tl}
+              className={tool === tl ? 'text-[var(--fg)] underline' : ''}
+              onClick={() => setTool(tool === tl ? 'none' : tl)}
             >
-              {toolLabel[t]}
+              {t(toolLabel[tl])}
             </QuietButton>
           ))}
           <QuietButton
@@ -226,11 +233,14 @@ export function PageView({
               commit(prev)
             }}
           >
-            Annulla
+            {t('Annulla')}
           </QuietButton>
           {strokes.length > 0 && prefs.ai.apiKey && (
-            <QuietButton onClick={transcribe} disabled={transcribing === 'Leggo la tua scrittura…'}>
-              Trascrivi in testo (IA)
+            <QuietButton
+              onClick={transcribe}
+              disabled={transcribing === t('Leggo la tua scrittura…')}
+            >
+              {t('Trascrivi in testo (IA)')}
             </QuietButton>
           )}
         </div>
@@ -242,7 +252,7 @@ export function PageView({
           <>
             <canvas
               ref={canvasRef}
-              aria-label={`Pagina ${page} del PDF originale`}
+              aria-label={t('Pagina {page} del PDF originale', { page })}
               role="img"
               className="block max-w-full bg-white"
             />
@@ -285,7 +295,7 @@ export function PageView({
       {drawing?.transcript && (
         <section className="flex flex-col gap-2 border-l border-[var(--rule)] pl-4">
           <h2 className="text-xs text-[var(--fg-quiet)]">
-            Le tue note a penna, in testo (verificale)
+            {t('Le tue note a penna, in testo (verificale)')}
           </h2>
           <p className="whitespace-pre-line text-sm leading-relaxed">{drawing.transcript}</p>
         </section>

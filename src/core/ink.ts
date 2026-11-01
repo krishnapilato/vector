@@ -92,9 +92,9 @@ export function bounds(strokes: readonly Stroke[], margin = 0.02) {
   }
 }
 
-export function buildTranscribePrompt(language: 'it' | 'en'): string {
+export function buildTranscribePrompt(language: 'it' | 'en', examName = 'PPL(A)'): string {
   return [
-    'L’immagine contiene appunti scritti a mano da uno studente PPL(A) su una pagina di un manuale' +
+    `L’immagine contiene appunti scritti a mano da uno studente (${examName}) su una pagina di un manuale` +
       (language === 'en' ? ' in inglese' : '') +
       '.',
     'Trascrivi fedelmente il testo scritto a mano, riga per riga. Mantieni abbreviazioni, numeri e unità di misura così come sono.',

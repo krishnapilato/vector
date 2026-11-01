@@ -13,13 +13,15 @@ import {
   weekDays,
 } from '../../core/plan'
 import { masteryOf } from '../../core/progress'
+import { locale, t, tn } from '../i18n'
 import { hrefFor } from '../router'
 import { useStore } from '../state'
 import { LinkButton, Page, PrimaryButton, QuietButton } from '../ui'
 
-const dayFmt = new Intl.DateTimeFormat('it-IT', { weekday: 'long', day: 'numeric', month: 'long' })
-const timeFmt = new Intl.DateTimeFormat('it-IT', { hour: '2-digit', minute: '2-digit' })
-const rangeFmt = new Intl.DateTimeFormat('it-IT', { day: 'numeric', month: 'long' })
+const dayFmt = () =>
+  new Intl.DateTimeFormat(locale(), { weekday: 'long', day: 'numeric', month: 'long' })
+const timeFmt = () => new Intl.DateTimeFormat(locale(), { hour: '2-digit', minute: '2-digit' })
+const rangeFmt = () => new Intl.DateTimeFormat(locale(), { day: 'numeric', month: 'long' })
 
 const inputClass =
   'min-h-11 w-full rounded-lg border border-[var(--rule)] bg-[var(--bg)] px-3 text-[var(--fg)]'
@@ -64,10 +66,10 @@ export function Plan() {
   const examId = useId()
 
   return (
-    <Page title="Piano">
+    <Page title={t('Piano')}>
       <section className="flex flex-col gap-3">
         <label htmlFor={examId} className="text-sm">
-          Data dell'esame teorico
+          {t("Data dell'esame teorico")}
         </label>
         <div className="flex flex-wrap items-center gap-4">
           <input
@@ -80,16 +82,26 @@ export function Plan() {
           />
           {ready && ready.daysLeft > 0 && (
             <p>
-              Mancano <strong className="font-medium">{ready.daysLeft} giorni</strong>.
+              {t('Mancano')}{' '}
+              <strong className="font-medium">
+                {ready.daysLeft} {t('giorni')}
+              </strong>
+              .
             </p>
           )}
         </div>
         {ready && ready.daysLeft > 0 && ready.notStarted > 0 && ready.newPerDay !== null && (
           <p className="text-sm text-[var(--fg-quiet)]">
-            {ready.notStarted} concetti ancora da iniziare: circa {ready.newPerDay}{' '}
-            {ready.newPerDay === 1 ? 'nuovo' : 'nuovi'} al giorno
-            {ready.daysLeft > 28 ? ', tenendo le ultime due settimane per il ripasso' : ''}. Lo
-            imposti in Impostazioni → Concetti nuovi per sessione.
+            {tn(
+              ready.newPerDay,
+              '{left} concetti ancora da iniziare: circa {n} nuovo al giorno',
+              '{left} concetti ancora da iniziare: circa {n} nuovi al giorno',
+              {
+                left: ready.notStarted,
+              },
+            )}
+            {ready.daysLeft > 28 ? t(', tenendo le ultime due settimane per il ripasso') : ''}
+            {t('. Lo imposti in Impostazioni → Concetti nuovi per sessione.')}
           </p>
         )}
       </section>
@@ -97,22 +109,24 @@ export function Plan() {
       <section className="flex flex-col gap-4 border-t border-[var(--rule)] pt-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-lg font-medium">
-            {rangeFmt.format(weekOf)} – {rangeFmt.format(addDays(weekOf, 6))}
+            {rangeFmt().format(weekOf)} – {rangeFmt().format(addDays(weekOf, 6))}
           </h2>
           <div className="flex items-center gap-1">
             <QuietButton onClick={() => setWeekOf(addDays(weekOf, -7))}>
-              ‹ Settimana prima
+              {t('‹ Settimana prima')}
             </QuietButton>
-            <QuietButton onClick={() => setWeekOf(startOfWeek(new Date()))}>Oggi</QuietButton>
+            <QuietButton onClick={() => setWeekOf(startOfWeek(new Date()))}>
+              {t('Oggi')}
+            </QuietButton>
             <QuietButton onClick={() => setWeekOf(addDays(weekOf, 7))}>
-              Settimana dopo ›
+              {t('Settimana dopo ›')}
             </QuietButton>
           </div>
         </div>
         {weekMinutes > 0 && (
           <p className="text-sm text-[var(--fg-quiet)]">
-            Concentrazione registrata questa settimana: {Math.floor(weekMinutes / 60)} h{' '}
-            {weekMinutes % 60} min.
+            {t('Concentrazione registrata questa settimana:')} {Math.floor(weekMinutes / 60)}{' '}
+            {t('h')} {weekMinutes % 60} {t('min.')}
           </p>
         )}
         <ol className="flex flex-col">
@@ -125,9 +139,9 @@ export function Plan() {
                 <h3
                   className={`text-sm ${isToday ? 'font-medium underline underline-offset-4' : ''}`}
                 >
-                  {dayFmt.format(day)}
-                  {isToday && ' · oggi'}
-                  {isExam && ' · ESAME'}
+                  {dayFmt().format(day)}
+                  {isToday && t(' · oggi')}
+                  {isExam && t(' · ESAME')}
                 </h3>
                 {items.length > 0 && (
                   <ul className="mt-2 flex flex-col gap-2">
@@ -151,9 +165,9 @@ export function Plan() {
       <AddSession defaultDay={sameDay(weekOf, startOfWeek(today)) ? today : weekOf} />
 
       <section className="flex flex-wrap items-center gap-6 border-t border-[var(--rule)] pt-6">
-        <LinkButton href={hrefFor({ name: 'pomodoro' })}>Avvia un pomodoro</LinkButton>
+        <LinkButton href={hrefFor({ name: 'pomodoro' })}>{t('Avvia un pomodoro')}</LinkButton>
         <QuietButton onClick={exportIcs} disabled={plan.length === 0}>
-          Esporta per Google Calendar (.ics)
+          {t('Esporta per Google Calendar (.ics)')}
         </QuietButton>
       </section>
     </Page>
@@ -173,9 +187,9 @@ function PlanRow({
 }) {
   const start = new Date(item.start)
   const label = [
-    timeFmt.format(start),
+    timeFmt().format(start),
     `${item.minutes} min`,
-    planKindLabel[item.kind],
+    t(planKindLabel[item.kind]),
     item.subjectId ? subjectName(item.subjectId) : null,
   ]
     .filter(Boolean)
@@ -193,12 +207,12 @@ function PlanRow({
             href={studyHref}
             className="inline-flex min-h-11 items-center px-3 text-sm underline underline-offset-4"
           >
-            Inizia
+            {t('Inizia')}
           </a>
         )}
-        <QuietButton onClick={onToggle}>{item.done ? 'Da fare' : 'Fatto'}</QuietButton>
-        <QuietButton onClick={onDelete} aria-label={`Elimina ${label}`}>
-          Elimina
+        <QuietButton onClick={onToggle}>{item.done ? t('Da fare') : 'Fatto'}</QuietButton>
+        <QuietButton onClick={onDelete} aria-label={t('Elimina {label}', { label })}>
+          {t('Elimina')}
         </QuietButton>
       </span>
     </li>
@@ -232,16 +246,20 @@ function AddSession({ defaultDay }: { defaultDay: Date }) {
       () => crypto.randomUUID(),
     )
     savePlan(items)
-    setAdded(items.length === 1 ? 'Sessione aggiunta.' : `${items.length} sessioni aggiunte.`)
+    setAdded(
+      items.length === 1
+        ? t('Sessione aggiunta.')
+        : t('{length} sessioni aggiunte.', { length: items.length }),
+    )
   }
 
   return (
     <section className="flex flex-col gap-4 border-t border-[var(--rule)] pt-6">
-      <h2 className="text-lg font-medium">Pianifica una sessione</h2>
+      <h2 className="text-lg font-medium">{t('Pianifica una sessione')}</h2>
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
         <div className="flex flex-col gap-1">
           <label htmlFor={ids.date} className="text-sm">
-            Giorno
+            {t('Giorno')}
           </label>
           <input
             id={ids.date}
@@ -253,7 +271,7 @@ function AddSession({ defaultDay }: { defaultDay: Date }) {
         </div>
         <div className="flex flex-col gap-1">
           <label htmlFor={ids.time} className="text-sm">
-            Ora
+            {t('Ora')}
           </label>
           <input
             id={ids.time}
@@ -265,7 +283,7 @@ function AddSession({ defaultDay }: { defaultDay: Date }) {
         </div>
         <div className="flex flex-col gap-1">
           <label htmlFor={ids.min} className="text-sm">
-            Durata
+            {t('Durata')}
           </label>
           <select
             id={ids.min}
@@ -275,14 +293,14 @@ function AddSession({ defaultDay }: { defaultDay: Date }) {
           >
             {[15, 25, 30, 45, 60, 90, 120].map((m) => (
               <option key={m} value={m}>
-                {m} min
+                {m} {t('min')}
               </option>
             ))}
           </select>
         </div>
         <div className="flex flex-col gap-1">
           <label htmlFor={ids.kind} className="text-sm">
-            Tipo
+            {t('Tipo')}
           </label>
           <select
             id={ids.kind}
@@ -292,14 +310,14 @@ function AddSession({ defaultDay }: { defaultDay: Date }) {
           >
             {(Object.keys(planKindLabel) as PlanKind[]).map((k) => (
               <option key={k} value={k}>
-                {planKindLabel[k]}
+                {t(planKindLabel[k])}
               </option>
             ))}
           </select>
         </div>
         <div className="flex flex-col gap-1">
           <label htmlFor={ids.subj} className="text-sm">
-            Materia
+            {t('Materia')}
           </label>
           <select
             id={ids.subj}
@@ -307,17 +325,17 @@ function AddSession({ defaultDay }: { defaultDay: Date }) {
             onChange={(e) => setSubjectId(e.target.value)}
             className={inputClass}
           >
-            <option value="">Tutte</option>
+            <option value="">{t('Tutte')}</option>
             {course.subjects.map((s) => (
               <option key={s.id} value={s.id}>
-                {s.name}
+                {t(s.name)}
               </option>
             ))}
           </select>
         </div>
         <div className="flex flex-col gap-1">
           <label htmlFor={ids.weeks} className="text-sm">
-            Ripeti
+            {t('Ripeti')}
           </label>
           <select
             id={ids.weeks}
@@ -325,17 +343,17 @@ function AddSession({ defaultDay }: { defaultDay: Date }) {
             onChange={(e) => setWeeks(Number(e.target.value))}
             className={inputClass}
           >
-            <option value={1}>Una volta</option>
+            <option value={1}>{t('Una volta')}</option>
             {[2, 4, 8, 12].map((w) => (
               <option key={w} value={w}>
-                Ogni settimana per {w} settimane
+                {t('Ogni settimana per')} {w} {t('settimane')}
               </option>
             ))}
           </select>
         </div>
       </div>
       <div className="flex flex-wrap items-center gap-4">
-        <PrimaryButton onClick={add}>Aggiungi</PrimaryButton>
+        <PrimaryButton onClick={add}>{t('Aggiungi')}</PrimaryButton>
         {added && (
           <p className="text-sm text-[var(--fg-quiet)]" aria-live="polite">
             {added}

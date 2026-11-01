@@ -1,5 +1,6 @@
 /** The error diary: every mistake, grouped by concept, with whether it has been fixed since. */
 import type { Concept } from './content/types'
+import { msg } from './i18n'
 import type { AttemptLike } from './profile'
 
 export interface DiaryAttempt extends AttemptLike {
@@ -11,10 +12,10 @@ export interface DiaryAttempt extends AttemptLike {
 export const MISTAKES: readonly string[] = ['wrong', 'unknown', 'reason-wrong', 'guessed']
 
 export const mistakeLabel: Record<string, string> = {
-  wrong: 'Sbagliata',
-  unknown: 'Non sapevo',
-  'reason-wrong': 'Perché sbagliato',
-  guessed: 'Indovinata',
+  wrong: msg('Sbagliata'),
+  unknown: msg('Non sapevo'),
+  'reason-wrong': msg('Perché sbagliato'),
+  guessed: msg('Indovinata'),
 }
 
 export interface DiaryEntry {
@@ -47,7 +48,7 @@ export function buildDiary(
     const after = list.filter((a) => a.at > last.at)
     out.push({
       conceptId,
-      title: c?.title ?? 'Concetto rimosso',
+      title: c?.title ?? msg('Concetto rimosso'),
       subjectId: c?.subjectId ?? null,
       source: c?.source ?? null,
       mistakes: mistakes.reverse(),

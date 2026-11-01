@@ -1,11 +1,12 @@
+import { msg } from './i18n'
 /** Study planning: sessions on a calendar, the exam date, and an .ics export. */
 
 export type PlanKind = 'study' | 'review' | 'exam-sim'
 
 export const planKindLabel: Record<PlanKind, string> = {
-  study: 'Studio',
-  review: 'Ripasso',
-  'exam-sim': 'Simulazione esame',
+  study: msg('Studio'),
+  review: msg('Ripasso'),
+  'exam-sim': msg('Simulazione esame'),
 }
 
 export interface PlanItem {

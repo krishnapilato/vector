@@ -1,4 +1,5 @@
 import * as z from 'zod/mini'
+import { t } from '../i18n'
 
 /**
  * Calls the Gemini API directly from the browser with the learner's own key.
@@ -38,14 +39,14 @@ const modelsResponse = z.object({
 
 function explainStatus(status: number): string {
   if (status === 400 || status === 401 || status === 403)
-    return 'Chiave non valida o non autorizzata.'
-  if (status === 404) return 'Modello non trovato: scegline un altro nelle impostazioni.'
-  if (status === 429) return 'Limite gratuito raggiunto per ora: riprova più tardi.'
-  return `Il servizio ha risposto con un errore (${status}).`
+    return t('Chiave non valida o non autorizzata.')
+  if (status === 404) return t('Modello non trovato: scegline un altro nelle impostazioni.')
+  if (status === 429) return t('Limite gratuito raggiunto per ora: riprova più tardi.')
+  return t('Il servizio ha risposto con un errore ({status}).', { status })
 }
 
 async function call(url: string, apiKey: string, init: RequestInit = {}): Promise<unknown> {
-  if (!navigator.onLine) throw new AiError('Sei offline: questa funzione richiede la rete.')
+  if (!navigator.onLine) throw new AiError(t('Sei offline: questa funzione richiede la rete.'))
   let res: Response
   try {
     res = await fetch(url, {
@@ -53,7 +54,7 @@ async function call(url: string, apiKey: string, init: RequestInit = {}): Promis
       headers: { 'content-type': 'application/json', 'x-goog-api-key': apiKey },
     })
   } catch {
-    throw new AiError('Non riesco a raggiungere il servizio. Controlla la connessione.')
+    throw new AiError(t('Non riesco a raggiungere il servizio. Controlla la connessione.'))
   }
   if (!res.ok) throw new AiError(explainStatus(res.status))
   return res.json()
@@ -99,7 +100,7 @@ export async function generate(
         .join('')
         .trim()
     : ''
-  if (!text) throw new AiError('Risposta vuota: riprova.')
+  if (!text) throw new AiError(t('Risposta vuota: riprova.'))
   return text
 }
 

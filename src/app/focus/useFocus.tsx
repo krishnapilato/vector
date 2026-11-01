@@ -12,6 +12,7 @@ import {
 } from '../../core/focus/focus'
 import { beep } from '../alerts'
 import { addFocusRecord } from '../data/db'
+import { t } from '../i18n'
 import { useStore } from '../state'
 import type { Sensors } from './sensors'
 
@@ -76,8 +77,8 @@ export function useFocus(active: boolean, kind: 'study' | 'reading'): FocusView 
             ...v,
             sensors: 'error',
             error: denied
-              ? 'Permesso negato per fotocamera o microfono: la sessione continua senza.'
-              : 'Non riesco ad avviare fotocamera o microfono: la sessione continua senza.',
+              ? t('Permesso negato per fotocamera o microfono: la sessione continua senza.')
+              : t('Non riesco ad avviare fotocamera o microfono: la sessione continua senza.'),
           }))
         })
     }
@@ -137,10 +138,10 @@ export function FocusLine({ view }: { view: FocusView }) {
   if (view.score === null) return null
   return (
     <p className="text-xs text-[var(--fg-quiet)]" aria-live="polite">
-      Attenzione {Math.round(view.score * 100)}%
-      {view.sensors === 'starting' ? ' · avvio i sensori…' : ''}
+      {t('Attenzione')} {Math.round(view.score * 100)}%
+      {view.sensors === 'starting' ? t(' · avvio i sensori…') : ''}
       {view.distraction ? (
-        <span className="text-[var(--fg)]"> · {distractionLabel[view.distraction]}</span>
+        <span className="text-[var(--fg)]"> · {t(distractionLabel[view.distraction])}</span>
       ) : null}
     </p>
   )

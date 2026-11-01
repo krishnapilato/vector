@@ -2,6 +2,7 @@ import { useEffect, useId, useState } from 'react'
 import { type Card, type CardState, pickCards, review } from '../../core/cards'
 import { glossary, lookup } from '../../core/content/glossary'
 import { loadCards, loadLookups, saveCard } from '../data/db'
+import { t } from '../i18n'
 import { PrimaryButton, QuietButton } from '../ui'
 
 /** The IT/EN glossary: search, and flashcards that start from the terms you look up most. */
@@ -13,7 +14,7 @@ export function GlossaryTool() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex gap-1" role="tablist" aria-label="Glossario">
+      <div className="flex gap-1" role="tablist" aria-label={t('Glossario')}>
         {(['cards', 'search'] as const).map((m) => (
           <button
             key={m}
@@ -23,14 +24,14 @@ export function GlossaryTool() {
             onClick={() => setMode(m)}
             className={`min-h-11 rounded-lg px-3 text-sm ${mode === m ? 'border border-[var(--fg)]' : 'text-[var(--fg-quiet)]'}`}
           >
-            {m === 'cards' ? 'Schede' : 'Cerca'}
+            {m === 'cards' ? t('Schede') : t('Cerca')}
           </button>
         ))}
       </div>
       {mode === 'search' ? (
         <div className="flex flex-col gap-4">
           <label htmlFor={id} className="text-sm">
-            Termine in italiano o in inglese
+            {t('Termine in italiano o in inglese')}
           </label>
           <input
             id={id}
@@ -50,7 +51,9 @@ export function GlossaryTool() {
               </div>
             ))}
           </dl>
-          <p className="text-xs text-[var(--fg-quiet)]">{glossary.length} termini.</p>
+          <p className="text-xs text-[var(--fg-quiet)]">
+            {glossary.length} {t('termini.')}
+          </p>
         </div>
       ) : (
         <Cards />
@@ -95,10 +98,10 @@ function Cards() {
       <div className="flex flex-col items-start gap-4" aria-live="polite">
         <p>
           {deck.length === 0
-            ? 'Nessuna scheda da ripassare oggi.'
-            : `Fatto: ${knew} su ${deck.length} sapute.`}
+            ? t('Nessuna scheda da ripassare oggi.')
+            : t('Fatto: {knew} su {length} sapute.', { knew, length: deck.length })}
         </p>
-        <QuietButton onClick={start}>Ricomincia</QuietButton>
+        <QuietButton onClick={start}>{t('Ricomincia')}</QuietButton>
       </div>
     )
   }
@@ -115,8 +118,8 @@ function Cards() {
   return (
     <div className="flex flex-col gap-6">
       <p className="text-xs text-[var(--fg-quiet)]">
-        Scheda {index + 1} di {deck.length} ·{' '}
-        {card.direction === 'it-en' ? 'italiano → inglese' : 'inglese → italiano'}
+        {t('Scheda')} {index + 1} {t('di')} {deck.length} ·{' '}
+        {card.direction === 'it-en' ? t('italiano → inglese') : t('inglese → italiano')}
       </p>
       <p lang={card.direction === 'it-en' ? 'it' : 'en'} className="text-3xl">
         {card.front}
@@ -129,13 +132,13 @@ function Cards() {
           </p>
           <p className="text-sm text-[var(--fg-quiet)]">{card.entry.def}</p>
           <div className="flex flex-wrap gap-2">
-            <PrimaryButton onClick={() => answer(true)}>Lo sapevo</PrimaryButton>
-            <QuietButton onClick={() => answer(false)}>Non lo sapevo</QuietButton>
+            <PrimaryButton onClick={() => answer(true)}>{t('Lo sapevo')}</PrimaryButton>
+            <QuietButton onClick={() => answer(false)}>{t('Non lo sapevo')}</QuietButton>
           </div>
         </div>
       ) : (
         <PrimaryButton className="self-start" onClick={() => setFlipped(true)}>
-          Gira la scheda
+          {t('Gira la scheda')}
         </PrimaryButton>
       )}
     </div>

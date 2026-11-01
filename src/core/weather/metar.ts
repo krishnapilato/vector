@@ -1,6 +1,7 @@
 /**
  * METAR and TAF decoding into plain Italian, for study. Not for flight planning.
  */
+import { italian, msg, type Tr } from '../i18n'
 import { pick, type Rng, randomInt, shuffle } from '../random'
 
 export interface Cloud {
@@ -35,62 +36,62 @@ export interface Metar {
 }
 
 const coverLabel: Record<Cloud['cover'], string> = {
-  FEW: 'poche nubi (1–2 ottavi)',
-  SCT: 'nubi sparse (3–4 ottavi)',
-  BKN: 'cielo molto nuvoloso (5–7 ottavi)',
-  OVC: 'cielo coperto (8 ottavi)',
-  VV: 'visibilità verticale',
+  FEW: msg('poche nubi (1–2 ottavi)'),
+  SCT: msg('nubi sparse (3–4 ottavi)'),
+  BKN: msg('cielo molto nuvoloso (5–7 ottavi)'),
+  OVC: msg('cielo coperto (8 ottavi)'),
+  VV: msg('visibilità verticale'),
 }
 
 const wxCodes: Record<string, string> = {
-  MI: 'basso',
-  BC: 'a banchi',
-  PR: 'parziale',
-  DR: 'scaccianeve basso',
-  BL: 'scaccianeve alto',
-  SH: 'rovesci di',
-  TS: 'temporale',
-  FZ: 'che gela',
-  DZ: 'pioviggine',
-  RA: 'pioggia',
-  SN: 'neve',
-  SG: 'granelli di neve',
-  PL: 'ghiaccio granuloso',
-  GR: 'grandine',
-  GS: 'grandine piccola',
-  UP: 'precipitazione sconosciuta',
-  BR: 'foschia',
-  FG: 'nebbia',
-  FU: 'fumo',
-  VA: 'cenere vulcanica',
-  DU: 'polvere',
-  SA: 'sabbia',
-  HZ: 'caligine',
-  PO: 'vortici di polvere',
-  SQ: 'groppo',
-  FC: 'tromba',
-  SS: 'tempesta di sabbia',
-  DS: 'tempesta di polvere',
+  MI: msg('sottile'),
+  BC: msg('a banchi'),
+  PR: msg('parziale'),
+  DR: msg('scaccianeve basso'),
+  BL: msg('scaccianeve alto'),
+  SH: msg('rovesci di'),
+  TS: msg('temporale'),
+  FZ: msg('che gela'),
+  DZ: msg('pioviggine'),
+  RA: msg('pioggia'),
+  SN: msg('neve'),
+  SG: msg('granelli di neve'),
+  PL: msg('ghiaccio granuloso'),
+  GR: msg('grandine'),
+  GS: msg('grandine piccola'),
+  UP: msg('precipitazione sconosciuta'),
+  BR: msg('foschia'),
+  FG: msg('nebbia'),
+  FU: msg('fumo'),
+  VA: msg('cenere vulcanica'),
+  DU: msg('polvere'),
+  SA: msg('sabbia'),
+  HZ: msg('caligine'),
+  PO: msg('vortici di polvere'),
+  SQ: msg('groppo'),
+  FC: msg('tromba'),
+  SS: msg('tempesta di sabbia'),
+  DS: msg('tempesta di polvere'),
 }
 
-export function describeWeather(code: string): string {
+export function describeWeather(code: string, tr: Tr = italian): string {
   let rest = code
   let intensity = ''
   if (rest.startsWith('+')) {
-    intensity = 'forte'
+    intensity = tr('forte')
     rest = rest.slice(1)
   } else if (rest.startsWith('-')) {
-    intensity = 'debole'
+    intensity = tr('debole')
     rest = rest.slice(1)
   }
   let vicinity = ''
   if (rest.startsWith('VC')) {
-    vicinity = 'nelle vicinanze'
+    vicinity = tr('nelle vicinanze')
     rest = rest.slice(2)
   }
   const parts: string[] = []
   for (let i = 0; i < rest.length; i += 2)
-    parts.push(wxCodes[rest.slice(i, i + 2)] ?? rest.slice(i, i + 2))
+    parts.push(tr(wxCodes[rest.slice(i, i + 2)] ?? rest.slice(i, i + 2)))
   return [parts.join(' '), intensity, vicinity].filter(Boolean).join(', ')
 }
 
@@ -214,65 +215,89 @@ export function vfrHint(m: Metar): 'VMC' | 'marginale' | 'IMC' | null {
   return 'VMC'
 }
 
-export function describeMetar(m: Metar): { label: string; value: string }[] {
+export function describeMetar(m: Metar, tr: Tr = italian): { label: string; value: string }[] {
   const out: { label: string; value: string }[] = []
-  if (m.station) out.push({ label: 'Aeroporto', value: m.station })
+  const hhmm = (h: number, mm: number) =>
+    `${String(h).padStart(2, '0')}:${String(mm).padStart(2, '0')}`
+  if (m.station) out.push({ label: tr('Aeroporto'), value: m.station })
   if (m.time)
     out.push({
-      label: 'Emesso',
-      value: `giorno ${m.time.day} alle ${String(m.time.hour).padStart(2, '0')}:${String(m.time.minute).padStart(2, '0')} UTC${m.auto ? ' (automatico)' : ''}`,
+      label: tr('Emesso'),
+      value:
+        tr('giorno {day} alle {time} UTC', {
+          day: m.time.day,
+          time: hhmm(m.time.hour, m.time.minute),
+        }) + (m.auto ? tr(' (automatico)') : ''),
     })
   if (m.wind) {
     const w = m.wind
     let v =
       w.kt === 0
-        ? 'calmo'
-        : `${w.dir === 'VRB' ? 'variabile' : `da ${String(w.dir).padStart(3, '0')}°`} a ${w.kt} nodi`
-    if (w.gust) v += `, raffiche ${w.gust} nodi`
-    if (w.varFrom !== null) v += `, variabile tra ${w.varFrom}° e ${w.varTo}°`
-    out.push({ label: 'Vento', value: v })
+        ? tr('calmo')
+        : w.dir === 'VRB'
+          ? tr('variabile a {kt} nodi', { kt: w.kt })
+          : tr('da {dir}° a {kt} nodi', { dir: String(w.dir).padStart(3, '0'), kt: w.kt })
+    if (w.gust) v += tr(', raffiche {gust} nodi', { gust: w.gust })
+    if (w.varFrom !== null)
+      v += tr(', variabile tra {from}° e {to}°', { from: w.varFrom, to: w.varTo ?? '' })
+    out.push({ label: tr('Vento'), value: v })
   }
   if (m.cavok)
     out.push({
       label: 'CAVOK',
-      value:
+      value: tr(
         'visibilità ≥ 10 km, nessuna nube sotto 5000 ft né CB/TCU, nessun fenomeno significativo',
+      ),
     })
   else if (m.visibility)
     out.push({
-      label: 'Visibilità',
-      value: m.visibility.meters >= 10_000 ? '10 km o più' : `${m.visibility.meters} m`,
+      label: tr('Visibilità'),
+      value: m.visibility.meters >= 10_000 ? tr('10 km o più') : `${m.visibility.meters} m`,
     })
-  for (const w of m.weather) out.push({ label: 'Fenomeni', value: `${w}: ${describeWeather(w)}` })
+  for (const w of m.weather)
+    out.push({ label: tr('Fenomeni'), value: `${w}: ${describeWeather(w, tr)}` })
   for (const c of m.clouds)
     out.push({
-      label: 'Nubi',
-      value: `${coverLabel[c.cover]} a ${c.feet} ft${c.type === 'CB' ? ', cumulonembi' : c.type === 'TCU' ? ', cumuli torreggianti' : ''}`,
+      label: tr('Nubi'),
+      value:
+        tr('{cover} a {feet} ft', { cover: tr(coverLabel[c.cover]), feet: c.feet }) +
+        (c.type === 'CB'
+          ? tr(', cumulonembi')
+          : c.type === 'TCU'
+            ? tr(', cumuli torreggianti')
+            : ''),
     })
   if (m.noCloud)
     out.push({
-      label: 'Nubi',
-      value: m.noCloud === 'NSC' ? 'nessuna nube significativa' : 'nessuna nube rilevata',
+      label: tr('Nubi'),
+      value: m.noCloud === 'NSC' ? tr('nessuna nube significativa') : tr('nessuna nube rilevata'),
     })
   if (m.temp !== null)
     out.push({
-      label: 'Temperatura',
-      value: `${m.temp} °C, rugiada ${m.dew ?? '—'} °C${m.dew !== null && m.temp - m.dew <= 2 ? ' (aria quasi satura: possibile nebbia o nubi basse)' : ''}`,
+      label: tr('Temperatura'),
+      value:
+        tr('{temp} °C, rugiada {dew} °C', { temp: m.temp, dew: m.dew ?? '—' }) +
+        (m.dew !== null && m.temp - m.dew <= 2
+          ? tr(' (aria quasi satura: possibile nebbia o nubi basse)')
+          : ''),
     })
   if (m.qnh !== null) out.push({ label: 'QNH', value: `${m.qnh} hPa` })
   if (m.trend)
     out.push({
-      label: 'Tendenza',
+      label: tr('Tendenza'),
       value: m.trend.startsWith('NOSIG')
-        ? 'nessun cambiamento significativo nelle prossime 2 ore'
+        ? tr('nessun cambiamento significativo nelle prossime 2 ore')
         : m.trend,
     })
-  if (m.unknown.length) out.push({ label: 'Non decodificato', value: m.unknown.join(' ') })
+  if (m.unknown.length) out.push({ label: tr('Non decodificato'), value: m.unknown.join(' ') })
   return out
 }
 
 /** TAF: split into the base forecast and change groups, each decoded like a METAR body. */
-export function parseTaf(input: string): {
+export function parseTaf(
+  input: string,
+  tr: Tr = italian,
+): {
   header: string
   groups: { label: string; body: Metar }[]
 } {
@@ -283,12 +308,16 @@ export function parseTaf(input: string): {
   const groups = parts.map((p, i) => {
     const label =
       i === 0
-        ? `Previsione base${head?.[2] ? ` (validità ${head[2]})` : ''}`
+        ? head?.[2]
+          ? tr('Previsione base (validità {period})', { period: head[2] })
+          : tr('Previsione base')
         : (/^(BECMG|TEMPO|FM\d{6}|PROB\d{2}(?: TEMPO)?)( \d{4}\/\d{4})?/.exec(p)?.[0] ?? p)
-            .replace('BECMG', 'In cambiamento')
-            .replace(/^TEMPO/, 'Temporaneamente')
-            .replace(/^PROB(\d{2})/, 'Probabilità $1%')
-            .replace(/^FM(\d{2})(\d{2})(\d{2})/, 'Dalle $2:$3 del giorno $1')
+            .replace('BECMG', tr('In cambiamento'))
+            .replace(/^TEMPO/, tr('Temporaneamente'))
+            .replace(/^PROB(\d{2})/, (_, n: string) => tr('Probabilità {n}%', { n }))
+            .replace(/^FM(\d{2})(\d{2})(\d{2})/, (_, d: string, h: string, mm: string) =>
+              tr('Dalle {time} del giorno {day}', { time: `${h}:${mm}`, day: d }),
+            )
     const body =
       i === 0 && head
         ? p.slice(head[1]?.length ?? 0)
@@ -358,51 +387,57 @@ export interface MetarQuestion {
 }
 
 /** A few multiple-choice questions on a METAR, with distractors near the truth. */
-export function metarQuestions(m: Metar, rng: Rng): MetarQuestion[] {
+export function metarQuestions(m: Metar, rng: Rng, tr: Tr = italian): MetarQuestion[] {
   const qs: MetarQuestion[] = []
   const opts = (answer: string, others: string[]) =>
     shuffle(rng, [answer, ...[...new Set(others)].filter((o) => o !== answer).slice(0, 3)])
+  const deg = (n: number) => String(n % 360 || 360).padStart(3, '0')
   if (m.wind && m.wind.dir !== 'VRB' && m.wind.kt > 0) {
     const d = m.wind.dir
-    const a = `da ${String(d).padStart(3, '0')}° a ${m.wind.kt} nodi`
+    const kt = m.wind.kt
+    const a = tr('da {dir}° a {kt} nodi', { dir: deg(d), kt })
     qs.push({
-      prompt: 'Da dove soffia il vento e a che velocità?',
+      prompt: tr('Da dove soffia il vento e a che velocità?'),
       answer: a,
       options: opts(a, [
-        `verso ${String(d).padStart(3, '0')}° a ${m.wind.kt} nodi`,
-        `da ${String((d + 180) % 360 || 360).padStart(3, '0')}° a ${m.wind.kt} nodi`,
-        `da ${String(d).padStart(3, '0')}° a ${m.wind.kt} km/h`,
-        `da ${String((d + 90) % 360 || 360).padStart(3, '0')}° a ${m.wind.kt + 5} nodi`,
+        tr('verso {dir}° a {kt} nodi', { dir: deg(d), kt }),
+        tr('da {dir}° a {kt} nodi', { dir: deg(d + 180), kt }),
+        tr('da {dir}° a {kt} km/h', { dir: deg(d), kt }),
+        tr('da {dir}° a {kt} nodi', { dir: deg(d + 90), kt: kt + 5 }),
       ]),
     })
   }
   if (m.qnh !== null) {
     const a = `${m.qnh} hPa`
     qs.push({
-      prompt: 'Che valore imposti nell’altimetro per leggere l’altitudine?',
+      prompt: tr('Che valore imposti nell’altimetro per leggere l’altitudine?'),
       answer: a,
       options: opts(a, [`${m.qnh - 3} hPa`, `${m.qnh + 2} hPa`, `${m.qnh - 10} hPa`, '1013 hPa']),
     })
   }
   const ceil = ceiling(m)
-  const a = ceil === null ? 'nessun ceiling' : `${ceil} ft`
+  const none = tr('nessun ceiling')
+  const a = ceil === null ? none : `${ceil} ft`
   qs.push({
-    prompt: 'Qual è il ceiling (base del primo strato BKN o OVC)?',
+    prompt: tr('Qual è il ceiling (base del primo strato BKN o OVC)?'),
     answer: a,
     options: opts(a, [
-      'nessun ceiling',
+      none,
       ...m.clouds.map((c) => `${c.feet} ft`),
       `${(ceil ?? 3000) + 1000} ft`,
       `${Math.max(100, (ceil ?? 3000) - 500)} ft`,
     ]),
   })
   if (m.temp !== null && m.dew !== null) {
-    const spread = m.temp - m.dew
-    const ans = spread <= 2 ? 'alto: aria quasi satura' : 'basso'
+    const high = tr('alto: aria quasi satura')
+    const low = tr('basso')
     qs.push({
-      prompt: `Temperatura ${m.temp} °C, rugiada ${m.dew} °C: rischio di nebbia o nubi basse?`,
-      answer: ans,
-      options: shuffle(rng, ['alto: aria quasi satura', 'basso']),
+      prompt: tr('Temperatura {temp} °C, rugiada {dew} °C: rischio di nebbia o nubi basse?', {
+        temp: m.temp,
+        dew: m.dew,
+      }),
+      answer: m.temp - m.dew <= 2 ? high : low,
+      options: shuffle(rng, [high, low]),
     })
   }
   return qs

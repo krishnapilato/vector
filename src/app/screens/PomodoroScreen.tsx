@@ -10,6 +10,7 @@ import {
   startPomodoro,
 } from '../../core/pomodoro'
 import { askNotificationPermission } from '../alerts'
+import { t } from '../i18n'
 import { hrefFor } from '../router'
 import { useStore } from '../state'
 import { LinkButton, PrimaryButton, QuietButton, QuietLink } from '../ui'
@@ -50,17 +51,19 @@ export function PomodoroScreen() {
         <div className="h-px bg-[var(--fg)]" style={{ width: `${(1 - left / total) * 100}%` }} />
       </div>
       <header className="mx-auto flex w-full max-w-2xl justify-end px-6 pt-3">
-        <QuietLink href="#/piano">Esci</QuietLink>
+        <QuietLink href="#/piano">{t('Esci')}</QuietLink>
       </header>
       <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col justify-center gap-8 px-6 pb-16">
         <p className="text-sm text-[var(--fg-quiet)]">
           {pomodoro
-            ? `Pomodoro ${pomodoro.completed + (pomodoro.phase === 'focus' ? 1 : 0)}`
-            : 'Pomodoro'}
-          {pomodoro && !running && ' · in pausa'}
+            ? t('Pomodoro {n}', { n: pomodoro.completed + (pomodoro.phase === 'focus' ? 1 : 0) })
+            : t('Pomodoro')}
+          {pomodoro && !running && t(' · in pausa')}
         </p>
         <h1 className="text-4xl font-medium tracking-tight">
-          {pomodoro ? phaseLabel[pomodoro.phase] : `${cfg.focusMinutes} minuti di concentrazione`}
+          {pomodoro
+            ? t(phaseLabel[pomodoro.phase])
+            : t('{focusMinutes} minuti di concentrazione', { focusMinutes: cfg.focusMinutes })}
         </h1>
         <p className="min-h-10 text-3xl tabular-nums" aria-live="polite">
           {showTime || !pomodoro ? formatClock(left) : ''}
@@ -68,35 +71,37 @@ export function PomodoroScreen() {
 
         {!pomodoro ? (
           <div>
-            <PrimaryButton onClick={start}>Inizia</PrimaryButton>
+            <PrimaryButton onClick={start}>{t('Inizia')}</PrimaryButton>
           </div>
         ) : (
           <div className="flex flex-wrap items-center gap-4">
             {pomodoro.phase === 'focus' && (
               <LinkButton href={hrefFor({ name: 'study', subjectId: null, early: false })}>
-                Studia adesso
+                {t('Studia adesso')}
               </LinkButton>
             )}
-            <QuietButton onClick={() => setShowTime(true)}>Mostra il tempo</QuietButton>
+            <QuietButton onClick={() => setShowTime(true)}>{t('Mostra il tempo')}</QuietButton>
             <QuietButton
               onClick={() =>
                 setPomodoro(running ? pause(pomodoro, Date.now()) : resume(pomodoro, Date.now()))
               }
             >
-              {running ? 'Pausa' : 'Riprendi'}
+              {running ? t('Pausa') : t('Riprendi')}
             </QuietButton>
             <QuietButton onClick={() => setPomodoro(nextPhase(pomodoro, Date.now(), cfg, false))}>
-              Salta
+              {t('Salta')}
             </QuietButton>
-            <QuietButton onClick={() => setPomodoro(null)}>Ferma</QuietButton>
+            <QuietButton onClick={() => setPomodoro(null)}>{t('Ferma')}</QuietButton>
           </div>
         )}
         <p className="max-w-prose text-sm text-[var(--fg-quiet)]">
-          Il pomodoro continua anche mentre studi: alla fine di ogni fase senti un breve suono
+          {t(
+            'Il pomodoro continua anche mentre studi: alla fine di ogni fase senti un breve suono',
+          )}
           {typeof Notification !== 'undefined' && Notification.permission === 'granted'
-            ? ' e ricevi una notifica'
+            ? t(' e ricevi una notifica')
             : ''}
-          . Saltare una fase non la conta come completata.
+          {t('. Saltare una fase non la conta come completata.')}
         </p>
       </main>
     </div>

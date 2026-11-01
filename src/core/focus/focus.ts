@@ -1,3 +1,4 @@
+import { msg } from '../i18n'
 /**
  * Focus tracking from coarse signals. Pure and deterministic: the camera and the
  * microphone only produce booleans many times a second; images and sound never
@@ -50,13 +51,13 @@ export interface FocusRules {
 export type Distraction = 'left' | 'away' | 'lookAway' | 'phone' | 'drowsy' | 'talking' | 'voices'
 
 export const distractionLabel: Record<Distraction, string> = {
-  left: 'Sei uscito dall’app',
-  away: 'Non ti vedo',
-  lookAway: 'Stai guardando altrove',
-  phone: 'Telefono in vista',
-  drowsy: 'Occhi chiusi: fai una pausa?',
-  talking: 'Stai parlando',
-  voices: 'Voci intorno a te',
+  left: msg('Sei uscito dall’app'),
+  away: msg('Non ti vedo'),
+  lookAway: msg('Stai guardando altrove'),
+  phone: msg('Telefono in vista'),
+  drowsy: msg('Occhi chiusi: fai una pausa?'),
+  talking: msg('Stai parlando'),
+  voices: msg('Voci intorno a te'),
 }
 
 /** The first matching condition wins: the most serious first. */

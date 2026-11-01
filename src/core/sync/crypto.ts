@@ -1,3 +1,4 @@
+import { msg } from '../i18n'
 /**
  * End-to-end encryption for backups and sync, with the browser's WebCrypto.
  * The passphrase never leaves the device; the server only ever sees ciphertext,
@@ -77,7 +78,7 @@ export async function encrypt(
 
 export class WrongPassphrase extends Error {
   constructor() {
-    super('Frase segreta sbagliata, o file danneggiato.')
+    super(msg('Frase segreta sbagliata, o file danneggiato.'))
   }
 }
 
@@ -160,6 +161,6 @@ export function generatePassphrase(count = 7): string {
 export function passphraseProblem(p: string): string | null {
   const t = p.trim()
   if (t.split(/\s+/).length < 5 && t.length < 24)
-    return 'Usa almeno 5 parole o 24 caratteri: è l’unica protezione dei tuoi dati.'
+    return msg('Usa almeno 5 parole o 24 caratteri: è l’unica protezione dei tuoi dati.')
   return null
 }

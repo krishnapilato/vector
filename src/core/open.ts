@@ -3,9 +3,12 @@
  * instead of the full answer, the learner gets a hint on what is missing and
  * tries again. Without AI, the learner checks the key points honestly.
  */
+
+import { type ExamContext, languageName, pplExam, tutor, writeIn } from './ai/exam'
 import { extractJson } from './ai/questions'
 import type { Concept } from './content/types'
 import type { Graded } from './grading'
+import { italian, msg, type Tr } from './i18n'
 import { pick, type Rng } from './random'
 
 /** Key points of a concept: written ones, or the sentences of its source text. */
@@ -19,14 +22,14 @@ export function keyPointsFor(concept: Pick<Concept, 'source' | 'keyPoints'>): st
 }
 
 const prompts = [
-  (t: string) => `Spiega con parole tue: ${t}.`,
-  (t: string) => `Come lo spiegheresti a un compagno di corso? ${t}.`,
-  (t: string) => `Cosa devi sapere, e perché, su: ${t}?`,
-  (t: string) => `Racconta ${t} come se fossi l’istruttore.`,
+  msg('Spiega con parole tue: {topic}.'),
+  msg('Come lo spiegheresti a un compagno di corso? {topic}.'),
+  msg('Cosa devi sapere, e perché, su: {topic}?'),
+  msg('Racconta {topic} come se fossi l’istruttore.'),
 ]
 
-export function openPrompt(title: string, rng: Rng): string {
-  return pick(rng, prompts)(title.replace(/[.?!]+$/, ''))
+export function openPrompt(title: string, rng: Rng, tr: Tr = italian): string {
+  return tr(pick(rng, prompts), { topic: title.replace(/[.?!]+$/, '') })
 }
 
 export interface OpenFeedback {
@@ -44,14 +47,17 @@ export function buildOpenPrompt(i: {
   keyPoints: readonly string[]
   answer: string
   round: number
+  exam?: ExamContext
 }): string {
+  const exam = i.exam ?? pplExam
   return [
-    'Sei un istruttore di volo che corregge la spiegazione a parole di uno studente PPL(A).',
+    `${tutor(exam)} Correggi la spiegazione a parole dello studente.`,
+    `- ${writeIn(exam)}`,
     'Valuta la risposta SOLO rispetto ai punti chiave e al testo di riferimento. Non premiare la forma, solo la sostanza: parole diverse dal testo vanno benissimo se il significato è giusto.',
     'Regole:',
     '- "covered": per ogni punto chiave, in ordine, true se la risposta lo esprime correttamente.',
     '- "mistakes": affermazioni sbagliate presenti nella risposta (massimo 3, frasi brevi). Nessuna se non ce ne sono.',
-    `- "hint": se manca qualcosa, UNA domanda guida in italiano che porti lo studente a ragionare sul primo punto mancante, SENZA dare la risposta. ${i.round > 1 ? 'È già il secondo tentativo: la domanda può essere più diretta.' : ''} null se è tutto coperto.`,
+    `- "hint": se manca qualcosa, UNA domanda guida in ${languageName(exam)} che porti lo studente a ragionare sul primo punto mancante, SENZA dare la risposta. ${i.round > 1 ? 'È già il secondo tentativo: la domanda può essere più diretta.' : ''} null se è tutto coperto.`,
     'Rispondi solo con JSON: {"covered":[true],"mistakes":[""],"hint":""}',
     '',
     `Concetto: ${i.title}`,

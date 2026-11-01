@@ -1,3 +1,4 @@
+import { msg } from '../i18n'
 /** Unit conversions: each quantity has a base unit and a factor per unit. */
 
 export interface Quantity {
@@ -21,7 +22,7 @@ const linear = (id: string, label: string, factor: number) => ({
 export const quantities: readonly Quantity[] = [
   {
     id: 'speed',
-    name: 'Velocità',
+    name: msg('Velocità'),
     units: [
       linear('kt', 'kt', 1.852),
       linear('kmh', 'km/h', 1),
@@ -31,22 +32,22 @@ export const quantities: readonly Quantity[] = [
   },
   {
     id: 'distance',
-    name: 'Distanza',
+    name: msg('Distanza'),
     units: [linear('nm', 'NM', 1.852), linear('km', 'km', 1), linear('sm', 'SM', 1.609344)],
   },
   {
     id: 'height',
-    name: 'Altezza',
+    name: msg('Altezza'),
     units: [linear('ft', 'ft', 0.3048), linear('m', 'm', 1)],
   },
   {
     id: 'pressure',
-    name: 'Pressione',
+    name: msg('Pressione'),
     units: [linear('hpa', 'hPa', 1), linear('inhg', 'inHg', 33.8639)],
   },
   {
     id: 'temperature',
-    name: 'Temperatura',
+    name: msg('Temperatura'),
     units: [
       { id: 'c', label: '°C', toBase: (v: number) => v, fromBase: (v: number) => v },
       {
@@ -59,17 +60,17 @@ export const quantities: readonly Quantity[] = [
   },
   {
     id: 'mass',
-    name: 'Massa',
+    name: msg('Massa'),
     units: [linear('kg', 'kg', 1), linear('lb', 'lb', 0.45359237)],
   },
   {
     id: 'volume',
-    name: 'Volume',
+    name: msg('Volume'),
     units: [linear('l', 'L', 1), linear('usg', 'USG', 3.785411784)],
   },
   {
     id: 'vertical',
-    name: 'Velocità verticale',
+    name: msg('Velocità verticale'),
     units: [linear('fpm', 'ft/min', 0.00508), linear('ms', 'm/s', 1)],
   },
 ]

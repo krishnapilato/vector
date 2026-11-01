@@ -14,7 +14,10 @@ import {
   windTriangle,
 } from '../../core/flight/flight'
 import { convert, quantities } from '../../core/flight/units'
+import { msg } from '../../core/i18n'
+import { locale, t } from '../i18n'
 import { hrefFor } from '../router'
+import { useStore } from '../state'
 import { Page, QuietButton } from '../ui'
 import { GlossaryTool } from './GlossaryTool'
 import { WeatherTool } from './WeatherTool'
@@ -25,52 +28,58 @@ import { WeatherTool } from './WeatherTool'
  */
 
 const fmt = (v: number, digits = 1) =>
-  new Intl.NumberFormat('it-IT', { maximumFractionDigits: digits }).format(v)
+  new Intl.NumberFormat(locale(), { maximumFractionDigits: digits }).format(v)
 
 /** Accepts "12,5" and "12.5"; empty or invalid → NaN. */
 const num = (s: string) => (s.trim() === '' ? Number.NaN : Number(s.replace(',', '.')))
 const ok = (...values: number[]) => values.every(Number.isFinite)
 
 export const tools = [
-  { id: 'calcolatrice', name: 'Calcolatrice', component: Calculator },
-  { id: 'conversioni', name: 'Conversioni', component: Converter },
-  { id: 'vento', name: 'Vento', component: Wind },
-  { id: 'quote', name: 'Quote e velocità', component: Altitudes },
-  { id: 'tempo', name: 'Tempo, distanza, velocità', component: TimeSpeed },
-  { id: 'carburante', name: 'Carburante', component: Fuel },
-  { id: 'centraggio', name: 'Peso e centraggio', component: MassAndBalance },
-  { id: 'meteo', name: 'METAR e TAF', component: WeatherTool },
-  { id: 'glossario', name: 'Glossario', component: GlossaryTool },
+  { id: 'calcolatrice', name: msg('Calcolatrice'), component: Calculator, aviation: false },
+  { id: 'conversioni', name: msg('Conversioni'), component: Converter, aviation: false },
+  { id: 'vento', name: msg('Vento'), component: Wind, aviation: true },
+  { id: 'quote', name: msg('Quote e velocità'), component: Altitudes, aviation: true },
+  { id: 'tempo', name: msg('Tempo, distanza, velocità'), component: TimeSpeed, aviation: true },
+  { id: 'carburante', name: msg('Carburante'), component: Fuel, aviation: true },
+  { id: 'centraggio', name: msg('Peso e centraggio'), component: MassAndBalance, aviation: true },
+  { id: 'meteo', name: msg('METAR e TAF'), component: WeatherTool, aviation: true },
+  { id: 'glossario', name: msg('Glossario'), component: GlossaryTool, aviation: true },
 ] as const
 
+/** Flight tools only for aviation exams; the calculator and conversions for everyone. */
+export const toolsFor = (aviation: boolean) => tools.filter((x) => aviation || !x.aviation)
+
 export function Tools({ tool }: { tool: string | null }) {
-  const current = tools.find((t) => t.id === tool) ?? tools[0]
+  const { exam } = useStore()
+  const available = toolsFor(exam.aviation)
+  const current = available.find((x) => x.id === tool) ?? tools[0]
   const Current = current.component
   return (
-    <Page title="Strumenti">
-      <nav aria-label="Strumenti">
+    <Page title={t('Strumenti')}>
+      <nav aria-label={t('Strumenti')}>
         <ul className="flex flex-wrap gap-x-1 gap-y-2">
-          {tools.map((t) => (
-            <li key={t.id}>
+          {available.map((tool) => (
+            <li key={tool.id}>
               <a
-                href={hrefFor({ name: 'tools', tool: t.id })}
-                aria-current={t.id === current.id ? 'page' : undefined}
+                href={hrefFor({ name: 'tools', tool: tool.id })}
+                aria-current={tool.id === current.id ? 'page' : undefined}
                 className={`inline-flex min-h-11 items-center rounded-lg px-3 text-sm ${
-                  t.id === current.id ? 'border border-[var(--fg)]' : 'text-[var(--fg-quiet)]'
+                  tool.id === current.id ? 'border border-[var(--fg)]' : 'text-[var(--fg-quiet)]'
                 }`}
               >
-                {t.name}
+                {t(tool.name)}
               </a>
             </li>
           ))}
         </ul>
       </nav>
-      <section aria-label={current.name} className="flex flex-col gap-6">
+      <section aria-label={t(current.name)} className="flex flex-col gap-6">
         <Current />
       </section>
       <p className="text-xs text-[var(--fg-quiet)]">
-        Strumenti per studiare ed esercitarsi: per pianificare un volo vero usa sempre il manuale
-        dell'aereo e i dati ufficiali.
+        {t(
+          "Strumenti per studiare ed esercitarsi: per pianificare un volo vero usa sempre il manuale dell'aereo e i dati ufficiali.",
+        )}
       </p>
     </Page>
   )
@@ -123,7 +132,7 @@ function Results({ items }: { items: [string, string | null][] }) {
     >
       {items.map(([label, value]) => (
         <div key={label}>
-          <dt className="text-xs text-[var(--fg-quiet)]">{label}</dt>
+          <dt className="text-xs text-[var(--fg-quiet)]">{t(label)}</dt>
           <dd className="text-xl tabular-nums">{value ?? '—'}</dd>
         </div>
       ))}
@@ -152,7 +161,7 @@ export function Calculator() {
   return (
     <div className="flex flex-col gap-4">
       <label htmlFor={id} className="text-sm">
-        Calcolo <span className="text-[var(--fg-quiet)]">(Invio per confermare)</span>
+        {t('Calcolo')} <span className="text-[var(--fg-quiet)]">{t('(Invio per confermare)')}</span>
       </label>
       <input
         id={id}
@@ -166,7 +175,7 @@ export function Calculator() {
             commit()
           }
         }}
-        placeholder="es. 120 * cos(30)"
+        placeholder={t('es. 120 * cos(30)')}
         className="min-h-12 w-full rounded-lg border border-[var(--rule)] bg-transparent px-3 font-mono text-lg"
       />
       <p className="min-h-8 text-2xl tabular-nums" aria-live="polite">
@@ -175,7 +184,7 @@ export function Calculator() {
         ) : result.ok ? (
           `= ${fmt(result.value, 6)}`
         ) : (
-          <span className="text-base text-[var(--fg-quiet)]">{result.error}</span>
+          <span className="text-base text-[var(--fg-quiet)]">{t(result.message, result.vars)}</span>
         )}
       </p>
       {history.length > 0 && (
@@ -188,8 +197,9 @@ export function Calculator() {
         </ul>
       )}
       <Note>
-        Operatori + − × ÷ ^ e parentesi. Funzioni in gradi: sin, cos, tan, asin, acos, atan; poi
-        sqrt, abs, ln, log, round, pi.
+        {t(
+          'Operatori + − × ÷ ^ e parentesi. Funzioni in gradi: sin, cos, tan, asin, acos, atan; poi sqrt, abs, ln, log, round, pi.',
+        )}
       </Note>
     </div>
   )
@@ -211,7 +221,7 @@ export function Converter() {
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
         <div className="flex flex-col gap-1">
           <label htmlFor={qId} className="text-sm">
-            Grandezza
+            {t('Grandezza')}
           </label>
           <select
             id={qId}
@@ -221,15 +231,15 @@ export function Converter() {
           >
             {quantities.map((q) => (
               <option key={q.id} value={q.id}>
-                {q.name}
+                {t(q.name)}
               </option>
             ))}
           </select>
         </div>
-        <Field label="Valore" value={value} onChange={setValue} />
+        <Field label={t('Valore')} value={value} onChange={setValue} />
         <div className="flex flex-col gap-1">
           <label htmlFor={uId} className="text-sm">
-            Unità
+            {t('Unità')}
           </label>
           <select
             id={uId}
@@ -266,48 +276,53 @@ function Wind() {
   const c = ok(num(rwy), num(wd), num(ws))
     ? windComponents(runwayToHeading(num(rwy)), num(wd), num(ws))
     : null
-  const side = (x: number) => (x >= 0 ? 'da destra' : 'da sinistra')
-  const head = (x: number) => (x >= 0 ? 'contro' : 'in coda')
+  const side = (x: number) => (x >= 0 ? t('da destra') : t('da sinistra'))
+  const head = (x: number) => (x >= 0 ? 'contro' : t('in coda'))
 
   return (
     <div className="flex flex-col gap-8">
       <div className="flex flex-col gap-4">
-        <h2 className="text-lg font-medium">Triangolo del vento</h2>
+        <h2 className="text-lg font-medium">{t('Triangolo del vento')}</h2>
         <Grid>
-          <Field label="Rotta vera" unit="°" value={tc} onChange={setTc} />
-          <Field label="TAS" unit="kt" value={tas} onChange={setTas} />
-          <Field label="Vento da" unit="°" value={wd} onChange={setWd} />
-          <Field label="Intensità" unit="kt" value={ws} onChange={setWs} />
+          <Field label={t('Rotta vera')} unit="°" value={tc} onChange={setTc} />
+          <Field label={t('TAS')} unit="kt" value={tas} onChange={setTas} />
+          <Field label={t('Vento da')} unit="°" value={wd} onChange={setWd} />
+          <Field label={t('Intensità')} unit="kt" value={ws} onChange={setWs} />
         </Grid>
         <Results
           items={[
             [
-              'Correzione (WCA)',
-              w ? `${fmt(Math.abs(w.wca))}° ${w.wca >= 0 ? 'a destra' : 'a sinistra'}` : null,
+              t('Correzione (WCA)'),
+              w ? `${fmt(Math.abs(w.wca))}° ${w.wca >= 0 ? t('a destra') : t('a sinistra')}` : null,
             ],
-            ['Prua vera', w ? `${fmt(w.trueHeading, 0).padStart(3, '0')}°` : null],
-            ['Velocità al suolo', w ? `${fmt(w.groundSpeed, 0)} kt` : null],
+            [t('Prua vera'), w ? `${fmt(w.trueHeading, 0).padStart(3, '0')}°` : null],
+            [t('Velocità al suolo'), w ? `${fmt(w.groundSpeed, 0)} kt` : null],
           ]}
         />
         {!w && ok(num(tc), num(tas), num(wd), num(ws)) && (
-          <Note>Con questo vento la rotta non si può mantenere.</Note>
+          <Note>{t('Con questo vento la rotta non si può mantenere.')}</Note>
         )}
       </div>
       <div className="flex flex-col gap-4">
-        <h2 className="text-lg font-medium">Componenti per la pista</h2>
+        <h2 className="text-lg font-medium">{t('Componenti per la pista')}</h2>
         <Grid>
-          <Field label="Pista" unit="es. 27" value={rwy} onChange={setRwy} />
+          <Field label={t('Pista')} unit="es. 27" value={rwy} onChange={setRwy} />
         </Grid>
         <Results
           items={[
-            ['Vento frontale', c ? `${fmt(Math.abs(c.headwind), 0)} kt ${head(c.headwind)}` : null],
             [
-              'Vento al traverso',
+              t('Vento frontale'),
+              c ? `${fmt(Math.abs(c.headwind), 0)} kt ${head(c.headwind)}` : null,
+            ],
+            [
+              t('Vento al traverso'),
               c ? `${fmt(Math.abs(c.crosswind), 0)} kt ${side(c.crosswind)}` : null,
             ],
           ]}
         />
-        <Note>Usa lo stesso vento inserito sopra. Il vento del METAR è riferito al nord vero.</Note>
+        <Note>
+          {t('Usa lo stesso vento inserito sopra. Il vento del METAR è riferito al nord vero.')}
+        </Note>
       </div>
     </div>
   )
@@ -329,31 +344,32 @@ function Altitudes() {
   return (
     <div className="flex flex-col gap-4">
       <Grid>
-        <Field label="Quota / elevazione" unit="ft" value={elev} onChange={setElev} />
-        <Field label="QNH" unit="hPa" value={qnh} onChange={setQnh} />
-        <Field label="Temperatura esterna" unit="°C" value={oat} onChange={setOat} />
-        <Field label="CAS" unit="kt" value={cas} onChange={setCas} />
+        <Field label={t('Quota / elevazione')} unit="ft" value={elev} onChange={setElev} />
+        <Field label={t('QNH')} unit="hPa" value={qnh} onChange={setQnh} />
+        <Field label={t('Temperatura esterna')} unit="°C" value={oat} onChange={setOat} />
+        <Field label={t('CAS')} unit="kt" value={cas} onChange={setCas} />
       </Grid>
       <Results
         items={[
-          ['Quota pressione', pa === null ? null : `${fmt(pa, 0)} ft`],
-          ['Temperatura ISA', isa === null ? null : `${fmt(isa)} °C`],
+          [t('Quota pressione'), pa === null ? null : `${fmt(pa, 0)} ft`],
+          [t('Temperatura ISA'), isa === null ? null : `${fmt(isa)} °C`],
           [
-            'Scarto da ISA',
+            t('Scarto da ISA'),
             isa === null || !ok(num(oat))
               ? null
               : `${num(oat) - isa >= 0 ? '+' : ''}${fmt(num(oat) - isa)} °C`,
           ],
-          ['Quota densità', da === null ? null : `${fmt(da, 0)} ft`],
-          ['TAS', tas === null ? null : `${fmt(tas, 0)} kt`],
+          [t('Quota densità'), da === null ? null : `${fmt(da, 0)} ft`],
+          [msg('TAS'), tas === null ? null : `${fmt(tas, 0)} kt`],
         ]}
       />
       <div className="max-w-48">
-        <Field label="Piedi per hPa" value={factor} onChange={setFactor} />
+        <Field label={t('Piedi per hPa')} value={factor} onChange={setFactor} />
       </div>
       <Note>
-        Regole pratiche: 30 ft per hPa (alcuni testi usano 27) e 120 ft di quota densità per ogni °C
-        sopra l'ISA. La TAS è calcolata dalla densità in atmosfera standard.
+        {t(
+          "Regole pratiche: 30 ft per hPa (alcuni testi usano 27) e 120 ft di quota densità per ogni °C sopra l'ISA. La TAS è calcolata dalla densità in atmosfera standard.",
+        )}
       </Note>
     </div>
   )
@@ -365,26 +381,29 @@ function TimeSpeed() {
   const [time, setTime] = useState('')
   const d = num(dist)
   const g = num(gs)
-  const t = num(time)
+  const tm = num(time)
   let missing: 'dist' | 'gs' | 'time' | null = null
-  if (!ok(t) && ok(d, g)) missing = 'time'
-  else if (!ok(g) && ok(d, t)) missing = 'gs'
-  else if (!ok(d) && ok(g, t)) missing = 'dist'
+  if (!ok(tm) && ok(d, g)) missing = 'time'
+  else if (!ok(g) && ok(d, tm)) missing = 'gs'
+  else if (!ok(d) && ok(g, tm)) missing = 'dist'
 
   return (
     <div className="flex flex-col gap-4">
-      <Note>Lascia vuoto il campo da calcolare.</Note>
+      <Note>{t('Lascia vuoto il campo da calcolare.')}</Note>
       <Grid>
-        <Field label="Distanza" unit="NM" value={dist} onChange={setDist} />
-        <Field label="Velocità al suolo" unit="kt" value={gs} onChange={setGs} />
-        <Field label="Tempo" unit="min" value={time} onChange={setTime} />
+        <Field label={t('Distanza')} unit="NM" value={dist} onChange={setDist} />
+        <Field label={t('Velocità al suolo')} unit="kt" value={gs} onChange={setGs} />
+        <Field label={t('Tempo')} unit="min" value={time} onChange={setTime} />
       </Grid>
       <Results
         items={[
-          ['Distanza', missing === 'dist' ? `${fmt((g * t) / 60)} NM` : null],
-          ['Velocità al suolo', missing === 'gs' && t > 0 ? `${fmt((d / t) * 60, 0)} kt` : null],
+          [msg('Distanza'), missing === 'dist' ? `${fmt((g * tm) / 60)} NM` : null],
           [
-            'Tempo',
+            t('Velocità al suolo'),
+            missing === 'gs' && tm > 0 ? `${fmt((d / tm) * 60, 0)} kt` : null,
+          ],
+          [
+            msg('Tempo'),
             missing === 'time' && g > 0
               ? `${Math.floor(((d / g) * 60) / 60)} h ${fmt(((d / g) * 60) % 60, 0)} min`
               : null,
@@ -415,23 +434,25 @@ function Fuel() {
   return (
     <div className="flex flex-col gap-4">
       <Grid>
-        <Field label="Consumo" unit="L/h" value={burn} onChange={setBurn} />
-        <Field label="Durata del volo" unit="min" value={trip} onChange={setTrip} />
-        <Field label="Riserva" unit="min" value={reserve} onChange={setReserve} />
-        <Field label="Rullaggio" unit="L" value={taxi} onChange={setTaxi} />
-        <Field label="A bordo" unit="L" value={onBoard} onChange={setOnBoard} />
+        <Field label={t('Consumo')} unit="L/h" value={burn} onChange={setBurn} />
+        <Field label={t('Durata del volo')} unit="min" value={trip} onChange={setTrip} />
+        <Field label={t('Riserva')} unit="min" value={reserve} onChange={setReserve} />
+        <Field label={t('Rullaggio')} unit="L" value={taxi} onChange={setTaxi} />
+        <Field label={t('A bordo')} unit="L" value={onBoard} onChange={setOnBoard} />
       </Grid>
       <Results
         items={[
-          ['Viaggio', f ? l(f.tripLitres) : null],
-          ['Riserva', f ? l(f.reserveLitres) : null],
-          ['Necessario', f ? l(f.requiredLitres) : null],
+          [msg('Viaggio'), f ? l(f.tripLitres) : null],
+          [msg('Riserva'), f ? l(f.reserveLitres) : null],
+          [msg('Necessario'), f ? l(f.requiredLitres) : null],
           [
-            'Margine',
-            f ? `${f.marginLitres >= 0 ? '' : 'mancano '}${fmt(Math.abs(f.marginLitres))} L` : null,
+            msg('Margine'),
+            f
+              ? `${f.marginLitres >= 0 ? '' : t('mancano ')}${fmt(Math.abs(f.marginLitres))} L`
+              : null,
           ],
           [
-            'Autonomia',
+            msg('Autonomia'),
             f
               ? `${Math.floor(f.enduranceMinutes / 60)} h ${fmt(f.enduranceMinutes % 60, 0)} min`
               : null,
@@ -439,18 +460,22 @@ function Fuel() {
         ]}
       />
       <Note>
-        Massa calcolata con AVGAS a {fmt(AVGAS_KG_PER_LITRE, 2)} kg/L. La riserva minima la
-        stabiliscono il regolamento e il manuale: inseriscila tu.
+        {t('Massa calcolata con AVGAS a')} {fmt(AVGAS_KG_PER_LITRE, 2)}{' '}
+        {t('kg/L. La riserva minima la stabiliscono il regolamento e il manuale: inseriscila tu.')}
       </Note>
     </div>
   )
 }
 
 function MassAndBalance() {
-  const [rows, setRows] = useState<{ id: number; name: string; mass: string; arm: string }[]>(
-    ['Aereo vuoto', 'Pilota e passeggero', 'Passeggeri dietro', 'Bagagli', 'Carburante'].map(
-      (name, id) => ({ id, name, mass: '', arm: '' }),
-    ),
+  const [rows, setRows] = useState<{ id: number; name: string; mass: string; arm: string }[]>(() =>
+    [
+      t('Aereo vuoto'),
+      t('Pilota e passeggero'),
+      t('Passeggeri dietro'),
+      t('Bagagli'),
+      t('Carburante'),
+    ].map((name, id) => ({ id, name, mass: '', arm: '' })),
   )
   const [maxMass, setMaxMass] = useState('')
   const [cgMin, setCgMin] = useState('')
@@ -463,19 +488,20 @@ function MassAndBalance() {
     ...(ok(num(cgMin), num(cgMax)) ? { cgMin: num(cgMin), cgMax: num(cgMax) } : {}),
   }
   const r = massBalance(items, limits)
-  const yesNo = (v: boolean | null) => (v === null ? null : v ? 'entro i limiti' : 'FUORI LIMITE')
+  const yesNo = (v: boolean | null) =>
+    v === null ? null : v ? t('entro i limiti') : t('FUORI LIMITE')
   const set = (i: number, patch: Partial<(typeof rows)[number]>) =>
     setRows((rs) => rs.map((row, j) => (j === i ? { ...row, ...patch } : row)))
 
   return (
     <div className="flex flex-col gap-4">
-      <Note>Inserisci masse e bracci dal manuale del tuo aereo, nelle stesse unità.</Note>
+      <Note>{t('Inserisci masse e bracci dal manuale del tuo aereo, nelle stesse unità.')}</Note>
       <div className="flex flex-col gap-3">
         <div className="hidden grid-cols-[2fr_1fr_1fr_1fr] gap-2 text-sm text-[var(--fg-quiet)] sm:grid">
-          <span>Voce</span>
-          <span>Massa</span>
-          <span>Braccio</span>
-          <span>Momento</span>
+          <span>{t('Voce')}</span>
+          <span>{t('Massa')}</span>
+          <span>{t('Braccio')}</span>
+          <span>{t('Momento')}</span>
         </div>
         {rows.map((row, i) => (
           <div
@@ -483,22 +509,22 @@ function MassAndBalance() {
             className="grid grid-cols-3 gap-2 border-b border-[var(--rule)] pb-3 sm:grid-cols-[2fr_1fr_1fr_1fr] sm:border-0 sm:pb-0"
           >
             <input
-              aria-label={`Voce ${i + 1}`}
+              aria-label={t('Voce {n}', { n: i + 1 })}
               value={row.name}
               onChange={(e) => set(i, { name: e.target.value })}
               className="col-span-3 min-h-11 rounded-lg border border-[var(--rule)] bg-transparent px-2 sm:col-span-1"
             />
             <input
-              aria-label={`Massa di ${row.name}`}
-              placeholder="massa"
+              aria-label={t('Massa di {name}', { name: row.name })}
+              placeholder={t('massa')}
               inputMode="decimal"
               value={row.mass}
               onChange={(e) => set(i, { mass: e.target.value })}
               className="min-h-11 rounded-lg border border-[var(--rule)] bg-transparent px-2 tabular-nums placeholder:text-[var(--fg-quiet)]"
             />
             <input
-              aria-label={`Braccio di ${row.name}`}
-              placeholder="braccio"
+              aria-label={t('Braccio di {name}', { name: row.name })}
+              placeholder={t('braccio')}
               inputMode="decimal"
               value={row.arm}
               onChange={(e) => set(i, { arm: e.target.value })}
@@ -515,24 +541,24 @@ function MassAndBalance() {
         onClick={() =>
           setRows((rs) => [
             ...rs,
-            { id: rs.length, name: `Voce ${rs.length + 1}`, mass: '', arm: '' },
+            { id: rs.length, name: t('Voce {n}', { n: rs.length + 1 }), mass: '', arm: '' },
           ])
         }
       >
-        Aggiungi una voce
+        {t('Aggiungi una voce')}
       </QuietButton>
       <Grid>
-        <Field label="Massa massima" value={maxMass} onChange={setMaxMass} />
-        <Field label="Baricentro minimo" value={cgMin} onChange={setCgMin} />
-        <Field label="Baricentro massimo" value={cgMax} onChange={setCgMax} />
+        <Field label={t('Massa massima')} value={maxMass} onChange={setMaxMass} />
+        <Field label={t('Baricentro minimo')} value={cgMin} onChange={setCgMin} />
+        <Field label={t('Baricentro massimo')} value={cgMax} onChange={setCgMax} />
       </Grid>
       <Results
         items={[
-          ['Massa totale', items.length ? fmt(r.mass) : null],
-          ['Momento totale', items.length ? fmt(r.moment) : null],
-          ['Baricentro', r.cg === null ? null : fmt(r.cg, 3)],
-          ['Verifica massa', yesNo(r.withinMass)],
-          ['Verifica centraggio', yesNo(r.withinCg)],
+          [t('Massa totale'), items.length ? fmt(r.mass) : null],
+          [t('Momento totale'), items.length ? fmt(r.moment) : null],
+          [msg('Baricentro'), r.cg === null ? null : fmt(r.cg, 3)],
+          [t('Verifica massa'), yesNo(r.withinMass)],
+          [t('Verifica centraggio'), yesNo(r.withinCg)],
         ]}
       />
     </div>

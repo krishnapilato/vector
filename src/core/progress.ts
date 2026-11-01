@@ -1,4 +1,5 @@
 import type { Graded, Verdict } from './grading'
+import { msg } from './i18n'
 import type { Srs, SrsCard } from './scheduler'
 
 /** What the app knows about the learner, per concept. Only numbers and ids: no content, no media. */
@@ -92,10 +93,10 @@ export function masteryOf(p: ConceptProgress | undefined, now: Date): Mastery {
 }
 
 export const masteryLabel: Record<Mastery, string> = {
-  new: 'da iniziare',
-  learning: 'in apprendimento',
-  due: 'da ripassare',
-  consolidated: 'consolidato',
+  new: msg('da iniziare'),
+  learning: msg('in apprendimento'),
+  due: msg('da ripassare'),
+  consolidated: msg('consolidato'),
 }
 
 export interface Scores {
