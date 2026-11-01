@@ -1,6 +1,7 @@
 import Dexie, { type EntityTable } from 'dexie'
 import { type Config, configSchema, defaultConfig } from '../../config/config'
 import type { UserConcept } from '../../core/ai/questions'
+import type { CardState } from '../../core/cards'
 import { defaultFocusSettings, type FocusSettings } from '../../core/focus/focus'
 import type { Stroke } from '../../core/ink'
 import type { PlanItem } from '../../core/plan'
@@ -119,6 +120,7 @@ class VectorDb extends Dexie {
   attempts!: EntityTable<Attempt, 'id'>
   focusRecords!: EntityTable<FocusRecord, 'id'>
   drawings!: EntityTable<Drawing, 'id'>
+  cards!: EntityTable<CardState, 'term'>
 
   constructor() {
     super('vector')
@@ -143,6 +145,7 @@ class VectorDb extends Dexie {
       focusRecords: 'id, endedAt',
       drawings: 'id, bookId, [bookId+page]',
     })
+    this.version(4).stores({ cards: 'term' })
   }
 }
 
@@ -297,6 +300,8 @@ export const loadFocusRecords = () => db.focusRecords.orderBy('endedAt').toArray
 export const loadDrawing = (bookId: string, page: number) =>
   db.drawings.where('[bookId+page]').equals([bookId, page]).first()
 export const saveDrawing = (d: Drawing) => db.drawings.put(d)
+export const loadCards = async () => new Map((await db.cards.toArray()).map((c) => [c.term, c]))
+export const saveCard = (c: CardState) => db.cards.put(c)
 export const loadDrawings = (bookId: string) => db.drawings.where('bookId').equals(bookId).toArray()
 
 /** A readable backup the learner can keep: their data, in their hands. */
@@ -320,6 +325,7 @@ const syncedTables = [
   'attempts',
   'focusRecords',
   'drawings',
+  'cards',
 ] as const
 type SyncedTable = (typeof syncedTables)[number]
 

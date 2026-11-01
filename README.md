@@ -4,7 +4,7 @@ Studia i concetti, non le risposte.
 
 Vector è una web app di studio **local-first**, open source e gratuita. Nasce per preparare la teoria del PPL(A) EASA, ma è costruita per qualsiasi esame. Obiettivo: capire davvero, non memorizzare le risposte dei quiz.
 
-> Stato: **v1.3 — note a penna sulle pagine**. Importi i tuoi libri, li leggi e li sottolinei, generi domande di comprensione e studi con un monitoraggio dell'attenzione che resta sul tuo computer.
+> Stato: **v1.4 — radio, METAR/TAF, glossario a schede**. Importi i tuoi libri, li leggi e li sottolinei, generi domande di comprensione e studi con un monitoraggio dell'attenzione che resta sul tuo computer.
 
 ## Cosa fa già
 
@@ -33,6 +33,9 @@ Vector è una web app di studio **local-first**, open source e gratuita. Nasce p
 - **Backup cifrato** su file con una frase segreta, e ripristino.
 - **Sincronizzazione tra dispositivi** facoltativa, cifrata end-to-end, con un server tuo (Cloudflare Worker gratuito, istruzioni in [`worker/`](worker/README.md)). Il server non può leggere niente.
 - **Note a penna** sulla pagina originale del PDF: penna sensibile alla pressione (perfect-freehand), evidenziatore, gomma, annulla; con penna attiva le dita non disegnano. I tratti sono vettori salvati sul dispositivo e si sincronizzano. **Trascrivi in testo** (facoltativo, IA): viene inviata solo l'immagine della tua scrittura, non la pagina del libro.
+- **Radio in inglese**: nove tipi di scambio VFR (prima chiamata, rullaggio, attesa, decollo, cambio frequenza, transponder, circuito, cambio pista, atterraggio) con nominativo, pista, QNH, squawk e frequenze sempre nuovi. La voce ATC è sintetizzata dal sistema (spesso in locale); rispondi scritto o a voce, e Vector controlla gli elementi della collazione, non le parole esatte.
+- **METAR e TAF**: scarica i bollettini reali da aviationweather.gov (viene inviato solo il codice ICAO) o incollali, e leggi la decodifica in italiano con una valutazione VFR indicativa. In più, esercizi su METAR generati con domande su vento, QNH, ceiling e punto di rugiada.
+- **Glossario a schede** italiano-inglese con ripasso a scatole (Leitner): prima i termini che cerchi più spesso nel lettore.
 - Tastiera: `1`–`4` rispondi, `0` non lo so, `Spazio`/`Invio` avanti, `Esc` esci.
 
 ## Principi

@@ -16,6 +16,8 @@ import {
 import { convert, quantities } from '../../core/flight/units'
 import { hrefFor } from '../router'
 import { Page, QuietButton } from '../ui'
+import { GlossaryTool } from './GlossaryTool'
+import { WeatherTool } from './WeatherTool'
 
 /**
  * Flight tools. Every tool works offline and is also available as a side panel
@@ -37,6 +39,8 @@ export const tools = [
   { id: 'tempo', name: 'Tempo, distanza, velocità', component: TimeSpeed },
   { id: 'carburante', name: 'Carburante', component: Fuel },
   { id: 'centraggio', name: 'Peso e centraggio', component: MassAndBalance },
+  { id: 'meteo', name: 'METAR e TAF', component: WeatherTool },
+  { id: 'glossario', name: 'Glossario', component: GlossaryTool },
 ] as const
 
 export function Tools({ tool }: { tool: string | null }) {

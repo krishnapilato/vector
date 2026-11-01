@@ -20,6 +20,7 @@ describe('router', () => {
       { name: 'open', subjectId: null },
       { name: 'open', subjectId: 'met' },
       { name: 'diary' },
+      { name: 'radio' },
       { name: 'map', subjectId: null },
       { name: 'map', subjectId: 'nav' },
       { name: 'reader', bookId: 'abc', page: null, view: 'text' },

@@ -19,6 +19,7 @@ const Diary = lazy(() => import('./screens/Diary').then((m) => ({ default: m.Dia
 const ProgramMap = lazy(() =>
   import('./screens/ProgramMap').then((m) => ({ default: m.ProgramMap })),
 )
+const Radio = lazy(() => import('./screens/Radio').then((m) => ({ default: m.Radio })))
 const PomodoroScreen = lazy(() =>
   import('./screens/PomodoroScreen').then((m) => ({ default: m.PomodoroScreen })),
 )
@@ -26,6 +27,7 @@ const PomodoroScreen = lazy(() =>
 const nav: { label: string; route: Route }[] = [
   { label: 'Studia', route: { name: 'home' } },
   { label: 'Libreria', route: { name: 'library' } },
+  { label: 'Radio', route: { name: 'radio' } },
   { label: 'Piano', route: { name: 'plan' } },
   { label: 'Strumenti', route: { name: 'tools', tool: null } },
   { label: 'Materie', route: { name: 'subjects', subjectId: null } },
@@ -143,13 +145,14 @@ function Shell() {
           {route.name === 'library' && <Library />}
           {route.name === 'profile' && <Profile />}
           {route.name === 'diary' && <Diary />}
+          {route.name === 'radio' && <Radio />}
           {route.name === 'map' && <ProgramMap subjectId={route.subjectId} />}
           {route.name === 'tools' && <Tools tool={route.tool} />}
         </Suspense>
       </main>
 
       <footer className="flex flex-wrap justify-between gap-2 py-6 text-xs text-[var(--fg-quiet)]">
-        <span>vector v1.3</span>
+        <span>vector v1.4</span>
         <span>I tuoi dati restano su questo dispositivo.</span>
       </footer>
     </div>

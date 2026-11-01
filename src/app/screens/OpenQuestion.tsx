@@ -14,9 +14,9 @@ import {
 import { masteryOf } from '../../core/progress'
 import { createRng, randomSeed } from '../../core/random'
 import { AiError, generate } from '../ai/gemini'
+import { Dictate } from '../Dictate'
 import { FocusLine, useFocus } from '../focus/useFocus'
 import { hrefFor, navigate } from '../router'
-import { speechSupported, useDictation } from '../speech'
 import { useStore } from '../state'
 import { PrimaryButton, QuietButton, QuietLink } from '../ui'
 
@@ -251,7 +251,7 @@ function Explain({
             }
             className="w-full rounded-lg border border-[var(--rule)] bg-[var(--bg)] p-4 text-lg leading-relaxed text-[var(--fg)]"
           />
-          <Dictate onText={(t) => setCurrent(current ? `${current} ${t}` : t)} />
+          <Dictate lang="it-IT" onText={(t) => setCurrent(current ? `${current} ${t}` : t)} />
           <div className="flex flex-wrap items-center gap-2">
             <PrimaryButton
               onClick={check}
@@ -325,54 +325,5 @@ function Explain({
         </section>
       )}
     </main>
-  )
-}
-
-function Dictate({ onText }: { onText: (t: string) => void }) {
-  const { prefs, updatePrefs } = useStore()
-  const dictation = useDictation('it-IT', onText)
-  const [asking, setAsking] = useState(false)
-  if (!speechSupported()) return null
-
-  if (asking) {
-    return (
-      <div className="flex flex-col gap-2 border-l border-[var(--rule)] pl-4 text-sm">
-        <p>
-          La dettatura usa il riconoscimento vocale del browser: in Chrome ed Edge l’audio viene
-          trascritto dai server di Google o Microsoft. Vector non lo registra.
-        </p>
-        <div className="flex gap-2">
-          <QuietButton
-            className="text-[var(--fg)] underline"
-            onClick={() => {
-              void updatePrefs({ ...prefs, study: { ...prefs.study, voiceConsent: true } })
-              setAsking(false)
-              dictation.start()
-            }}
-          >
-            Ho capito, detta
-          </QuietButton>
-          <QuietButton onClick={() => setAsking(false)}>No, scrivo</QuietButton>
-        </div>
-      </div>
-    )
-  }
-
-  return (
-    <div className="flex flex-wrap items-center gap-2 text-sm">
-      {dictation.listening ? (
-        <QuietButton className="text-[var(--fg)] underline" onClick={dictation.stop}>
-          Smetti di dettare
-        </QuietButton>
-      ) : (
-        <QuietButton
-          onClick={() => (prefs.study.voiceConsent ? dictation.start() : setAsking(true))}
-        >
-          Rispondi a voce
-        </QuietButton>
-      )}
-      {dictation.interim && <span className="text-[var(--fg-quiet)]">{dictation.interim}…</span>}
-      {dictation.error && <span role="alert">{dictation.error}</span>}
-    </div>
   )
 }
