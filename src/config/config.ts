@@ -1,35 +1,43 @@
-import { z } from 'zod'
+import * as z from 'zod/mini'
 import defaults from './defaults.json'
 
-const seconds = z.number().int().positive().max(3600)
-const minutes = z.number().int().positive().max(180)
+// zod/mini: the same validation as zod at a fraction of the size.
+const int = (min: number, max: number) => z.int().check(z.minimum(min), z.maximum(max))
 
-export const configSchema = z
-  .object({
-    version: z.literal(1),
-    timers: z.object({
-      recall: seconds,
-      reasoning: seconds,
-      calculation: seconds,
-      open: seconds,
-    }),
-    pomodoro: z.object({
-      focusMinutes: minutes,
-      shortBreakMinutes: minutes,
-      longBreakMinutes: minutes,
-      cyclesBeforeLongBreak: z.number().int().min(1).max(12),
-    }),
-    focus: z
-      .object({
-        ignoreDistractionSeconds: z.number().int().min(0).max(60),
-        pauseAfterSeconds: z.number().int().min(1).max(600),
-      })
-      .refine((f) => f.pauseAfterSeconds > f.ignoreDistractionSeconds, {
+export const configSchema = z.strictObject({
+  version: z.literal(1),
+  timers: z.object({
+    recall: int(1, 3600),
+    reasoning: int(1, 3600),
+    calculation: int(1, 3600),
+    open: int(1, 3600),
+  }),
+  pomodoro: z.object({
+    focusMinutes: int(1, 180),
+    shortBreakMinutes: int(1, 180),
+    longBreakMinutes: int(1, 180),
+    cyclesBeforeLongBreak: int(1, 12),
+  }),
+  session: z.object({
+    length: int(1, 50),
+    newConcepts: int(0, 20),
+  }),
+  quiz: z.object({
+    thinkFirstSeconds: int(0, 30),
+    whyProbability: z.number().check(z.minimum(0), z.maximum(1)),
+  }),
+  focus: z
+    .object({
+      ignoreDistractionSeconds: int(0, 60),
+      pauseAfterSeconds: int(1, 600),
+    })
+    .check(
+      z.refine((f) => f.pauseAfterSeconds > f.ignoreDistractionSeconds, {
         message: 'pauseAfterSeconds must be greater than ignoreDistractionSeconds',
         path: ['pauseAfterSeconds'],
       }),
-  })
-  .strict()
+    ),
+})
 
 export type Config = z.infer<typeof configSchema>
 

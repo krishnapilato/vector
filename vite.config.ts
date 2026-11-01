@@ -5,6 +5,8 @@ import { defineConfig } from 'vite'
 import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig({
+  // GitHub Pages serves the app from /vector/; locally it lives at /.
+  base: process.env.BASE_PATH ?? '/',
   plugins: [
     react(),
     babel({ presets: [reactCompilerPreset()] }),

@@ -1,6 +1,6 @@
 {
   "name": "vector",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "description": "Vector — local-first study app: understand concepts, don't memorize answers.",
   "type": "module",
@@ -25,8 +25,10 @@
     "check": "pnpm typecheck && pnpm ci:lint && pnpm test && pnpm build && pnpm size"
   },
   "dependencies": {
+    "dexie": "^4.4.7",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
+    "ts-fsrs": "^6.0.0",
     "zod": "^4.4.7"
   },
   "devDependencies": {

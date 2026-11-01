@@ -4,11 +4,24 @@ Studia i concetti, non le risposte.
 
 Vector è una web app di studio **local-first**, open source e gratuita. Nasce per preparare la teoria del PPL(A) EASA, ma è costruita per qualsiasi esame. Obiettivo: capire davvero, non memorizzare le risposte dei quiz.
 
-> Stato: **v0.1 — fondamenta**. Stack, qualità e CI pronti; le funzioni arrivano versione per versione (vedi la roadmap nel documento di progetto).
+> Stato: **v0.2 — prima sezione funzionante**. Sessioni di studio complete su un piccolo corso PPL di esempio; l'importazione del proprio materiale arriva nelle prossime versioni.
+
+## Cosa fa già
+
+- **Sessioni di studio** con ripasso spaziato (FSRS): prima i concetti da ripassare, poi pochi nuovi, mescolati tra le materie.
+- **Anti-memorizzazione**: si ripassa il concetto, non la domanda (più formulazioni per concetto), risposte rimescolate e distrattori sempre diversi, calcoli con numeri nuovi a ogni giro, pausa per pensare prima di vedere le opzioni, livello di sicurezza (sicuro / incerto / a caso), domanda «Perché?», rilevamento delle risposte troppo rapide su domande già viste.
+- **Errore → si torna al testo**: dopo un errore compare il paragrafo di riferimento e il concetto torna più avanti con parole diverse.
+- **Due punteggi onesti**: comprensione (domande mai viste) e riconoscimento (domande già viste).
+- **Timer per tipo di domanda**; un tempo scaduto vale «non lo so». Pausa automatica se esci dall'app.
+- **Ripresa esatta** della sessione dopo una chiusura.
+- **Materie** con lo stato di ogni concetto e il testo da rileggere.
+- **Impostazioni**: modalità Capire / Allenamento, lunghezza della sessione, timer, chiave Gemini facoltativa, backup e cancellazione dei dati.
+- **Spiegamelo in un altro modo** (facoltativo): con la propria chiave Gemini, una spiegazione alternativa dopo un errore.
+- Tastiera: `1`–`4` rispondi, `0` non lo so, `Spazio`/`Invio` avanti, `Esc` esci.
 
 ## Principi
 
-- **Privacy prima di tutto**: i dati restano sul dispositivo. Fotocamera e microfono, quando arriveranno, sono analizzati in locale e mai registrati.
+- **Privacy prima di tutto**: i dati restano sul dispositivo. La chiave AI è dell'utente e non lascia il suo browser. Fotocamera e microfono, quando arriveranno, saranno analizzati in locale e mai registrati.
 - **Zero distrazioni**: bianco, nero e tre grigi; nessuna animazione (verificato da un test).
 - **Niente psicologia manipolativa**: niente streak, badge o punti.
 - **Comprensione, non memoria**: il sistema di quiz è progettato per impedire lo studio a memoria.
@@ -42,6 +55,12 @@ pnpm check          # typecheck, lint, test, build, budget di peso
 pnpm test:browser   # test dei componenti in Chromium
 pnpm e2e            # test end-to-end (prima volta: pnpm exec playwright install chromium)
 ```
+
+## Rilascio
+
+- **CI** (`ci.yml`) a ogni push e pull request.
+- **GitHub Pages** (`pages.yml`): dopo una CI verde su `main` l'app viene pubblicata. Da attivare una volta in Settings → Pages → Source: GitHub Actions.
+- **Release** (`release.yml`): con un tag `vX.Y.Z` uguale alla versione in `package.json` viene creata una release con lo zip della build.
 
 ## Qualità
 

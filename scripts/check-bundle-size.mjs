@@ -7,7 +7,9 @@ import { gzipSync } from 'node:zlib'
 const BUDGET_KB = 120 // gzipped JS + CSS loaded at startup
 const dist = 'dist'
 const html = readFileSync(join(dist, 'index.html'), 'utf8')
-const entry = [...html.matchAll(/(?:src|href)="\/(assets\/[^"]+\.(?:js|css))"/g)].map((m) => m[1])
+const entry = [...html.matchAll(/(?:src|href)="[^"]*?(assets\/[^"]+\.(?:js|css))"/g)].map(
+  (m) => m[1],
+)
 
 if (entry.length === 0) {
   console.error('No entry assets found in dist/index.html — run the build first.')

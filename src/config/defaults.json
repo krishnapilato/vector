@@ -15,5 +15,13 @@
   "focus": {
     "ignoreDistractionSeconds": 3,
     "pauseAfterSeconds": 10
+  },
+  "session": {
+    "length": 10,
+    "newConcepts": 3
+  },
+  "quiz": {
+    "thinkFirstSeconds": 4,
+    "whyProbability": 0.35
   }
 }
