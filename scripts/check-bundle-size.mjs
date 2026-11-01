@@ -4,7 +4,8 @@ import { readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { gzipSync } from 'node:zlib'
 
-const BUDGET_KB = 120 // gzipped JS + CSS loaded at startup
+// Raised from 120 in v1.0: the store now owns books and generated concepts.
+const BUDGET_KB = 135 // gzipped JS + CSS loaded at startup
 const dist = 'dist'
 const html = readFileSync(join(dist, 'index.html'), 'utf8')
 const entry = [...html.matchAll(/(?:src|href)="[^"]*?(assets\/[^"]+\.(?:js|css))"/g)].map(

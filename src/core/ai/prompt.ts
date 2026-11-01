@@ -31,3 +31,20 @@ export function buildExplainPrompt(i: ExplainInput): string {
     `Problema: ${i.mistake}`,
   ].join('\n')
 }
+
+/** Meaning of a word or phrase in the exact sentence where the learner met it. */
+export function buildContextPrompt(term: string, context: string, language: 'it' | 'en'): string {
+  return [
+    'Sei un istruttore di volo. Uno studente PPL(A) sta leggendo un testo' +
+      (language === 'en' ? ' in inglese' : '') +
+      ' e non capisce un termine.',
+    'Spiega in italiano, in massimo 80 parole, cosa significa il termine IN QUESTA FRASE, nel contesto aeronautico.',
+    language === 'en' ? 'Indica anche il termine italiano corrispondente usato all’esame.' : '',
+    'Non inventare: se il contesto non basta, dillo.',
+    '',
+    `Termine: ${term}`,
+    `Frase: ${context}`,
+  ]
+    .filter(Boolean)
+    .join('\n')
+}

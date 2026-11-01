@@ -67,7 +67,7 @@ pnpm e2e            # test end-to-end (prima volta: pnpm exec playwright install
 
 ## Qualità
 
-La CI blocca ogni modifica che non passa: controllo dei tipi, lint, test unitari con copertura minima, test nel browser, test end-to-end (incluse accessibilità e assenza di animazioni) e budget di peso del bundle iniziale (120 kB gzip).
+La CI blocca ogni modifica che non passa: controllo dei tipi, lint, test unitari con copertura minima, test nel browser, test end-to-end (incluse accessibilità e assenza di animazioni) e budget di peso del bundle iniziale (135 kB gzip).
 
 ## Come è stato costruito
 

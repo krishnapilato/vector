@@ -84,6 +84,11 @@ export function Settings() {
           checked={prefs.study.fullscreen}
           onChange={(v) => setStudy({ fullscreen: v })}
         />
+        <Checkbox
+          label="Includi i concetti di esempio scritti a mano"
+          checked={prefs.study.includeSample}
+          onChange={(v) => setStudy({ includeSample: v })}
+        />
       </Section>
 
       <Section title="Timer (secondi, modalità Allenamento)">

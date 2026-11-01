@@ -221,6 +221,18 @@ function Question({ session, setSession, rngSeed }: QuestionProps) {
         graded: result,
         updatesSchedule: item.attempt === 1,
       })
+      store.logAttempt({
+        id: crypto.randomUUID(),
+        at: new Date().toISOString(),
+        conceptId: q.conceptId,
+        variantId: q.variantId,
+        verdict: result.verdict,
+        prompt: q.prompt,
+        chosen: q.options.find((o) => o.id === picked)?.text ?? null,
+        correct: q.options.find((o) => o.id === q.correctOptionId)?.text ?? '',
+        elapsedSeconds: Math.round(secs * 10) / 10,
+        seenBefore: item.seenBefore,
+      })
     },
     [q, item, store, config, rngSeed, setSession, elapsed],
   )

@@ -12,6 +12,8 @@ export type Route =
   | { name: 'plan' }
   | { name: 'tools'; tool: string | null }
   | { name: 'pomodoro' }
+  | { name: 'library' }
+  | { name: 'reader'; bookId: string; page: number | null; view: 'text' | 'page' }
 
 export function parseRoute(hash: string): Route {
   const [path = '', query = ''] = hash.replace(/^#\/?/, '').split('?')
@@ -30,6 +32,16 @@ export function parseRoute(hash: string): Route {
       return { name: 'tools', tool: second || null }
     case 'pomodoro':
       return { name: 'pomodoro' }
+    case 'libreria': {
+      if (!second) return { name: 'library' }
+      const p = Number(params.get('p'))
+      return {
+        name: 'reader',
+        bookId: second,
+        page: Number.isInteger(p) && p > 0 ? p : null,
+        view: params.get('vista') === 'pagina' ? 'page' : 'text',
+      }
+    }
     default:
       return { name: 'home' }
   }
@@ -56,6 +68,15 @@ export function hrefFor(route: Route): string {
       return route.tool ? `#/strumenti/${route.tool}` : '#/strumenti'
     case 'pomodoro':
       return '#/pomodoro'
+    case 'library':
+      return '#/libreria'
+    case 'reader': {
+      const q = new URLSearchParams()
+      if (route.page) q.set('p', String(route.page))
+      if (route.view === 'page') q.set('vista', 'pagina')
+      const s = q.toString()
+      return `#/libreria/${route.bookId}${s ? `?${s}` : ''}`
+    }
   }
 }
 

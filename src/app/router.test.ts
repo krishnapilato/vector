@@ -14,6 +14,9 @@ describe('router', () => {
       { name: 'tools', tool: null },
       { name: 'tools', tool: 'vento' },
       { name: 'pomodoro' },
+      { name: 'library' },
+      { name: 'reader', bookId: 'abc', page: null, view: 'text' },
+      { name: 'reader', bookId: 'abc', page: 12, view: 'page' },
     ]
     for (const r of routes) expect(parseRoute(hrefFor(r))).toEqual(r)
   })

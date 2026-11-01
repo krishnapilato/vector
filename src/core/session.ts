@@ -11,6 +11,10 @@ export interface StudySettings {
   sessionLength: number
   newConcepts: number
   fullscreen: boolean
+  /** Include the hand-written sample course alongside the learner's own material. */
+  includeSample: boolean
+  /** Reading text size step, 0 (small) to 3 (very large). */
+  readingSize: number
 }
 
 export function defaultSettings(config: Config): StudySettings {
@@ -19,6 +23,8 @@ export function defaultSettings(config: Config): StudySettings {
     sessionLength: config.session.length,
     newConcepts: config.session.newConcepts,
     fullscreen: true,
+    includeSample: true,
+    readingSize: 1,
   }
 }
 

@@ -59,15 +59,33 @@ async function call(url: string, apiKey: string, init: RequestInit = {}): Promis
   return res.json()
 }
 
+export interface GenerateOptions {
+  /** Ask for a JSON reply. */
+  json?: boolean
+  maxOutputTokens?: number
+  temperature?: number
+  signal?: AbortSignal
+  /** Extra inline data, e.g. an image of handwritten notes (sent only on explicit request). */
+  inline?: { mimeType: string; base64: string }
+}
+
 export async function generate(
   apiKey: string,
   model: string,
   prompt: string,
-  signal?: AbortSignal,
+  opts: GenerateOptions = {},
 ): Promise<string> {
+  const { signal } = opts
+  const parts: unknown[] = [{ text: prompt }]
+  if (opts.inline)
+    parts.push({ inlineData: { mimeType: opts.inline.mimeType, data: opts.inline.base64 } })
   const body = {
-    contents: [{ role: 'user', parts: [{ text: prompt }] }],
-    generationConfig: { temperature: 0.4, maxOutputTokens: 600 },
+    contents: [{ role: 'user', parts }],
+    generationConfig: {
+      temperature: opts.temperature ?? 0.4,
+      maxOutputTokens: opts.maxOutputTokens ?? 600,
+      ...(opts.json ? { responseMimeType: 'application/json' } : {}),
+    },
   }
   const json = await call(`${BASE}/models/${encodeURIComponent(model)}:generateContent`, apiKey, {
     method: 'POST',

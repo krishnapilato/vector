@@ -1,12 +1,14 @@
+import { useState } from 'react'
+import type { UserConcept } from '../../core/ai/questions'
 import { type Mastery, masteryLabel, masteryOf } from '../../core/progress'
 import { hrefFor } from '../router'
 import { useStore } from '../state'
-import { LinkButton, Page, QuietLink } from '../ui'
+import { LinkButton, Page, QuietButton, QuietLink } from '../ui'
 
 const order: Mastery[] = ['due', 'learning', 'new', 'consolidated']
 
 export function Subjects({ subjectId }: { subjectId: string | null }) {
-  const { course, progress } = useStore()
+  const { course, progress, userConcepts } = useStore()
   const now = new Date()
   const subject = course.subjects.find((s) => s.id === subjectId)
 
@@ -70,9 +72,41 @@ export function Subjects({ subjectId }: { subjectId: string | null }) {
               </span>
             </div>
             <p className="max-w-prose leading-relaxed">{concept.source}</p>
+            <Origin concept={userConcepts.find((u) => u.id === concept.id)} />
           </article>
         ))}
       </div>
     </Page>
+  )
+}
+
+/** Generated concepts show where they come from and can be removed. */
+function Origin({ concept }: { concept: UserConcept | undefined }) {
+  const { removeConcept } = useStore()
+  const [armed, setArmed] = useState(false)
+  if (!concept) return null
+  const o = concept.origin
+  return (
+    <div className="flex flex-wrap items-center gap-2 text-sm text-[var(--fg-quiet)]">
+      <a
+        href={hrefFor({ name: 'reader', bookId: o.bookId, page: o.fromPage, view: 'text' })}
+        className="underline-offset-4 hover:underline"
+      >
+        Creato con l’IA da {o.bookTitle}, pagine {o.fromPage}–{o.toPage}
+      </a>
+      {armed ? (
+        <>
+          <QuietButton
+            className="text-[var(--fg)] underline"
+            onClick={() => removeConcept(concept.id)}
+          >
+            Conferma eliminazione
+          </QuietButton>
+          <QuietButton onClick={() => setArmed(false)}>Annulla</QuietButton>
+        </>
+      ) : (
+        <QuietButton onClick={() => setArmed(true)}>Elimina</QuietButton>
+      )}
+    </div>
   )
 }

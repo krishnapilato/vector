@@ -8,31 +8,42 @@ import {
   useRef,
   useState,
 } from 'react'
+import type { UserConcept } from '../core/ai/questions'
+import { buildCourse } from '../core/content/course'
 import { pplSample } from '../core/content/ppl-sample'
 import type { Course } from '../core/content/types'
 import type { PlanItem } from '../core/plan'
 import { type Pomodoro, phaseLabel, tick } from '../core/pomodoro'
 import { type AnswerRecord, applyAnswer, type ConceptProgress, flagVariant } from '../core/progress'
+import type { Book } from '../core/reading/book'
 import { createSrs, type Srs } from '../core/scheduler'
 import type { Session } from '../core/session'
 import { notify } from './alerts'
 import {
+  type Attempt,
+  addAttempt,
   addFocusEntry,
+  deleteBook,
   deletePlanItem,
+  deleteUserConcept,
   type FocusEntry,
   loadActiveSession,
+  loadBooks,
   loadFocusLog,
   loadPlan,
   loadPomodoro,
   loadPreferences,
   loadProgress,
+  loadUserConcepts,
   type Preferences,
   resetAll,
   saveActiveSession,
+  saveBook,
   savePlanItems,
   savePomodoro,
   savePreferences,
   saveProgress,
+  saveUserConcepts,
 } from './data/db'
 
 interface Store {
@@ -52,6 +63,13 @@ interface Store {
   pomodoro: Pomodoro | null
   setPomodoro: (p: Pomodoro | null) => void
   focusLog: readonly FocusEntry[]
+  books: readonly Book[]
+  putBook: (b: Book) => void
+  removeBook: (id: string) => Promise<void>
+  userConcepts: readonly UserConcept[]
+  addConcepts: (c: UserConcept[]) => void
+  removeConcept: (id: string) => void
+  logAttempt: (a: Attempt) => void
 }
 
 const StoreContext = createContext<Store | null>(null)
@@ -70,6 +88,8 @@ interface Loaded {
   plan: PlanItem[]
   pomodoro: Pomodoro | null
   focusLog: FocusEntry[]
+  books: Book[]
+  userConcepts: UserConcept[]
 }
 
 export function StoreProvider({ children }: { children: ReactNode }) {
@@ -85,9 +105,22 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       loadPlan(),
       loadPomodoro(),
       loadFocusLog(),
+      loadBooks(),
+      loadUserConcepts(),
     ])
-      .then(([prefs, progress, activeSession, srs, plan, pomodoro, focusLog]) =>
-        setLoaded({ prefs, progress, activeSession, srs, plan, pomodoro, focusLog }),
+      .then(
+        ([prefs, progress, activeSession, srs, plan, pomodoro, focusLog, books, userConcepts]) =>
+          setLoaded({
+            prefs,
+            progress,
+            activeSession,
+            srs,
+            plan,
+            pomodoro,
+            focusLog,
+            books,
+            userConcepts,
+          }),
       )
       .catch((e: unknown) => setError(e instanceof Error ? e.message : String(e)))
   }, [])
@@ -134,10 +167,44 @@ export function StoreProvider({ children }: { children: ReactNode }) {
             plan: [],
             pomodoro: null,
             focusLog: [],
+            books: [],
+            userConcepts: [],
           }
         : l,
     )
   }, [])
+
+  const putBook = useCallback((book: Book) => {
+    void saveBook(book)
+    setLoaded((l) => (l ? { ...l, books: [...l.books.filter((b) => b.id !== book.id), book] } : l))
+  }, [])
+
+  const removeBook = useCallback(async (id: string) => {
+    await deleteBook(id)
+    setLoaded((l) => (l ? { ...l, books: l.books.filter((b) => b.id !== id) } : l))
+  }, [])
+
+  const addConcepts = useCallback((concepts: UserConcept[]) => {
+    void saveUserConcepts(concepts)
+    setLoaded((l) => (l ? { ...l, userConcepts: [...l.userConcepts, ...concepts] } : l))
+  }, [])
+
+  const removeConcept = useCallback((id: string) => {
+    void deleteUserConcept(id)
+    setLoaded((l) => (l ? { ...l, userConcepts: l.userConcepts.filter((c) => c.id !== id) } : l))
+  }, [])
+
+  const logAttempt = useCallback((a: Attempt) => {
+    void addAttempt(a)
+  }, [])
+
+  const course = useMemo(
+    () =>
+      loaded
+        ? buildCourse(pplSample, loaded.userConcepts, loaded.prefs.study.includeSample)
+        : pplSample,
+    [loaded],
+  )
 
   const savePlan = useCallback((items: PlanItem[]) => {
     void savePlanItems(items)
@@ -186,7 +253,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const value = useMemo<Store | null>(
     () =>
       loaded && {
-        course: pplSample,
+        course,
         ...loaded,
         updatePrefs,
         recordAnswer,
@@ -196,9 +263,20 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         savePlan,
         removePlan,
         setPomodoro,
+        putBook,
+        removeBook,
+        addConcepts,
+        removeConcept,
+        logAttempt,
       },
     [
       loaded,
+      course,
+      putBook,
+      removeBook,
+      addConcepts,
+      removeConcept,
+      logAttempt,
       updatePrefs,
       recordAnswer,
       flag,

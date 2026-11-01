@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildExplainPrompt } from './prompt'
+import { buildContextPrompt, buildExplainPrompt } from './prompt'
 
 describe('buildExplainPrompt', () => {
   const input = {
@@ -20,5 +20,12 @@ describe('buildExplainPrompt', () => {
 
   it('handles "I don\'t know"', () => {
     expect(buildExplainPrompt({ ...input, chosenAnswer: null })).toContain('non lo sapeva')
+  })
+})
+
+describe('buildContextPrompt', () => {
+  it('asks for the Italian exam term when reading English', () => {
+    expect(buildContextPrompt('stall', 'The wing will stall.', 'en')).toContain('termine italiano')
+    expect(buildContextPrompt('stallo', 'L’ala stalla.', 'it')).not.toContain('termine italiano')
   })
 })

@@ -9,12 +9,15 @@ const Settings = lazy(() => import('./screens/Settings').then((m) => ({ default:
 const Subjects = lazy(() => import('./screens/Subjects').then((m) => ({ default: m.Subjects })))
 const Plan = lazy(() => import('./screens/Plan').then((m) => ({ default: m.Plan })))
 const Tools = lazy(() => import('./screens/Tools').then((m) => ({ default: m.Tools })))
+const Library = lazy(() => import('./screens/Library').then((m) => ({ default: m.Library })))
+const Reader = lazy(() => import('./screens/Reader').then((m) => ({ default: m.Reader })))
 const PomodoroScreen = lazy(() =>
   import('./screens/PomodoroScreen').then((m) => ({ default: m.PomodoroScreen })),
 )
 
 const nav: { label: string; route: Route }[] = [
   { label: 'Studia', route: { name: 'home' } },
+  { label: 'Libreria', route: { name: 'library' } },
   { label: 'Piano', route: { name: 'plan' } },
   { label: 'Strumenti', route: { name: 'tools', tool: null } },
   { label: 'Materie', route: { name: 'subjects', subjectId: null } },
@@ -37,6 +40,13 @@ function Shell() {
     return (
       <Suspense fallback={null}>
         <PomodoroScreen />
+      </Suspense>
+    )
+  }
+  if (route.name === 'reader') {
+    return (
+      <Suspense fallback={null}>
+        <Reader bookId={route.bookId} page={route.page} view={route.view} />
       </Suspense>
     )
   }
@@ -88,6 +98,7 @@ function Shell() {
           {route.name === 'subjects' && <Subjects subjectId={route.subjectId} />}
           {route.name === 'settings' && <Settings />}
           {route.name === 'plan' && <Plan />}
+          {route.name === 'library' && <Library />}
           {route.name === 'tools' && <Tools tool={route.tool} />}
         </Suspense>
       </main>
