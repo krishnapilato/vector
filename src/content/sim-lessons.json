@@ -1,0 +1,194 @@
+{
+  "lezioni": [
+    {
+      "id": "sim-01",
+      "titolo": "Preparation and checklists",
+      "obiettivi": [
+        "Pre-flight inspection with the checklist",
+        "Engine start and before-taxi checks"
+      ],
+      "tolleranze": [
+        "Every checklist item read and done in order"
+      ],
+      "ordine": 1
+    },
+    {
+      "id": "sim-02",
+      "titolo": "Taxiing",
+      "obiettivi": [
+        "Taxi to the holding point",
+        "Use brakes and rudder smoothly"
+      ],
+      "tolleranze": [
+        "Stay on the centreline",
+        "Taxi speed no faster than a brisk walk"
+      ],
+      "ordine": 2
+    },
+    {
+      "id": "sim-03",
+      "titolo": "Take-off and climb",
+      "obiettivi": [
+        "Normal take-off",
+        "Climb at Vy"
+      ],
+      "tolleranze": [
+        "Rotate at 55 KIAS",
+        "Climb speed ±5 kt",
+        "Heading ±10°"
+      ],
+      "ordine": 3
+    },
+    {
+      "id": "sim-04",
+      "titolo": "Straight and level flight",
+      "obiettivi": [
+        "Trim for level flight at cruise power"
+      ],
+      "tolleranze": [
+        "Altitude ±100 ft",
+        "Heading ±10°",
+        "Speed ±5 kt"
+      ],
+      "ordine": 4
+    },
+    {
+      "id": "sim-05",
+      "titolo": "Turns at 15° and 30° of bank",
+      "obiettivi": [
+        "Medium turns onto set headings",
+        "Coordinated turns"
+      ],
+      "tolleranze": [
+        "Bank ±5°",
+        "Altitude ±100 ft",
+        "Roll out ±10° of heading"
+      ],
+      "ordine": 5
+    },
+    {
+      "id": "sim-06",
+      "titolo": "Climbs and descents",
+      "obiettivi": [
+        "Level off at set altitudes",
+        "Climbing and descending turns"
+      ],
+      "tolleranze": [
+        "Level off ±100 ft",
+        "Speed ±5 kt"
+      ],
+      "ordine": 6
+    },
+    {
+      "id": "sim-07",
+      "titolo": "Slow flight",
+      "obiettivi": [
+        "Fly at 1.3 Vs with flaps",
+        "Recognise the stall warning"
+      ],
+      "tolleranze": [
+        "Altitude ±100 ft",
+        "Speed +10/−0 kt"
+      ],
+      "ordine": 7
+    },
+    {
+      "id": "sim-08",
+      "titolo": "Stalls and recovery",
+      "obiettivi": [
+        "Clean and landing-configuration stalls",
+        "Recover with minimum height loss"
+      ],
+      "tolleranze": [
+        "Recovery started at the first sign of the stall",
+        "Height loss under 200 ft"
+      ],
+      "ordine": 8
+    },
+    {
+      "id": "sim-09",
+      "titolo": "Circuit",
+      "obiettivi": [
+        "Fly a standard left-hand circuit at 1000 ft AGL"
+      ],
+      "tolleranze": [
+        "Altitude ±100 ft",
+        "Speed ±5 kt",
+        "Track parallel to the runway"
+      ],
+      "ordine": 9
+    },
+    {
+      "id": "sim-10",
+      "titolo": "Normal landing",
+      "obiettivi": [
+        "Stabilised approach and landing"
+      ],
+      "tolleranze": [
+        "Approach speed +5/−0 kt",
+        "Touch down in the first third of the runway"
+      ],
+      "ordine": 10
+    },
+    {
+      "id": "sim-11",
+      "titolo": "Crosswind landing",
+      "obiettivi": [
+        "Landing with 10 kt of crosswind"
+      ],
+      "tolleranze": [
+        "No drift at touchdown",
+        "Centreline ±10 ft"
+      ],
+      "ordine": 11
+    },
+    {
+      "id": "sim-12",
+      "titolo": "Go-around",
+      "obiettivi": [
+        "Go-around from short final"
+      ],
+      "tolleranze": [
+        "Full power and positive climb within 5 s",
+        "No sink below 200 ft AGL"
+      ],
+      "ordine": 12
+    },
+    {
+      "id": "sim-13",
+      "titolo": "Simulated engine failure",
+      "obiettivi": [
+        "Best glide, field selection and checklist"
+      ],
+      "tolleranze": [
+        "Best glide speed ±5 kt",
+        "Field reached in landing configuration"
+      ],
+      "ordine": 13
+    },
+    {
+      "id": "sim-14",
+      "titolo": "Short dead-reckoning navigation",
+      "obiettivi": [
+        "Fly a planned 2-leg route by heading and time"
+      ],
+      "tolleranze": [
+        "Track ±1 NM",
+        "ETA ±3 min"
+      ],
+      "ordine": 14
+    },
+    {
+      "id": "sim-15",
+      "titolo": "Navigation with radio aids",
+      "obiettivi": [
+        "Intercept and track VOR radials"
+      ],
+      "tolleranze": [
+        "Track ±5° of the radial",
+        "Altitude ±150 ft"
+      ],
+      "ordine": 15
+    }
+  ]
+}

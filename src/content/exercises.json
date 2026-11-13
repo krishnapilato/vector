@@ -1,0 +1,52 @@
+{
+  "esercizi": [
+    {
+      "id": "es-regolo",
+      "tipo": "regolo",
+      "titolo": "Flight computer: wind triangle and time-speed-distance",
+      "fonte": "Exercises in the CRP-5 manual",
+      "frequenzaSettimanale": 2,
+      "materia": "navigazione"
+    },
+    {
+      "id": "es-navigazione",
+      "tipo": "pianificazione",
+      "titolo": "Plan a VFR cross-country by hand",
+      "fonte": "ICAO 1:500,000 chart, Italy North",
+      "frequenzaSettimanale": 1,
+      "materia": "prestazioni-e-pianificazione"
+    },
+    {
+      "id": "es-meteo",
+      "tipo": "meteo",
+      "titolo": "Decode METAR and TAF",
+      "fonte": "Real METAR/TAF for LIMC and LIML",
+      "frequenzaSettimanale": 2,
+      "materia": "meteorologia"
+    },
+    {
+      "id": "es-peso",
+      "tipo": "peso-centraggio",
+      "titolo": "Mass and balance for the C172",
+      "fonte": "C172S POH, chapter 6",
+      "frequenzaSettimanale": 1,
+      "materia": "prestazioni-e-pianificazione"
+    },
+    {
+      "id": "es-prestazioni",
+      "tipo": "prestazioni",
+      "titolo": "Take-off and landing distances",
+      "fonte": "C172S POH, chapter 5",
+      "frequenzaSettimanale": 1,
+      "materia": "prestazioni-e-pianificazione"
+    },
+    {
+      "id": "es-radio",
+      "tipo": "radio",
+      "titolo": "VFR radio calls, read aloud",
+      "fonte": "Fraseologia ENAC, VFR",
+      "frequenzaSettimanale": 1,
+      "materia": "comunicazioni"
+    }
+  ]
+}

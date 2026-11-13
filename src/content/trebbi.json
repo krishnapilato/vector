@@ -1,0 +1,212 @@
+{
+  "edizione": "Indice provvisorio: sostituire con l'indice reale del Trebbi",
+  "capitoli": [
+    {
+      "id": "cap-01",
+      "ordine": 1,
+      "titolo": "Organizzazioni internazionali e normativa EASA",
+      "materia": "diritto-aeronautico",
+      "paginaInizio": 9,
+      "paginaFine": 26,
+      "difficolta": 2
+    },
+    {
+      "id": "cap-02",
+      "ordine": 2,
+      "titolo": "Licenze, abilitazioni e certificato medico",
+      "materia": "diritto-aeronautico",
+      "paginaInizio": 28,
+      "paginaFine": 52,
+      "difficolta": 1
+    },
+    {
+      "id": "cap-03",
+      "ordine": 3,
+      "titolo": "Regole dell'aria e spazi aerei",
+      "materia": "diritto-aeronautico",
+      "paginaInizio": 54,
+      "paginaFine": 85,
+      "difficolta": 3
+    },
+    {
+      "id": "cap-04",
+      "ordine": 4,
+      "titolo": "Fisiologia del volo",
+      "materia": "prestazioni-umane",
+      "paginaInizio": 87,
+      "paginaFine": 110,
+      "difficolta": 2
+    },
+    {
+      "id": "cap-05",
+      "ordine": 5,
+      "titolo": "Psicologia e fattori umani",
+      "materia": "prestazioni-umane",
+      "paginaInizio": 112,
+      "paginaFine": 142,
+      "difficolta": 2
+    },
+    {
+      "id": "cap-06",
+      "ordine": 6,
+      "titolo": "L'atmosfera, pressione e temperatura",
+      "materia": "meteorologia",
+      "paginaInizio": 144,
+      "paginaFine": 166,
+      "difficolta": 2
+    },
+    {
+      "id": "cap-07",
+      "ordine": 7,
+      "titolo": "Umidità, nubi e precipitazioni",
+      "materia": "meteorologia",
+      "paginaInizio": 168,
+      "paginaFine": 197,
+      "difficolta": 2
+    },
+    {
+      "id": "cap-08",
+      "ordine": 8,
+      "titolo": "Masse d'aria, fronti e venti",
+      "materia": "meteorologia",
+      "paginaInizio": 199,
+      "paginaFine": 220,
+      "difficolta": 3
+    },
+    {
+      "id": "cap-09",
+      "ordine": 9,
+      "titolo": "Messaggi e carte meteorologiche",
+      "materia": "meteorologia",
+      "paginaInizio": 222,
+      "paginaFine": 250,
+      "difficolta": 3
+    },
+    {
+      "id": "cap-10",
+      "ordine": 10,
+      "titolo": "Fraseologia VFR e procedure radio",
+      "materia": "comunicazioni",
+      "paginaInizio": 252,
+      "paginaFine": 272,
+      "difficolta": 2
+    },
+    {
+      "id": "cap-11",
+      "ordine": 11,
+      "titolo": "Aerodinamica di base e portanza",
+      "materia": "principi-del-volo",
+      "paginaInizio": 274,
+      "paginaFine": 301,
+      "difficolta": 3
+    },
+    {
+      "id": "cap-12",
+      "ordine": 12,
+      "titolo": "Resistenza, stallo e stabilità",
+      "materia": "principi-del-volo",
+      "paginaInizio": 303,
+      "paginaFine": 322,
+      "difficolta": 3
+    },
+    {
+      "id": "cap-13",
+      "ordine": 13,
+      "titolo": "Comandi di volo e virata",
+      "materia": "principi-del-volo",
+      "paginaInizio": 324,
+      "paginaFine": 350,
+      "difficolta": 2
+    },
+    {
+      "id": "cap-14",
+      "ordine": 14,
+      "titolo": "Procedure operative ed emergenze",
+      "materia": "procedure-operative",
+      "paginaInizio": 352,
+      "paginaFine": 370,
+      "difficolta": 2
+    },
+    {
+      "id": "cap-15",
+      "ordine": 15,
+      "titolo": "Peso e centraggio",
+      "materia": "prestazioni-e-pianificazione",
+      "paginaInizio": 372,
+      "paginaFine": 397,
+      "difficolta": 2
+    },
+    {
+      "id": "cap-16",
+      "ordine": 16,
+      "titolo": "Prestazioni di decollo, salita e atterraggio",
+      "materia": "prestazioni-e-pianificazione",
+      "paginaInizio": 399,
+      "paginaFine": 416,
+      "difficolta": 3
+    },
+    {
+      "id": "cap-17",
+      "ordine": 17,
+      "titolo": "Pianificazione del volo VFR",
+      "materia": "prestazioni-e-pianificazione",
+      "paginaInizio": 418,
+      "paginaFine": 442,
+      "difficolta": 3
+    },
+    {
+      "id": "cap-18",
+      "ordine": 18,
+      "titolo": "Cellula e impianti",
+      "materia": "conoscenza-generale-aeromobile",
+      "paginaInizio": 444,
+      "paginaFine": 475,
+      "difficolta": 1
+    },
+    {
+      "id": "cap-19",
+      "ordine": 19,
+      "titolo": "Motore a pistoni ed elica",
+      "materia": "conoscenza-generale-aeromobile",
+      "paginaInizio": 477,
+      "paginaFine": 500,
+      "difficolta": 2
+    },
+    {
+      "id": "cap-20",
+      "ordine": 20,
+      "titolo": "Strumenti di volo",
+      "materia": "conoscenza-generale-aeromobile",
+      "paginaInizio": 502,
+      "paginaFine": 532,
+      "difficolta": 2
+    },
+    {
+      "id": "cap-21",
+      "ordine": 21,
+      "titolo": "La Terra, coordinate e carte",
+      "materia": "navigazione",
+      "paginaInizio": 534,
+      "paginaFine": 556,
+      "difficolta": 2
+    },
+    {
+      "id": "cap-22",
+      "ordine": 22,
+      "titolo": "Navigazione stimata e triangolo del vento",
+      "materia": "navigazione",
+      "paginaInizio": 558,
+      "paginaFine": 587,
+      "difficolta": 3
+    },
+    {
+      "id": "cap-23",
+      "ordine": 23,
+      "titolo": "Radionavigazione: VOR, ADF, DME e GNSS",
+      "materia": "navigazione",
+      "paginaInizio": 589,
+      "paginaFine": 610,
+      "difficolta": 3
+    }
+  ]
+}
