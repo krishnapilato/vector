@@ -3,8 +3,8 @@
 import { writeFileSync } from 'node:fs'
 import { deflateSync } from 'node:zlib'
 
-const paper = [248, 246, 241]
-const ink = [36, 62, 140]
+const paper = [246, 246, 247]
+const ink = [45, 46, 49]
 
 /** Coverage of the logo at a point in unit coordinates (0..1), before anti-aliasing. */
 function inside(x, y) {

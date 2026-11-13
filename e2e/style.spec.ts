@@ -32,14 +32,10 @@ test.describe('style guide', () => {
     expect(moving).toEqual([])
   })
 
-  test('shows the hidden timer after a 2 second hold', async ({ page }) => {
+  test('shows the hidden time for 3 seconds on a tap', async ({ page }) => {
     await page.goto('./style')
-    const timer = page.getByRole('button', { name: /Hold to see the time/ })
-    await timer.hover()
-    await page.mouse.down()
-    await page.waitForTimeout(2200)
-    await page.mouse.up()
-    await expect(page.getByRole('button', { name: /^\d+:\d\d left$/ })).toBeVisible()
+    await page.getByRole('button', { name: 'Tap to see the time' }).first().click()
+    await expect(page.getByText(/^\d+:\d\d$/).first()).toBeVisible()
   })
 
   test('every control is at least 44 px tall', async ({ page }) => {

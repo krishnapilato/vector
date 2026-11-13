@@ -10,7 +10,7 @@ interface Props {
 
 const {
   title,
-  description = 'A calm study companion for the EASA PPL(A) theory.',
+  description = 'Privacy-first focus sessions. The camera stays on your device.',
   noindex = false,
 } = Astro.props
 const base = import.meta.env.BASE_URL
@@ -22,7 +22,7 @@ const base = import.meta.env.BASE_URL
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="color-scheme" content="light" />
-    <meta name="theme-color" content="#f8f6f1" />
+    <meta name="theme-color" content="#f6f6f7" />
     <meta name="description" content={description} />
     {noindex && <meta name="robots" content="noindex" />}
     <link rel="icon" href={`${base}favicon.svg`} type="image/svg+xml" />

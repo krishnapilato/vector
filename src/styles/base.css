@@ -1,8 +1,4 @@
-@import "@fontsource/ibm-plex-sans/latin-400.css";
-@import "@fontsource/ibm-plex-sans/latin-500.css";
-@import "@fontsource/ibm-plex-sans/latin-600.css";
-@import "@fontsource/ibm-plex-mono/latin-400.css";
-@import "@fontsource/ibm-plex-mono/latin-500.css";
+@import "@fontsource-variable/instrument-sans/wght.css";
 @import "./tokens.css";
 
 *,
@@ -43,6 +39,7 @@ h2,
 h3 {
   line-height: var(--leading-tight);
   font-weight: var(--font-weight-semibold);
+  letter-spacing: -0.02em;
   text-wrap: balance;
 }
 
@@ -83,6 +80,7 @@ textarea {
 :focus-visible {
   outline: var(--border-thick) solid var(--color-accent);
   outline-offset: 2px;
+  box-shadow: 0 0 0 4px var(--color-focus-ring);
 }
 
 .visually-hidden {
@@ -95,4 +93,22 @@ textarea {
   clip-path: inset(50%);
   white-space: nowrap;
   border: 0;
+}
+
+::selection {
+  background: var(--color-accent-soft);
+  color: var(--color-accent-strong);
+}
+input::placeholder {
+  color: var(--color-text-secondary);
+  opacity: 0.8;
+}
+button,
+a,
+input,
+summary {
+  -webkit-tap-highlight-color: transparent;
+}
+[hidden] {
+  display: none;
 }

@@ -25,7 +25,7 @@
 </script>
 
 {#if href}
-  <a class="button {variant} {size}" class:full {href}>{@render children()}</a>
+  <a class="button {variant} {size}" class:full href={disabled ? undefined : href} aria-disabled={disabled || undefined} tabindex={disabled ? -1 : undefined} onclick={disabled ? (event) => event.preventDefault() : onclick}>{@render children()}</a>
 {:else}
   <button class="button {variant} {size}" class:full {type} {disabled} {onclick}>
     {@render children()}
@@ -40,8 +40,8 @@
     gap: var(--space-2);
     min-height: var(--target-min);
     padding: 0 var(--space-5);
-    border: var(--border-thin) solid transparent;
-    border-radius: var(--radius-md);
+    border: 0;
+    border-radius: var(--radius-sm);
     font-size: var(--text-md);
     font-weight: var(--font-weight-medium);
     line-height: 1;
@@ -49,8 +49,12 @@
     cursor: pointer;
     transition:
       background-color var(--duration-fast) var(--ease),
-      border-color var(--duration-fast) var(--ease),
-      color var(--duration-fast) var(--ease);
+      color var(--duration-fast) var(--ease),
+      transform var(--duration-fast) var(--ease);
+  }
+
+  .button:active:not(:disabled):not([aria-disabled="true"]) {
+    transform: scale(0.98);
   }
 
   .lg {
@@ -68,19 +72,22 @@
     color: var(--color-on-accent);
   }
 
-  .primary:hover:not(:disabled) {
+  .primary {
+    box-shadow: var(--shadow-sm);
+  }
+
+  .primary:hover:not(:disabled):not([aria-disabled="true"]) {
     background: var(--color-accent-strong);
     color: var(--color-on-accent);
   }
 
   .secondary {
-    background: var(--color-surface-raised);
-    border-color: var(--color-border-strong);
+    background: var(--color-fill);
     color: var(--color-text);
   }
 
-  .secondary:hover:not(:disabled) {
-    background: var(--color-accent-soft);
+  .secondary:hover:not(:disabled):not([aria-disabled="true"]) {
+    background: var(--color-fill-strong);
     color: var(--color-text);
   }
 
@@ -90,12 +97,13 @@
     color: var(--color-accent);
   }
 
-  .quiet:hover:not(:disabled) {
+  .quiet:hover:not(:disabled):not([aria-disabled="true"]) {
     background: var(--color-accent-soft);
     color: var(--color-accent-strong);
   }
 
-  .button:disabled {
+  .button:disabled,
+  .button[aria-disabled="true"] {
     cursor: not-allowed;
     opacity: 0.45;
   }

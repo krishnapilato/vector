@@ -1,11 +1,12 @@
 ---
-import Today from '../islands/today/Today.svelte'
+import Loading from '../components/Loading.svelte'
+import Focus from '../islands/focus/Focus.svelte'
 import App from '../layouts/App.astro'
 import { copy } from '../lib/copy'
 ---
 
-<App title={copy.nav.today}>
-  <Today client:only="svelte">
-    <p slot="fallback" role="status">{copy.app.loading}</p>
-  </Today>
+<App title={copy.nav.focus} centered>
+  <Focus client:only="svelte">
+    <div slot="fallback"><Loading /></div>
+  </Focus>
 </App>

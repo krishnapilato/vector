@@ -1,374 +1,297 @@
 /**
- * Focus from camera signals (PIANO-V3 §7, ported and simplified from v2 focus.ts). Pure and
+ * Focus from camera signals (PIANO-V3-LITE §5, ported and simplified from v2 focus.ts). Pure and
  * deterministic: the camera adapter turns each frame into a few numbers, the frame itself is
- * dropped at once, and only the aggregates below are ever stored.
+ * dropped at once, and only the aggregates are ever stored.
  */
-import type { Calibration, FocusAggregate, Sensitivity } from '../model/schemas'
+import type { FocusAggregates, Sensitivity } from '../model/schemas'
 
-/** One analysed frame (§7.2). Lives in memory only. */
+/** One analysed frame (§5.2). Lives in memory only. */
 export interface FrameSample {
-  /** Seconds since tracking started (monotonic). */
-  t: number
+  /** Milliseconds, monotonic. */
+  timestamp: number
   facePresent: boolean
-  /** Degrees. */
+  /** Degrees, from the face transformation matrix. */
   yaw: number
   pitch: number
+  roll: number
   /** Mean of eyeBlinkLeft and eyeBlinkRight, 0–1. */
-  blink: number
-  jawOpen: number
-  /**
-   * Extra signals from the other models (ADR 0008), null when not measured. They run at 1–2 fps,
-   * so the camera adapter repeats the latest value between runs.
-   */
-  /** A phone is in the picture (Object Detector). */
-  phone: boolean | null
-  /** Height of the shoulders, 0 at the top of the image and 1 at the bottom (Pose Landmarker). */
-  shoulderY: number | null
-  /** A hand rests on the face or under the chin (Hand Landmarker). */
-  handOnFace: boolean | null
+  eyeClosedScore: number
+  /** jawOpen blendshape, 0–1. */
+  jawOpenScore: number
 }
 
-export type FocusState = 'focused' | 'distracted' | 'away' | 'tired'
+/** §5.5. In the interface: focused and micro-distraction read "Focused", distracted and absent
+ * read "Away", fatigued reads "Break suggested". */
+export type FocusState = 'focused' | 'micro-distraction' | 'distracted' | 'absent' | 'fatigued'
 
-export type FocusReason =
-  | 'looking-away'
-  | 'no-face'
-  | 'perclos'
-  | 'yawns'
-  | 'restless'
-  | 'eyes-closed'
-  | 'phone'
-  | 'stood-up'
-  | 'slouching'
-  | 'head-on-hand'
+/** Why a state was reached: the "Why?" button lists these (§2.4). */
+export type Signal = 'off-task-gaze' | 'no-face' | 'perclos' | 'eye-closure' | 'yawns' | 'restless'
+
+export interface Posture {
+  meanYaw: number
+  sdYaw: number
+  meanPitch: number
+  sdPitch: number
+}
+
+/** Until the first calibration: looking at a screen, straight ahead. */
+export const neutralPosture: Posture = { meanYaw: 0, sdYaw: 6, meanPitch: 0, sdPitch: 6 }
 
 export interface FocusRules {
-  /** Shorter distractions are ignored: a glance at the notes, a sneeze (§7.5). */
+  /** A signal shorter than this is a micro-distraction and is ignored (§5.5). */
   briefSeconds: number
-  /** No face for this long and the timer pauses. */
-  awayPauseSeconds: number
-  /** Minimum gap between two break suggestions. */
-  suggestionGapSeconds: number
-  /** Look-away thresholds: |Δyaw| > max(minYaw, k·σ), |Δpitch| > max(minPitch, k·σ). */
+  /** No face for this long: absent, and the timer pauses. */
+  absentSeconds: number
+  /** No new break suggestion for this long after one (§5.5 cooldown). */
+  cooldownSeconds: number
+  /** Off-task gaze: |Δyaw| > max(minYaw, sigmas·σ) or |Δpitch| > max(minPitch, sigmas·σ). */
   minYaw: number
   minPitch: number
   sigmas: number
-  /** Eyes count as closed above the reading baseline plus this margin. */
-  blinkMargin: number
-  closedSeconds: number
-  perclosTired: number
+  /** Eyes count as closed above this score (§5.4 PERCLOS). */
+  eyeClosed: number
+  /** Share of closed-eye time in the last 60 s that reads as tired. */
+  perclosHigh: number
+  /** Eyes closed this long in a row is a prolonged closure. */
+  closureSeconds: number
   yawnJaw: number
   yawnSeconds: number
+  /** Yawns in 10 minutes that read as tired. */
   yawnsTired: number
+  /** Head movement variance this many times the calibrated one reads as restless. */
   restlessRatio: number
-  /** Shoulders this much higher than when calibrated (share of image height): you stood up. */
-  standRise: number
-  /** Shoulders this much lower for a while: slumping in the chair. */
-  slouchDrop: number
-  slouchSeconds: number
-  handOnFaceSeconds: number
 }
 
-const base: FocusRules = {
+const normal: FocusRules = {
   briefSeconds: 8,
-  awayPauseSeconds: 60,
-  suggestionGapSeconds: 8 * 60,
+  absentSeconds: 60,
+  cooldownSeconds: 8 * 60,
   minYaw: 25,
-  minPitch: 20,
+  minPitch: 22,
   sigmas: 3,
-  blinkMargin: 0.3,
-  closedSeconds: 1.5,
-  perclosTired: 0.15,
+  eyeClosed: 0.55,
+  perclosHigh: 0.15,
+  closureSeconds: 1.5,
   yawnJaw: 0.6,
   yawnSeconds: 1.5,
   yawnsTired: 3,
   restlessRatio: 3,
-  standRise: 0.18,
-  slouchDrop: 0.1,
-  slouchSeconds: 90,
-  handOnFaceSeconds: 30,
 }
 
-/** Sensitivity scales the thresholds; low means fewer interruptions (§7.5). */
+const lower: Record<Sensitivity, Sensitivity> = { high: 'normal', normal: 'low', low: 'low' }
+
+/** Sensitivity scales the thresholds; Low means fewer interruptions. */
 export function rulesFor(sensitivity: Sensitivity): FocusRules {
   const k = sensitivity === 'low' ? 1.3 : sensitivity === 'high' ? 0.8 : 1
   return {
-    ...base,
-    minYaw: base.minYaw * k,
-    minPitch: base.minPitch * k,
-    sigmas: base.sigmas * k,
-    perclosTired: base.perclosTired * k,
-    restlessRatio: base.restlessRatio * k,
+    ...normal,
+    minYaw: normal.minYaw * k,
+    minPitch: normal.minPitch * k,
+    sigmas: normal.sigmas * k,
+    perclosHigh: normal.perclosHigh * k,
+    restlessRatio: normal.restlessRatio * k,
   }
 }
 
-/** A calm default until the first calibration. */
-export const uncalibrated: Calibration = {
-  station: 'default',
-  yawMean: 0,
-  yawSd: 6,
-  pitchMean: 15,
-  pitchSd: 6,
-  blinkMean: 0.2,
-  shoulderY: null,
-  date: 0,
-}
-
-const windowSeconds = 60
-const yawnWindowSeconds = 10 * 60
+const windowMs = 60_000
+const yawnWindowMs = 10 * 60_000
 
 export interface FocusTracker {
+  sensitivity: Sensitivity
   rules: FocusRules
-  calibration: Calibration
-  lastT: number | null
-  /** Recent samples for the 60 s window: only the few numbers needed. */
-  recent: { t: number; closed: boolean; yaw: number; pitch: number }[]
-  lookAwaySince: number | null
+  posture: Posture
+  lastTimestamp: number | null
+  /** The last 60 s, only the few numbers needed. */
+  recent: { timestamp: number; closed: boolean; yaw: number; pitch: number }[]
+  offTaskSince: number | null
   noFaceSince: number | null
   closedSince: number | null
   jawSince: number | null
-  phoneSince: number | null
-  standSince: number | null
-  slouchSince: number | null
-  handSince: number | null
   yawns: number[]
   state: FocusState
-  reasons: FocusReason[]
-  /** The current distraction already counted. */
-  counted: boolean
+  signals: Signal[]
   lastSuggestionAt: number | null
-  declined: number
   suggestionPending: boolean
-  aggregate: FocusAggregate
-  fatigueSum: number
-  fatigueSamples: number
+  declined: number
+  aggregates: FocusAggregates
 }
 
-export function startTracker(calibration: Calibration, rules: FocusRules): FocusTracker {
+export function startTracker(posture: Posture, sensitivity: Sensitivity): FocusTracker {
   return {
-    rules,
-    calibration,
-    lastT: null,
+    sensitivity,
+    rules: rulesFor(sensitivity),
+    posture,
+    lastTimestamp: null,
     recent: [],
-    lookAwaySince: null,
+    offTaskSince: null,
     noFaceSince: null,
     closedSince: null,
     jawSince: null,
-    phoneSince: null,
-    standSince: null,
-    slouchSince: null,
-    handSince: null,
     yawns: [],
     state: 'focused',
-    reasons: [],
-    counted: false,
+    signals: [],
     lastSuggestionAt: null,
-    declined: 0,
     suggestionPending: false,
-    aggregate: {
+    declined: 0,
+    aggregates: {
       activeSeconds: 0,
       focusedSeconds: 0,
       distractedSeconds: 0,
       awaySeconds: 0,
-      tiredSeconds: 0,
-      distractions: 0,
+      distractionCount: 0,
+      fatigueEvents: 0,
       breaksSuggested: 0,
       breaksAccepted: 0,
-      breaksDeclined: 0,
-      attention: 1,
-      fatigueAvg: 0,
-      fatigueMax: 0,
+      focusScorePct: 100,
     },
-    fatigueSum: 0,
-    fatigueSamples: 0,
   }
 }
 
+/** Population variance; callers pass at least ten values. */
 function variance(values: number[]): number {
-  if (values.length < 2) return 0
   const mean = values.reduce((a, b) => a + b, 0) / values.length
   return values.reduce((a, b) => a + (b - mean) ** 2, 0) / values.length
 }
 
-/** Tiredness index 0–1: a hint, not a judgement (§7.5). Never called boredom. */
-export function fatigueIndex(
-  perclos: number,
-  yawns: number,
-  restless: number,
-  r: FocusRules,
-): number {
-  const parts = [perclos / r.perclosTired, yawns / r.yawnsTired, restless / r.restlessRatio]
-  return Math.min(1, Math.max(...parts) * 0.7 + (parts.reduce((a, b) => a + b, 0) / 3) * 0.3)
+/** Numbers behind a "Why?": what the last minute and the last ten minutes looked like. */
+export interface Evidence {
+  perclos: number
+  yawns: number
+  restlessness: number
+}
+
+export function evidence(t: FocusTracker): Evidence {
+  const closed = t.recent.filter((x) => x.closed).length
+  const baseline = Math.max(1, t.posture.sdYaw ** 2 + t.posture.sdPitch ** 2)
+  return {
+    perclos: t.recent.length > 0 ? closed / t.recent.length : 0,
+    yawns: t.yawns.length,
+    restlessness:
+      t.recent.length >= 10
+        ? (variance(t.recent.map((x) => x.yaw)) + variance(t.recent.map((x) => x.pitch))) / baseline
+        : 0,
+  }
 }
 
 export interface StepResult {
   tracker: FocusTracker
-  /** True once there has been no face for the pause threshold. */
+  /** True once the face has been gone for the absent threshold: pause the timer. */
   shouldPause: boolean
   /** True when a break should be offered now. */
   suggestBreak: boolean
 }
 
+const seconds = (from: number | null, to: number) => (from === null ? 0 : (to - from) / 1000)
+
 export function step(prev: FocusTracker, s: FrameSample): StepResult {
   const r = prev.rules
-  const c = prev.calibration
-  const dt = prev.lastT === null ? 0 : Math.max(0, Math.min(2, s.t - prev.lastT))
-  const t: FocusTracker = { ...prev, lastT: s.t, aggregate: { ...prev.aggregate } }
+  const p = prev.posture
+  const now = s.timestamp
+  const dt =
+    prev.lastTimestamp === null ? 0 : Math.max(0, Math.min(2000, now - prev.lastTimestamp)) / 1000
+  const t: FocusTracker = { ...prev, lastTimestamp: now, aggregates: { ...prev.aggregates } }
 
-  // Per-frame signals, relative to the calibrated reading posture (§7.3).
-  const yawLimit = Math.max(r.minYaw, r.sigmas * c.yawSd)
-  const pitchLimit = Math.max(r.minPitch, r.sigmas * c.pitchSd)
-  const lookingAway =
+  // Off-task gaze is relative to the calibrated posture: reading a paper book with the head down
+  // is not a distraction (§5.3).
+  const yawLimit = Math.max(r.minYaw, r.sigmas * p.sdYaw)
+  const pitchLimit = Math.max(r.minPitch, r.sigmas * p.sdPitch)
+  const offTask =
     s.facePresent &&
-    (Math.abs(s.yaw - c.yawMean) > yawLimit || Math.abs(s.pitch - c.pitchMean) > pitchLimit)
-  const closed = s.facePresent && s.blink > Math.min(0.95, c.blinkMean + r.blinkMargin)
+    (Math.abs(s.yaw - p.meanYaw) > yawLimit || Math.abs(s.pitch - p.meanPitch) > pitchLimit)
+  const closed = s.facePresent && s.eyeClosedScore > r.eyeClosed
 
-  t.noFaceSince = s.facePresent ? null : (prev.noFaceSince ?? s.t)
-  t.lookAwaySince = lookingAway ? (prev.lookAwaySince ?? s.t) : null
-  t.closedSince = closed ? (prev.closedSince ?? s.t) : null
+  t.noFaceSince = s.facePresent ? null : (prev.noFaceSince ?? now)
+  t.offTaskSince = offTask ? (prev.offTaskSince ?? now) : null
+  t.closedSince = closed ? (prev.closedSince ?? now) : null
 
-  // Extra signals (ADR 0008): only when the model measured them and calibration knows the posture.
-  const standing =
-    s.shoulderY !== null && c.shoulderY !== null && c.shoulderY - s.shoulderY > r.standRise
-  const slouching =
-    s.shoulderY !== null && c.shoulderY !== null && s.shoulderY - c.shoulderY > r.slouchDrop
-  t.phoneSince = s.phone === true ? (prev.phoneSince ?? s.t) : null
-  t.standSince = standing ? (prev.standSince ?? s.t) : null
-  t.slouchSince = slouching ? (prev.slouchSince ?? s.t) : null
-  t.handSince = s.handOnFace === true ? (prev.handSince ?? s.t) : null
-
-  // Yawns: jaw open past the threshold for long enough, counted once each.
-  const jawOpen = s.facePresent && s.jawOpen > r.yawnJaw
-  t.jawSince = jawOpen ? (prev.jawSince ?? s.t) : null
-  t.yawns = prev.yawns.filter((y) => s.t - y <= yawnWindowSeconds)
-  if (jawOpen && prev.jawSince !== null && s.t - prev.jawSince >= r.yawnSeconds) {
-    const since = prev.jawSince
-    if (!t.yawns.some((y) => y >= since)) t.yawns = [...t.yawns, s.t]
+  // A yawn: the jaw open past the threshold for long enough, counted once.
+  const jawOpen = s.facePresent && s.jawOpenScore > r.yawnJaw
+  t.jawSince = jawOpen ? (prev.jawSince ?? now) : null
+  t.yawns = prev.yawns.filter((y) => now - y <= yawnWindowMs)
+  const jawFrom = prev.jawSince
+  if (jawOpen && jawFrom !== null && seconds(jawFrom, now) >= r.yawnSeconds) {
+    if (!t.yawns.some((y) => y >= jawFrom)) t.yawns = [...t.yawns, now]
   }
 
   t.recent = [
-    ...prev.recent.filter((x) => s.t - x.t <= windowSeconds),
-    ...(s.facePresent ? [{ t: s.t, closed, yaw: s.yaw, pitch: s.pitch }] : []),
+    ...prev.recent.filter((x) => now - x.timestamp <= windowMs),
+    ...(s.facePresent ? [{ timestamp: now, closed, yaw: s.yaw, pitch: s.pitch }] : []),
   ]
-  const perclos =
-    t.recent.length > 0 ? t.recent.filter((x) => x.closed).length / t.recent.length : 0
-  const baseline = Math.max(1, c.yawSd ** 2 + c.pitchSd ** 2)
-  const restless =
-    t.recent.length >= 10
-      ? (variance(t.recent.map((x) => x.yaw)) + variance(t.recent.map((x) => x.pitch))) / baseline
-      : 0
-  const fatigue = fatigueIndex(perclos, t.yawns.length, restless, r)
+  const e = evidence(t)
 
-  // State, most serious first (§7.5).
-  const awayFor = t.noFaceSince === null ? 0 : s.t - t.noFaceSince
-  const lookFor = t.lookAwaySince === null ? 0 : s.t - t.lookAwaySince
-  const closedFor = t.closedSince === null ? 0 : s.t - t.closedSince
-  const phoneFor = t.phoneSince === null ? 0 : s.t - t.phoneSince
-  const standFor = t.standSince === null ? 0 : s.t - t.standSince
-  const slouchFor = t.slouchSince === null ? 0 : s.t - t.slouchSince
-  const handFor = t.handSince === null ? 0 : s.t - t.handSince
-  const reasons: FocusReason[] = []
+  const absentFor = seconds(t.noFaceSince, now)
+  const offTaskFor = seconds(t.offTaskSince, now)
+  const signals: Signal[] = []
   let state: FocusState = 'focused'
-  if (awayFor >= r.briefSeconds || standFor >= r.briefSeconds) {
-    state = 'away'
-    reasons.push(awayFor >= r.briefSeconds ? 'no-face' : 'stood-up')
-  } else if (lookFor >= r.briefSeconds || phoneFor >= r.briefSeconds) {
+  if (absentFor >= r.absentSeconds) {
+    state = 'absent'
+    signals.push('no-face')
+  } else if (absentFor >= r.briefSeconds || offTaskFor >= r.briefSeconds) {
     state = 'distracted'
-    if (phoneFor >= r.briefSeconds) reasons.push('phone')
-    if (lookFor >= r.briefSeconds) reasons.push('looking-away')
+    signals.push(absentFor >= r.briefSeconds ? 'no-face' : 'off-task-gaze')
   } else {
-    if (perclos >= r.perclosTired) reasons.push('perclos')
-    if (t.yawns.length >= r.yawnsTired) reasons.push('yawns')
-    if (restless >= r.restlessRatio) reasons.push('restless')
-    if (closedFor >= r.closedSeconds) reasons.push('eyes-closed')
-    if (slouchFor >= r.slouchSeconds) reasons.push('slouching')
-    if (handFor >= r.handOnFaceSeconds) reasons.push('head-on-hand')
-    if (reasons.some((x) => x !== 'eyes-closed')) state = 'tired'
+    if (e.perclos >= r.perclosHigh) signals.push('perclos')
+    if (seconds(t.closedSince, now) >= r.closureSeconds) signals.push('eye-closure')
+    if (e.yawns >= r.yawnsTired) signals.push('yawns')
+    if (e.restlessness >= r.restlessRatio) signals.push('restless')
+    const tired = signals.some((x) => x !== 'eye-closure')
+    if (tired) state = 'fatigued'
+    else if (absentFor > 0 || offTaskFor > 0) state = 'micro-distraction'
   }
 
-  const wasDistraction = prev.state === 'distracted' || prev.state === 'away'
-  const isDistraction = state === 'distracted' || state === 'away'
-  t.counted = isDistraction ? (wasDistraction ? prev.counted : false) : false
-  if (isDistraction && !t.counted) {
-    t.aggregate.distractions++
-    t.counted = true
-  }
-  t.state = state
-  t.reasons = reasons
-
-  // Time per state. The first seconds of a distraction are forgiven (§7.5).
-  const a = t.aggregate
+  const a = t.aggregates
+  const away = (x: FocusState) => x === 'distracted' || x === 'absent'
+  if (away(state) && !away(prev.state)) a.distractionCount++
+  if (state === 'fatigued' && prev.state !== 'fatigued') a.fatigueEvents++
   a.activeSeconds += dt
-  if (state === 'away') a.awaySeconds += dt
+  if (state === 'absent' || (state === 'distracted' && absentFor > 0)) a.awaySeconds += dt
   else if (state === 'distracted') a.distractedSeconds += dt
-  else if (state === 'tired') a.tiredSeconds += dt
   else a.focusedSeconds += dt
-  a.attention = a.activeSeconds > 0 ? (a.focusedSeconds + a.tiredSeconds) / a.activeSeconds : 1
-  if (dt > 0) {
-    t.fatigueSum = prev.fatigueSum + fatigue * dt
-    t.fatigueSamples = prev.fatigueSamples + dt
-  }
-  a.fatigueAvg = t.fatigueSamples > 0 ? t.fatigueSum / t.fatigueSamples : 0
-  a.fatigueMax = Math.max(prev.aggregate.fatigueMax, fatigue)
+  a.focusScorePct =
+    a.activeSeconds > 0 ? Math.round((a.focusedSeconds / a.activeSeconds) * 100) : 100
+  t.state = state
+  t.signals = signals
 
-  // A break is offered at most every 8 minutes, and never while one is waiting for an answer.
-  const gapOk =
-    prev.lastSuggestionAt === null || s.t - prev.lastSuggestionAt >= r.suggestionGapSeconds
-  const suggestBreak = state === 'tired' && gapOk && !prev.suggestionPending
+  // Break suggestions: at most one every 8 minutes, never while one waits for an answer.
+  const cooled =
+    prev.lastSuggestionAt === null || seconds(prev.lastSuggestionAt, now) >= r.cooldownSeconds
+  const suggestBreak = state === 'fatigued' && cooled && !prev.suggestionPending
   if (suggestBreak) {
-    t.lastSuggestionAt = s.t
+    t.lastSuggestionAt = now
     t.suggestionPending = true
     a.breaksSuggested++
   }
 
+  return { tracker: t, shouldPause: absentFor >= r.absentSeconds, suggestBreak }
+}
+
+/** The learner answered a break suggestion. Two refusals lower the sensitivity one level (§5.5). */
+export function answerBreak(t: FocusTracker, accepted: boolean): FocusTracker {
+  const aggregates = { ...t.aggregates }
+  if (accepted) aggregates.breaksAccepted++
+  const declined = accepted ? t.declined : t.declined + 1
+  const sensitivity = !accepted && declined === 2 ? lower[t.sensitivity] : t.sensitivity
   return {
-    tracker: t,
-    shouldPause: awayFor >= r.awayPauseSeconds || standFor >= r.awayPauseSeconds,
-    suggestBreak,
+    ...t,
+    aggregates,
+    declined,
+    sensitivity,
+    rules: rulesFor(sensitivity),
+    suggestionPending: false,
   }
 }
 
-/** The learner answered a break suggestion. Two refusals lower the sensitivity (§7.5). */
-export function answerBreak(t: FocusTracker, accepted: boolean): FocusTracker {
-  const aggregate = { ...t.aggregate }
-  if (accepted) aggregate.breaksAccepted++
-  else aggregate.breaksDeclined++
-  const declined = accepted ? t.declined : t.declined + 1
-  const rules =
-    !accepted && declined === 2
-      ? {
-          ...t.rules,
-          perclosTired: t.rules.perclosTired * 1.3,
-          yawnsTired: t.rules.yawnsTired + 1,
-          restlessRatio: t.rules.restlessRatio * 1.3,
-        }
-      : t.rules
-  return { ...t, aggregate, declined, rules, suggestionPending: false }
-}
-
-/** Calibration (§7.3): mean and spread of the reading posture over ~20 seconds. */
-export function calibrate(
-  station: string,
-  samples: readonly FrameSample[],
-  now: number,
-): Calibration | null {
+/** Calibration (§5.3): mean and spread of the natural working posture over 15 seconds. */
+export function calibrate(samples: readonly FrameSample[]): Posture | null {
   const faces = samples.filter((s) => s.facePresent)
   if (faces.length < 20) return null
-  const mean = (xs: number[]) => xs.reduce((a, b) => a + b, 0) / xs.length
-  const sd = (xs: number[]) => Math.sqrt(variance(xs))
+  const mean = (xs: number[]) => xs.reduce((x, y) => x + y, 0) / xs.length
   const yaw = faces.map((s) => s.yaw)
   const pitch = faces.map((s) => s.pitch)
   return {
-    station,
-    yawMean: mean(yaw),
-    yawSd: sd(yaw),
-    pitchMean: mean(pitch),
-    pitchSd: sd(pitch),
-    blinkMean: Math.min(1, Math.max(0, mean(faces.map((s) => s.blink)))),
-    shoulderY: (() => {
-      const ys = faces.map((s) => s.shoulderY).filter((y): y is number => y !== null)
-      return ys.length >= 10 ? mean(ys) : null
-    })(),
-    date: now,
+    meanYaw: mean(yaw),
+    sdYaw: Math.sqrt(variance(yaw)),
+    meanPitch: mean(pitch),
+    sdPitch: Math.sqrt(variance(pitch)),
   }
 }

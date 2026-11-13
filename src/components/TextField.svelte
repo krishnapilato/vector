@@ -51,7 +51,7 @@
       {disabled}
       {min}
       {max}
-      oninput={() => oninput?.(value ?? null)}
+      oninput={(event) => oninput?.(type === 'number' ? (event.currentTarget.value === '' ? null : event.currentTarget.valueAsNumber) : event.currentTarget.value)}
       aria-invalid={invalid ? 'true' : undefined}
       aria-describedby={describedby}
     />
@@ -76,15 +76,20 @@
     display: flex;
     align-items: center;
     min-height: var(--target-min);
-    border: var(--border-thin) solid var(--color-border-strong);
+    border: 1px solid var(--color-border-strong);
     border-radius: var(--radius-sm);
     background: var(--color-surface-raised);
-    transition: border-color var(--duration-fast) var(--ease);
+    transition:
+      background-color var(--duration-fast) var(--ease),
+      box-shadow var(--duration-fast) var(--ease);
   }
 
+  /* No border: the label above names the field; focus draws a clear accent ring. */
   .control:focus-within {
-    border-color: var(--color-accent);
-    outline: var(--border-thin) solid var(--color-accent);
+    background: var(--color-surface-raised);
+    box-shadow:
+      0 0 0 var(--border-thick) var(--color-accent),
+      0 0 0 6px var(--color-focus-ring);
   }
 
   /* width: 0 + flex: 1 lets the field shrink to any column, down to 360 px screens. */
@@ -101,10 +106,6 @@
 
   input:focus-visible {
     outline: none;
-  }
-
-  input[type='number'] {
-    font-family: var(--font-mono);
   }
 
   .suffix {
@@ -126,7 +127,7 @@
   }
 
   .has-invalid .control {
-    border-color: var(--color-attention);
+    background: var(--color-attention-soft);
   }
 
   input:disabled {
@@ -134,7 +135,6 @@
   }
 
   .control:has(input:disabled) {
-    border-color: var(--color-border);
     background: var(--color-bg);
     color: var(--color-text-secondary);
   }

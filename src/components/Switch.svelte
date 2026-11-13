@@ -78,38 +78,32 @@
 
   .track {
     position: relative;
-    width: 3rem;
-    height: 1.75rem;
-    border: var(--border-medium) solid var(--color-border-strong);
-    border-radius: 999px;
-    background: var(--color-surface-raised);
-    transition:
-      background-color var(--duration-fast) var(--ease),
-      border-color var(--duration-fast) var(--ease);
+    width: 3.25rem;
+    height: 2rem;
+    border-radius: var(--radius-pill);
+    background: var(--color-fill-strong);
+    transition: background-color var(--duration-base) var(--ease);
   }
 
+  /* A white knob with a soft shadow, sliding to the right when on. */
   .thumb {
     position: absolute;
-    top: 50%;
+    top: 3px;
     left: 3px;
-    width: 1.125rem;
-    height: 1.125rem;
+    width: 1.625rem;
+    height: 1.625rem;
     border-radius: 50%;
-    background: var(--color-border-strong);
-    transform: translateY(-50%);
-    transition:
-      transform var(--duration-fast) var(--ease),
-      background-color var(--duration-fast) var(--ease);
+    background: var(--color-surface-raised);
+    box-shadow: var(--shadow-md);
+    transition: transform var(--duration-base) var(--ease);
   }
 
   [aria-checked='true'] .track {
-    border-color: var(--color-accent);
     background: var(--color-accent);
   }
 
   [aria-checked='true'] .thumb {
-    background: var(--color-on-accent);
-    transform: translate(1.25rem, -50%);
+    transform: translateX(1.25rem);
   }
 
   button:disabled {

@@ -4,8 +4,6 @@ import { AstroPWAIntegration } from '@vite-pwa/astro'
 import { defineConfig } from 'astro/config'
 
 const base = '/vector/'
-/** The sync server (ADR 0005): the only origin the app may talk to besides itself. */
-const syncOrigin = 'https://gjerxjpchkyuddjiobze.supabase.co'
 
 export default defineConfig({
   site: 'https://krishnapilato.github.io',
@@ -13,13 +11,14 @@ export default defineConfig({
   output: 'static',
   trailingSlash: 'ignore',
   markdown: { syntaxHighlight: false },
-  // The browser itself refuses any other connection: camera data cannot leave (ADR 0006).
+  // Zero-network by construction (PIANO-V3-LITE §2.1, ADR 0006): the browser itself refuses any
+  // connection to another address, so nothing could leave the device even by mistake.
   security: {
     csp: {
       algorithm: 'SHA-256',
       directives: [
         "default-src 'self'",
-        `connect-src 'self' ${syncOrigin}`,
+        "connect-src 'self'",
         "img-src 'self' data: blob:",
         "font-src 'self'",
         "media-src 'self' blob: mediastream:",
@@ -47,13 +46,13 @@ export default defineConfig({
       manifest: {
         name: 'Vector',
         short_name: 'Vector',
-        description: 'A calm study companion for the EASA PPL(A) theory.',
+        description: 'Privacy-first focus sessions. The camera stays on your device.',
         lang: 'en',
         start_url: base,
         scope: base,
         display: 'standalone',
-        background_color: '#f8f6f1',
-        theme_color: '#f8f6f1',
+        background_color: '#f6f6f7',
+        theme_color: '#f6f6f7',
         icons: [
           { src: 'icon-192.png', sizes: '192x192', type: 'image/png' },
           { src: 'icon-512.png', sizes: '512x512', type: 'image/png' },
@@ -61,11 +60,11 @@ export default defineConfig({
         ],
       },
       generateSW: {
-        // App, fonts, the face model and its WASM: everything works offline (PIANO-V3 §12).
+        // App and fonts are precached: the app works offline after the first visit.
         globPatterns: ['**/*.{html,js,css,svg,png,woff2}'],
         globIgnores: ['**/*.woff', 'models/**'],
-        // The face model and WASM (~18 MB) are cached on first use, when the camera is turned
-        // on (lib/camera.ts warmModels): from then on the camera works offline too.
+        // The face model and WASM (~18 MB) are cached in the background on the first visit
+        // (lib/warm.ts), too big for the precache step: from then on the camera works offline.
         runtimeCaching: [
           {
             // Serialised into the service worker: no closure over `base`.

@@ -58,14 +58,13 @@
   }
 
   .value {
-    font-family: var(--font-mono);
     font-weight: var(--font-weight-medium);
   }
 
   .track {
     position: relative;
     height: 0.625rem;
-    border-radius: var(--radius-sm);
+    border-radius: var(--radius-pill);
     background: var(--color-accent-soft);
     overflow: hidden;
   }
@@ -85,7 +84,7 @@
 
   .segment {
     flex: 1;
-    border-radius: 2px;
+    border-radius: var(--radius-pill);
     background: var(--color-accent-soft);
     transition: background-color var(--duration-base) var(--ease);
   }

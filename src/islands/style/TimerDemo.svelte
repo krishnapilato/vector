@@ -12,28 +12,28 @@
     return () => clearInterval(id)
   })
 
-  const remainingMs = $derived(Math.max(0, totalMs - (now - startedAt)))
+  const elapsedMs = $derived(Math.min(totalMs, now - startedAt))
 </script>
 
 <div class="timers">
   <figure>
-    <Timer {remainingMs} {totalMs} />
-    <figcaption>Hidden (default): hold 2 s to show</figcaption>
+    <Timer remainingMs={totalMs - elapsedMs} {elapsedMs} progress={elapsedMs / totalMs} />
+    <figcaption>Hidden (default): tap to see it for 3 s</figcaption>
   </figure>
   <figure>
-    <Timer {remainingMs} {totalMs} alwaysShow />
+    <Timer remainingMs={totalMs - elapsedMs} {elapsedMs} progress={elapsedMs / totalMs} alwaysShow />
     <figcaption>Always shown (setting)</figcaption>
   </figure>
   <figure>
-    <Timer remainingMs={8 * 60_000 + 12_000} {totalMs} paused alwaysShow />
-    <figcaption>Paused</figcaption>
+    <Timer remainingMs={null} {elapsedMs} progress={0} alwaysShow paused />
+    <figcaption>Open session, paused</figcaption>
   </figure>
 </div>
 
 <style>
   .timers {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
     gap: var(--space-6);
   }
 
@@ -41,6 +41,7 @@
     display: grid;
     justify-items: center;
     gap: var(--space-3);
+    margin: 0;
   }
 
   figcaption {

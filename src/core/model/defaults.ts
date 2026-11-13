@@ -1,42 +1,17 @@
-import type { Availability, Settings } from './schemas'
+import type { Settings } from './schemas'
 
-/** A typical week to start from; Welcome step 2 adjusts it. */
-export const defaultAvailability: Availability = [
-  [
-    { window: 'commute', blocks: 1 },
-    { window: 'evening', blocks: 1 },
-  ],
-  [{ window: 'evening', blocks: 1 }],
-  [
-    { window: 'commute', blocks: 1 },
-    { window: 'evening', blocks: 1 },
-  ],
-  [{ window: 'evening', blocks: 1 }],
-  [{ window: 'commute', blocks: 1 }],
-  [{ window: 'morning', blocks: 2 }],
-  [{ window: 'morning', blocks: 1 }],
-]
-
+/** Usable from the first second: no onboarding (PIANO-V3-LITE §1). */
 export function defaultSettings(): Settings {
   return {
-    id: 'settings',
-    onboarded: false,
-    bookEdition: '',
-    targetDate: null,
-    availability: defaultAvailability,
-    pagesPer30: 6,
-    blockMinutes: 30,
-    split: { book: 0.6, exercises: 0.25, simulator: 0.15 },
-    simUnlockAfter: 3,
-    camera: false,
-    sensitivity: 'normal',
-    extraSignals: true,
-    softPreview: false,
-    station: 'Desk',
-    sounds: true,
+    id: 'default',
+    defaultDurationMin: 30,
     alwaysShowTimer: false,
-    pauseWhenAway: true,
-    lastBackupAt: null,
-    updatedAt: 0,
+    soundEnabled: true,
+    cameraEnabledByDefault: true,
+    sensitivity: 'normal',
+    activeCalibrationId: null,
   }
 }
+
+/** Durations offered on the Focus screen, in minutes; 0 means Open (a stopwatch). */
+export const durations = [25, 30, 45, 60, 0] as const

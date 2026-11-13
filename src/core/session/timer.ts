@@ -1,21 +1,24 @@
 /**
  * Session timer as a pure function of timestamps (ported from v2 pomodoro.ts): no intervals
- * inside, so it survives reloads and closing the browser and resumes exactly.
+ * inside, so it survives reloads and a sleeping browser and resumes exactly. A timer with no
+ * total is Open: a stopwatch that never finishes on its own.
  */
 import type { TimerState } from '../model/schemas'
 
-export function startTimer(now: number, totalMs: number): TimerState {
+export function startTimer(now: number, totalMs: number | null): TimerState {
   return { totalMs, startedAt: now, runningSince: now, accumulatedMs: 0, pauses: 0 }
 }
 
 /** Active (not paused) time so far. */
 export function activeMs(t: TimerState, now: number): number {
   const running = t.runningSince === null ? 0 : Math.max(0, now - t.runningSince)
-  return Math.min(t.totalMs, t.accumulatedMs + running)
+  const total = t.accumulatedMs + running
+  return t.totalMs === null ? total : Math.min(t.totalMs, total)
 }
 
-export function remainingMs(t: TimerState, now: number): number {
-  return Math.max(0, t.totalMs - activeMs(t, now))
+/** Time left, or null for an Open session. */
+export function remainingMs(t: TimerState, now: number): number | null {
+  return t.totalMs === null ? null : Math.max(0, t.totalMs - activeMs(t, now))
 }
 
 export function isRunning(t: TimerState): boolean {
@@ -24,6 +27,12 @@ export function isRunning(t: TimerState): boolean {
 
 export function isFinished(t: TimerState, now: number): boolean {
   return remainingMs(t, now) === 0
+}
+
+/** Share of the planned time already done, 0–1; 0 for Open sessions. */
+export function progress(t: TimerState, now: number): number {
+  if (t.totalMs === null || t.totalMs <= 0) return 0
+  return Math.min(1, activeMs(t, now) / t.totalMs)
 }
 
 export function pauseTimer(t: TimerState, now: number): TimerState {
@@ -37,8 +46,8 @@ export function resumeTimer(t: TimerState, now: number): TimerState {
 }
 
 /**
- * The learner left the app at `hiddenAt` and came back at `now`. If they stayed away longer than
- * `graceMs`, the timer is paused as of `hiddenAt + graceMs` (PIANO-V3 §5.3).
+ * The learner left the tab at `hiddenAt` and came back at `now`. If they stayed away longer than
+ * `graceMs`, the timer is paused as of `hiddenAt + graceMs` (PIANO-V3-LITE §4.1 B).
  */
 export function applyAbsence(
   t: TimerState,
@@ -51,7 +60,7 @@ export function applyAbsence(
   return { timer: pauseTimer(t, pauseAt), paused: true }
 }
 
-/** Whole active minutes, rounded to the nearest minute. */
-export function activeMinutes(t: TimerState, now: number): number {
-  return Math.round(activeMs(t, now) / 60_000)
+/** Whole active seconds. */
+export function activeSeconds(t: TimerState, now: number): number {
+  return Math.floor(activeMs(t, now) / 1000)
 }

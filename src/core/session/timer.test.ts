@@ -1,11 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import {
-  activeMinutes,
   activeMs,
+  activeSeconds,
   applyAbsence,
   isFinished,
   isRunning,
   pauseTimer,
+  progress,
   remainingMs,
   resumeTimer,
   startTimer,
@@ -18,6 +19,7 @@ describe('timestamp timer', () => {
     const t = startTimer(0, 30 * MIN)
     expect(remainingMs(t, 10 * MIN)).toBe(20 * MIN)
     expect(isRunning(t)).toBe(true)
+    expect(progress(t, 15 * MIN)).toBe(0.5)
   })
 
   it('resumes exactly after a reload: the state alone is enough', () => {
@@ -48,7 +50,15 @@ describe('timestamp timer', () => {
     expect(resumeTimer(pauseTimer(t, 31 * MIN), 40 * MIN).runningSince).toBeNull()
   })
 
-  it('pauses itself 60 s after leaving the app', () => {
+  it('runs Open sessions as a stopwatch that never finishes', () => {
+    const t = startTimer(0, null)
+    expect(remainingMs(t, 90 * MIN)).toBeNull()
+    expect(isFinished(t, 900 * MIN)).toBe(false)
+    expect(activeMs(t, 90 * MIN)).toBe(90 * MIN)
+    expect(progress(t, 90 * MIN)).toBe(0)
+  })
+
+  it('pauses itself 60 s after leaving the tab', () => {
     const t = startTimer(0, 30 * MIN)
     const away = applyAbsence(t, 5 * MIN, 9 * MIN, 60_000)
     expect(away.paused).toBe(true)
@@ -60,7 +70,7 @@ describe('timestamp timer', () => {
     expect(applyAbsence(t, 5 * MIN, 5 * MIN + 30_000, 60_000).paused).toBe(false)
   })
 
-  it('rounds active minutes', () => {
-    expect(activeMinutes(startTimer(0, 30 * MIN), 12.6 * MIN)).toBe(13)
+  it('counts whole active seconds', () => {
+    expect(activeSeconds(startTimer(0, 30 * MIN), 12_999)).toBe(12)
   })
 })

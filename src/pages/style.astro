@@ -1,12 +1,8 @@
 ---
 import Button from '../components/Button.svelte'
-import CameraIndicator from '../components/CameraIndicator.svelte'
-import Card from '../components/Card.svelte'
-import EmptyState from '../components/EmptyState.svelte'
-import InlineNotice from '../components/InlineNotice.svelte'
-import LogbookRow from '../components/LogbookRow.svelte'
-import MilestoneCard from '../components/MilestoneCard.svelte'
+import InlineAlert from '../components/InlineAlert.svelte'
 import ProgressBar from '../components/ProgressBar.svelte'
+import StatusBadge from '../components/StatusBadge.svelte'
 import ControlsDemo from '../islands/style/ControlsDemo.svelte'
 import DialogDemo from '../islands/style/DialogDemo.svelte'
 import TimerDemo from '../islands/style/TimerDemo.svelte'
@@ -20,7 +16,7 @@ const colors = [
   ['text-secondary', 'Secondary text'],
   ['border', 'Border'],
   ['border-strong', 'Control border'],
-  ['rule', 'Logbook rule'],
+  ['rule', 'Rule'],
   ['accent', 'Accent'],
   ['accent-strong', 'Accent, pressed'],
   ['accent-soft', 'Accent, soft'],
@@ -31,17 +27,12 @@ const colors = [
 ] as const
 
 const typeScale = [
-  ['display', 'Timer', '24:12', true],
-  ['xl', 'Page title', 'Today', false],
-  ['lg', 'Section title', 'Principles of Flight', false],
-  [
-    'md',
-    'Body',
-    'Read pages 112 to 124, then close the book and explain lift in two lines.',
-    false,
-  ],
-  ['sm', 'Secondary', 'Plan updated: chapter 5 moves to Tuesday.', false],
-  ['xs', 'Small print', 'Analysed on this device only.', false],
+  ['display', 'Timer', '24:12'],
+  ['xl', 'Page title', 'Ready when you are.'],
+  ['lg', 'Section title', 'Camera and detection'],
+  ['md', 'Body', 'Frames are analysed on this device and dropped at once.'],
+  ['sm', 'Secondary', 'Away for 60s — timer paused automatically.'],
+  ['xs', 'Small print', 'Camera active'],
 ] as const
 
 const spaces = [1, 2, 3, 4, 5, 6, 7, 8] as const
@@ -52,10 +43,11 @@ const shadows = ['sm', 'md', 'lg'] as const
 <Base title="Style guide" noindex>
   <main class="page">
     <header class="intro">
-      <h1>Style guide</h1>
+      <a href={import.meta.env.BASE_URL}>← Back to Vector</a>
+      <h1>Design system</h1>
       <p>
-        Every token and component in Vector, in every state. Light theme only, one accent, numbers in
-        mono. Internal page: not in the navigation.
+        Vector Studio: the shared foundations for a quieter workspace. Semantic colours, responsive type,
+        consistent controls, and accessible states.
       </p>
     </header>
 
@@ -76,15 +68,15 @@ const shadows = ['sm', 'md', 'lg'] as const
 
     <section aria-labelledby="type">
       <h2 id="type">Type</h2>
-      <p class="lead">IBM Plex Sans for words, IBM Plex Mono for numbers. Six sizes.</p>
+      <p class="lead">Instrument Sans for everything, with tabular digits so numbers never jump. Six sizes.</p>
       <dl class="type-scale">
         {
-          typeScale.map(([size, role, sample, mono]) => (
+          typeScale.map(([size, role, sample]) => (
             <div>
               <dt>
                 {role} <code>--text-{size}</code>
               </dt>
-              <dd class:list={[{ mono }]} style={`font-size: var(--text-${size})`}>
+              <dd style={`font-size: var(--text-${size})`}>
                 {sample}
               </dd>
             </div>
@@ -135,31 +127,24 @@ const shadows = ['sm', 'md', 'lg'] as const
       <h2 id="buttons">Buttons</h2>
       <div class="row">
         <Button variant="primary" size="lg">Start</Button>
-        <Button variant="primary">Save</Button>
-        <Button>Take a break</Button>
+        <Button variant="primary">Save to logbook</Button>
+        <Button>Keep going</Button>
         <Button variant="quiet">Why?</Button>
       </div>
       <div class="row">
         <Button variant="primary" disabled>Start</Button>
-        <Button disabled>Take a break</Button>
+        <Button disabled>Keep going</Button>
         <Button variant="quiet" disabled>Why?</Button>
         <Button href="#buttons">Link styled as a button</Button>
       </div>
     </section>
 
-    <section aria-labelledby="cards">
-      <h2 id="cards">Cards and progress</h2>
-      <div class="cards">
-        <Card as="article" elevation="raised">
-          <p class="eyebrowless">Reading · 30 min · Desk</p>
-          <h3 class="block-title">Trebbi · Ch. 4 Lift · p. 112–124</h3>
-          <Button variant="primary" size="lg" full>Start</Button>
-        </Card>
-        <Card>
-          <ProgressBar value={3} max={5} label="This week" valueText="3 of 5 blocks" segmented />
-          <ProgressBar value={42} max={100} label="Trebbi" valueText="42%" />
-          <ProgressBar value={0} max={4} label="Empty" valueText="0 of 4 blocks" segmented />
-        </Card>
+    <section aria-labelledby="progress">
+      <h2 id="progress">Progress</h2>
+      <div class="stack">
+        <ProgressBar value={18} max={30} label="Session" valueText="18 of 30 min" />
+        <ProgressBar value={2} max={4} label="Segmented" valueText="2 of 4" segmented />
+        <ProgressBar value={0} max={5} label="Empty" valueText="0 of 5" segmented />
       </div>
     </section>
 
@@ -171,79 +156,22 @@ const shadows = ['sm', 'md', 'lg'] as const
     <section aria-labelledby="session">
       <h2 id="session">Session</h2>
       <div class="row">
-        <CameraIndicator state="active" />
-        <CameraIndicator state="paused" />
-        <CameraIndicator state="off" />
+        <StatusBadge tone="active" label="Camera active · Local only" />
+        <StatusBadge tone="paused" label="Camera paused" />
+        <StatusBadge tone="off" label="Camera off" />
       </div>
       <TimerDemo client:load />
     </section>
 
-    <section aria-labelledby="logbook">
-      <h2 id="logbook">Logbook</h2>
-      <ol class="logbook">
-        <LogbookRow
-          date="2026-11-13"
-          kind="Reading"
-          content="Trebbi · Ch. 4 Lift · p. 112–124"
-          activeMinutes={32}
-          focusPercent={84}
-          clarity={4}
-          note="Angle of attack finally makes sense."
-        />
-        <LogbookRow
-          date="2026-11-12"
-          kind="Quiz"
-          content="quizppl.it · Principles of Flight · 18/20"
-          activeMinutes={20}
-          focusPercent={null}
-          clarity={null}
-        />
-        <LogbookRow
-          date="2026-11-11"
-          kind="Simulator"
-          content="MSFS · Circuit at LIML · repeat"
-          activeMinutes={45}
-          focusPercent={null}
-          clarity={3}
-          note="Downwind 150 ft high."
-        />
-      </ol>
-    </section>
-
-    <section aria-labelledby="milestones">
-      <h2 id="milestones">Milestones</h2>
-      <div class="cards">
-        <MilestoneCard
-          title="First full session"
-          sentence="30 minutes, start to finish. The logbook has its first line."
-          reachedOn="2026-11-13"
-        />
-        <MilestoneCard
-          title="10 hours of active study"
-          sentence="Ten hours of real, focused work."
-          reachedOn={null}
-          progress={{ value: 6.5, max: 10, text: '6.5 of 10 h' }}
-        />
-      </div>
-    </section>
-
     <section aria-labelledby="feedback">
-      <h2 id="feedback">Notices, dialogs, empty states</h2>
+      <h2 id="feedback">Alerts and dialogs</h2>
       <div class="stack">
-        <InlineNotice title="Plan updated">Chapter 5 moves to Tuesday.</InlineNotice>
-        <InlineNotice tone="success">You unlocked this week's flight.</InlineNotice>
-        <InlineNotice tone="attention" title="Last backup 16 days ago">
-          A backup keeps your logbook safe if the browser clears its data.
-          <Button slot="action" variant="secondary">Back up now</Button>
-        </InlineNotice>
+        <InlineAlert title="Take 5 minutes to rest your eyes?">
+          3 yawns and heavy eyelids in the last 10 minutes.
+        </InlineAlert>
+        <InlineAlert tone="success">Imported. 3 new sessions added; nothing was overwritten.</InlineAlert>
+        <InlineAlert tone="attention">Away for 60s — timer paused automatically.</InlineAlert>
         <DialogDemo client:load />
-        <EmptyState
-          level={3}
-          title="No sessions yet"
-          body="Every session will appear here, like in a logbook. Start the first one from Today."
-        >
-          <Button slot="action" variant="primary" href="#feedback">Go to Today</Button>
-        </EmptyState>
       </div>
     </section>
   </main>
@@ -334,10 +262,6 @@ const shadows = ['sm', 'md', 'lg'] as const
     max-width: var(--measure);
   }
 
-  .type-scale .mono {
-    font-family: var(--font-mono);
-  }
-
   .shape-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
@@ -385,27 +309,9 @@ const shadows = ['sm', 'md', 'lg'] as const
     gap: var(--space-4);
   }
 
-  .cards {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr));
-    gap: var(--space-5);
-  }
 
-  .eyebrowless {
-    font-size: var(--text-sm);
-    color: var(--color-text-secondary);
-  }
 
-  .block-title {
-    font-size: var(--text-lg);
-  }
 
-  .logbook {
-    margin: 0;
-    padding: 0;
-    border-top: var(--border-thick) solid var(--color-rule);
-    background: var(--color-surface-raised);
-  }
 
   .stack {
     display: grid;

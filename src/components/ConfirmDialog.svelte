@@ -61,8 +61,8 @@
 <style>
   dialog {
     width: min(26rem, calc(100vw - 2 * var(--space-4)));
-    padding: var(--space-5);
-    border: var(--border-thin) solid var(--color-border);
+    padding: var(--space-6);
+    border: 0;
     border-radius: var(--radius-lg);
     background: var(--color-surface-raised);
     color: var(--color-text);
@@ -91,7 +91,8 @@
   }
 
   dialog::backdrop {
-    background: oklch(25% 0.03 258 / 0.28);
+    background: oklch(25% 0.02 70 / 0.22);
+    backdrop-filter: blur(6px);
   }
 
   .actions {

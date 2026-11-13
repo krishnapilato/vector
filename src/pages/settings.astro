@@ -1,0 +1,12 @@
+---
+import Loading from '../components/Loading.svelte'
+import Settings from '../islands/settings/Settings.svelte'
+import App from '../layouts/App.astro'
+import { copy } from '../lib/copy'
+---
+
+<App title={copy.settings.title}>
+  <Settings client:only="svelte">
+    <div slot="fallback"><Loading /></div>
+  </Settings>
+</App>

@@ -1,33 +1,39 @@
-/*
- * Design tokens: the single source of truth for colour, type, space, shape and motion
- * (PIANO-V3 §11). One light theme only: it reads well next to a paper book and lights the
- * face for the camera in the evening. Colours are OKLCH; contrast is checked by
- * src/styles/tokens.test.ts.
- */
+/* Vector Studio: semantic tokens shared by every screen and component. */
 :root {
   color-scheme: light;
 
-  /* Colour: cool chart paper, logbook ink, one accent. */
-  --color-bg: oklch(96.8% 0.005 210);
-  --color-surface: oklch(99.1% 0.002 210);
+  /* Colour (PIANO-V3-LITE §6.2): smoke, chalk, sage and soft amber. */
+  /* Neutral surfaces keep the workspace quiet. */
+  --color-bg: oklch(97.5% 0.002 260);
+  --color-surface: oklch(99% 0.001 260);
   --color-surface-raised: oklch(100% 0 0);
-  --color-text: oklch(25% 0.03 258);
-  --color-text-secondary: oklch(47% 0.025 255);
-  --color-border: oklch(88.5% 0.01 230);
-  --color-border-strong: oklch(60% 0.02 250);
-  --color-rule: oklch(85% 0.035 255);
-  --color-accent: oklch(41% 0.13 266);
-  --color-accent-strong: oklch(34% 0.12 266);
-  --color-accent-soft: oklch(93.5% 0.025 266);
+  --color-text: oklch(24% 0.005 260);
+  --color-text-secondary: oklch(45% 0.008 260);
+  --color-border: oklch(88% 0.003 260);
+  --color-border-strong: oklch(58% 0.008 260);
+  --color-rule: oklch(86% 0.004 260);
+  --color-accent: oklch(30% 0.005 260);
+  --color-accent-strong: oklch(23% 0.005 260);
+  --color-accent-soft: oklch(93% 0.003 260);
   --color-on-accent: oklch(99.5% 0 0);
-  --color-success: oklch(46% 0.09 160);
-  --color-success-soft: oklch(94.5% 0.03 160);
-  --color-attention: oklch(49% 0.1 65);
-  --color-attention-soft: oklch(95.5% 0.035 85);
+  --color-success: oklch(46% 0.06 150);
+  --color-success-soft: oklch(94.5% 0.025 150);
+  --color-attention: oklch(50% 0.1 70);
+  --color-attention-soft: oklch(95.5% 0.04 85);
+  /* Filled fields and segmented tracks: a faint warm tint instead of hard borders. */
+  --color-fill: oklch(95% 0.002 260);
+  --color-fill-strong: oklch(92% 0.003 260);
+  --color-focus-ring: oklch(30% 0.005 260 / 0.28);
 
-  /* Type: IBM Plex Sans for text, IBM Plex Mono for numbers, timer and statistics. */
-  --font-sans: "IBM Plex Sans", system-ui, sans-serif;
-  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+  --layout-wide: 76rem;
+  --layout-page: 48rem;
+  --color-sidebar: oklch(19% 0.005 260);
+
+  /* Type: one family and six sizes. */
+  /* One variable typeface, served by the app (ADR 0011). Its tabular digits keep numbers steady. */
+  --font-sans: "Instrument Sans Variable", system-ui, sans-serif;
+  /* System monospace, only for code samples on the style page: nothing is downloaded for it. */
+  --font-mono: ui-monospace, "Cascadia Mono", monospace;
   --font-weight-regular: 400;
   --font-weight-medium: 500;
   --font-weight-semibold: 600;
@@ -35,8 +41,8 @@
   --text-sm: 0.9375rem;
   --text-md: 1.0625rem;
   --text-lg: 1.3125rem;
-  --text-xl: 1.75rem;
-  --text-display: 3rem;
+  --text-xl: clamp(1.75rem, 3vw, 2.5rem);
+  --text-display: clamp(3rem, 6vw, 4.5rem);
   --leading-tight: 1.2;
   --leading-body: 1.55;
   --measure: 66ch;
@@ -52,15 +58,17 @@
   --space-8: 4rem;
 
   /* Shape: three levels each, chosen by hierarchy. */
-  --radius-sm: 4px;
-  --radius-md: 8px;
-  --radius-lg: 14px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --radius-pill: 999px;
   --border-thin: 1px;
   --border-medium: 1.5px;
   --border-thick: 2px;
-  --shadow-sm: 0 1px 2px oklch(25% 0.03 258 / 0.06);
-  --shadow-md: 0 2px 6px oklch(25% 0.03 258 / 0.07), 0 1px 2px oklch(25% 0.03 258 / 0.05);
-  --shadow-lg: 0 12px 32px oklch(25% 0.03 258 / 0.14), 0 2px 6px oklch(25% 0.03 258 / 0.06);
+  /* Soft, wide shadows: depth without heaviness. */
+  --shadow-sm: 0 1px 2px oklch(30% 0.02 70 / 0.06), 0 1px 1px oklch(30% 0.02 70 / 0.04);
+  --shadow-md: 0 4px 16px oklch(30% 0.02 70 / 0.07), 0 1px 3px oklch(30% 0.02 70 / 0.05);
+  --shadow-lg: 0 18px 48px oklch(30% 0.02 70 / 0.12), 0 3px 8px oklch(30% 0.02 70 / 0.06);
 
   /* Touch: every target at least 44 px. */
   --target-min: 2.75rem;

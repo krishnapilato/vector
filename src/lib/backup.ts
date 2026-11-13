@@ -1,51 +1,36 @@
-/**
- * Backup and device-to-device transfer (PIANO-V3 §8, ADR 0004): a JSON file, encrypted when a
- * passphrase is given. Importing validates everything with Zod before any write.
- */
-import { localDate } from '../core/calendar/dates'
-import { Snapshot } from '../core/model/schemas'
+/** Backup files (PIANO-V3-LITE §4.3): JSON, encrypted when a passphrase is given. */
+import { Backup } from '../core/model/schemas'
 import { decryptFile, encryptFile, isEnvelope } from './crypto'
-import { exportSnapshot, saveSettings } from './repo'
+import { exportBackup } from './store'
 
 export const maxImportBytes = 20 * 1024 * 1024
 
-export async function buildBackup(passphrase: string | null): Promise<File> {
-  const snapshot = await exportSnapshot()
-  const json = JSON.stringify(snapshot)
+export async function backupFile(passphrase: string | null): Promise<File> {
+  const json = JSON.stringify(await exportBackup())
   const body = passphrase ? JSON.stringify(await encryptFile(json, passphrase)) : json
-  const name = `vector-${localDate(Date.now())}${passphrase ? '-encrypted' : ''}.json`
-  await saveSettings({ lastBackupAt: Date.now() })
-  return new File([body], name, { type: 'application/json' })
+  const day = new Date().toISOString().slice(0, 10)
+  return new File([body], `vector-${day}${passphrase ? '-encrypted' : ''}.json`, {
+    type: 'application/json',
+  })
 }
 
-/** Opens the share sheet where the browser can share files (phones), else downloads. */
-export async function shareOrDownload(file: File): Promise<'shared' | 'downloaded'> {
-  if (navigator.canShare?.({ files: [file] })) {
-    try {
-      await navigator.share({ files: [file], title: file.name })
-      return 'shared'
-    } catch (e) {
-      if (e instanceof DOMException && e.name === 'AbortError') return 'shared'
-    }
-  }
+export function download(file: File): void {
   const url = URL.createObjectURL(file)
   const a = document.createElement('a')
   a.href = url
   a.download = file.name
   a.click()
   setTimeout(() => URL.revokeObjectURL(url), 10_000)
-  return 'downloaded'
 }
 
 export type ReadResult =
-  | { kind: 'ok'; snapshot: Snapshot }
+  | { kind: 'ok'; backup: Backup }
   | { kind: 'needs-passphrase' }
   | { kind: 'invalid' }
-  | { kind: 'too-big' }
 
-/** Reads a backup file. Throws WrongPassphrase when the passphrase does not open it. */
+/** Validates a backup file with Zod before anything is written. Throws WrongPassphrase. */
 export async function readBackup(file: File, passphrase: string | null): Promise<ReadResult> {
-  if (file.size > maxImportBytes) return { kind: 'too-big' }
+  if (file.size > maxImportBytes) return { kind: 'invalid' }
   let parsed: unknown
   try {
     parsed = JSON.parse(await file.text())
@@ -61,6 +46,6 @@ export async function readBackup(file: File, passphrase: string | null): Promise
       throw e
     }
   }
-  const result = Snapshot.safeParse(parsed)
-  return result.success ? { kind: 'ok', snapshot: result.data } : { kind: 'invalid' }
+  const result = Backup.safeParse(parsed)
+  return result.success ? { kind: 'ok', backup: result.data } : { kind: 'invalid' }
 }

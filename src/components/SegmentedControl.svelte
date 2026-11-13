@@ -1,3 +1,8 @@
+<!--
+  A row of mutually exclusive choices (native radio buttons, so keyboard and screen readers work
+  as expected). A single pill glides under the chosen option: CSS only, using the motion tokens,
+  and still when the system asks for reduced motion.
+-->
 <script lang="ts" generics="T extends string">
   interface Option {
     value: T
@@ -14,11 +19,19 @@
   }
 
   let { options, value = $bindable(), name, legend, hideLegend = false, onchange }: Props = $props()
+
+  const selected = $derived(
+    Math.max(
+      0,
+      options.findIndex((o) => o.value === value),
+    ),
+  )
 </script>
 
 <fieldset class="segmented">
   <legend class:visually-hidden={hideLegend}>{legend}</legend>
-  <div class="options">
+  <div class="options" style:--count={options.length} style:--selected={selected}>
+    <span class="pill" aria-hidden="true"></span>
     {#each options as option (option.value)}
       <label class="option">
         <input
@@ -49,30 +62,42 @@
   }
 
   .options {
-    display: flex;
-    gap: 2px;
-    padding: 3px;
-    border: var(--border-thin) solid var(--color-border-strong);
-    border-radius: var(--radius-md);
-    background: var(--color-bg);
+    --inset: 3px;
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(var(--count), minmax(0, 1fr));
+    padding: var(--inset);
+    border-radius: var(--radius-sm);
+    background: var(--color-fill);
+  }
+
+  /* One pill, one column wide, moved to the chosen column. */
+  .pill {
+    position: absolute;
+    top: var(--inset);
+    bottom: var(--inset);
+    left: var(--inset);
+    width: calc((100% - 2 * var(--inset)) / var(--count));
+    border-radius: var(--radius-sm);
+    background: var(--color-surface-raised);
+    box-shadow: var(--shadow-sm);
+    transform: translateX(calc(var(--selected) * 100%));
+    transition: transform var(--duration-base) var(--ease);
   }
 
   .option {
     position: relative;
-    flex: 1;
     display: grid;
     place-items: center;
     min-height: var(--target-min);
-    padding: 0 var(--space-3);
-    border-radius: calc(var(--radius-md) - 3px);
+    padding: 0 var(--space-2);
+    border-radius: var(--radius-sm);
     color: var(--color-text-secondary);
     font-size: var(--text-sm);
     font-weight: var(--font-weight-medium);
     text-align: center;
     cursor: pointer;
-    transition:
-      background-color var(--duration-fast) var(--ease),
-      color var(--duration-fast) var(--ease);
+    transition: color var(--duration-fast) var(--ease);
   }
 
   .option input {
@@ -88,9 +113,7 @@
   }
 
   .option:has(input:checked) {
-    background: var(--color-surface-raised);
     color: var(--color-accent);
-    box-shadow: var(--shadow-sm);
   }
 
   .option:has(input:focus-visible) {

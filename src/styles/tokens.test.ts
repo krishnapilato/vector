@@ -56,6 +56,11 @@ const textPairs: [string, string][] = [
     ['success', s],
     ['attention', s],
   ]),
+  ['text', 'fill'],
+  ['text-secondary', 'fill'],
+  ['accent', 'fill'],
+  ['text', 'fill-strong'],
+  ['on-accent', 'sidebar'],
   ['on-accent', 'accent'],
   ['on-accent', 'accent-strong'],
   ['accent', 'accent-soft'],
@@ -68,10 +73,13 @@ const textPairs: [string, string][] = [
 ]
 
 /** Control borders and the focus ring need 3:1 (WCAG AA, non-text contrast). */
-const uiPairs: [string, string][] = surfaces.flatMap((s): [string, string][] => [
-  ['border-strong', s],
-  ['accent', s],
-])
+const uiPairs: [string, string][] = [
+  ...surfaces.flatMap((s): [string, string][] => [
+    ['border-strong', s],
+    ['accent', s],
+  ]),
+  ['border-strong', 'fill'],
+]
 
 describe('design tokens', () => {
   it('defines every colour inside the sRGB gamut', () => {

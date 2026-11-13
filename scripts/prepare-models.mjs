@@ -1,5 +1,5 @@
-// Puts the MediaPipe models and WASM into public/models/ so the app serves them itself
-// (PIANO-V3 §7.1, ADR 0008): no request to Google while studying, and it works offline.
+// Puts the MediaPipe Face Landmarker model and WASM into public/models/ so the app serves them itself
+// (PIANO-V3-LITE §5.1): no request to Google while studying, and it works offline.
 // Models (Apache-2.0) are downloaded once from MediaPipe's official bucket and checked against
 // pinned SHA-256 hashes; the WASM comes from the pinned @mediapipe/tasks-vision package.
 import { createHash } from 'node:crypto'
@@ -12,21 +12,6 @@ const models = [
     file: 'face_landmarker.task',
     path: 'face_landmarker/face_landmarker/float16/1/face_landmarker.task',
     sha256: '64184e229b263107bc2b804c6625db1341ff2bb731874b0bcc2fe6544e0bc9ff',
-  },
-  {
-    file: 'efficientdet_lite0.tflite',
-    path: 'object_detector/efficientdet_lite0/int8/1/efficientdet_lite0.tflite',
-    sha256: '0720bf247bd76e6594ea28fa9c6f7c5242be774818997dbbeffc4da460c723bb',
-  },
-  {
-    file: 'pose_landmarker_lite.task',
-    path: 'pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task',
-    sha256: '59929e1d1ee95287735ddd833b19cf4ac46d29bc7afddbbf6753c459690d574a',
-  },
-  {
-    file: 'hand_landmarker.task',
-    path: 'hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task',
-    sha256: 'fbc2a30080c3c557093b5ddfc334698132eb341044ccee322ccf8bcf3607cde1',
   },
 ]
 const out = 'public/models'

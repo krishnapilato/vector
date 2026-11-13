@@ -2,7 +2,7 @@
   "name": "vector",
   "version": "1.0.0",
   "private": true,
-  "description": "Vector — a calm study companion for the EASA PPL(A) theory.",
+  "description": "Privacy-first focus sessions in the browser. The camera stays on your device.",
   "type": "module",
   "packageManager": "pnpm@12.18.0",
   "engines": {
@@ -16,15 +16,15 @@
     "lint": "biome check --error-on-warnings .",
     "lint:fix": "biome check --write .",
     "ci:lint": "biome ci --error-on-warnings .",
-    "test": "vitest run",
-    "test:watch": "vitest",
+    "test": "vitest run --coverage",
     "e2e": "playwright test",
     "budget": "node scripts/check-budget.mjs",
-    "check": "astro check --minimumFailingSeverity warning && svelte-check --tsconfig ./tsconfig.json --fail-on-warnings && biome ci --error-on-warnings . && vitest run && node scripts/prepare-models.mjs && astro build && node scripts/check-budget.mjs"
+    "check": "astro check --minimumFailingSeverity warning && svelte-check --tsconfig ./tsconfig.json --fail-on-warnings && biome ci --error-on-warnings . && vitest run --coverage && node scripts/prepare-models.mjs && astro build && node scripts/check-budget.mjs",
+    "test:watch": "vitest",
+    "docs:screenshots": "pnpm build && node scripts/capture-screenshots.mjs"
   },
   "dependencies": {
-    "@fontsource/ibm-plex-mono": "5.3.0",
-    "@fontsource/ibm-plex-sans": "5.3.0",
+    "@fontsource-variable/instrument-sans": "5.3.0",
     "@mediapipe/tasks-vision": "1.2.2",
     "dexie": "4.4.7",
     "svelte": "5.57.3",
@@ -38,6 +38,7 @@
     "@playwright/test": "1.65.0",
     "@types/node": "26.6.6",
     "@vite-pwa/astro": "2.0.2",
+    "@vitest/coverage-v8": "5.1.0",
     "astro": "7.4.8",
     "fake-indexeddb": "6.2.8",
     "svelte-check": "4.7.8",

@@ -1,313 +1,165 @@
+<!--
+  The Logbook (PIANO-V3-LITE §4.2): totals at the top, then every session, newest first,
+  with a quick filter and a CSV export.
+-->
 <script lang="ts">
   import Button from '../../components/Button.svelte'
-  import EmptyState from '../../components/EmptyState.svelte'
-  import LogbookRow from '../../components/LogbookRow.svelte'
-  import { toCsv } from '../../core/backup/csv'
-  import { localDate } from '../../core/calendar/dates'
-  import { type BlockKind, blockKinds } from '../../core/model/schemas'
-  import { type SubjectId, subjectName, subjects } from '../../core/model/subjects'
-  import { bestHours, clarityBySubject, quizByChapter, totals } from '../../core/stats/stats'
-  import { copy } from '../../lib/copy'
-  import { db } from '../../lib/db'
-  import { describeBlock } from '../../lib/describe'
+  import Loading from '../../components/Loading.svelte'
+  import TextField from '../../components/TextField.svelte'
+  import { sessionsCsv } from '../../core/export/export'
+  import { totals, weekStart } from '../../core/session/totals'
+  import { download } from '../../lib/backup'
+  import { copy, formatDateTime } from '../../lib/copy'
   import { live } from '../../lib/live.svelte'
-  import { href } from '../../lib/nav'
+  import { listSessions } from '../../lib/store'
 
-  const today = localDate(Date.now())
-  let subject = $state<SubjectId | 'all'>('all')
-  let kind = $state<BlockKind | 'all'>('all')
+  let filter = $state<string | number | null>('')
 
-  const data = live(async () => {
-    const [sessions, chapters, exercises, simLessons] = await Promise.all([
-      db.sessions.orderBy('startedAt').reverse().toArray(),
-      db.chapters.orderBy('order').toArray(),
-      db.exercises.toArray(),
-      db.simLessons.toArray(),
-    ])
-    return { sessions, chapters, exercises, simLessons }
-  }, null)
+  const sessions = live(listSessions, [])
 
-  const catalogue = $derived({
-    chapters: data.value?.chapters ?? [],
-    exercises: data.value?.exercises ?? [],
-    simLessons: data.value?.simLessons ?? [],
-  })
-  const shown = $derived(
-    (data.value?.sessions ?? []).filter(
-      (s) => (subject === 'all' || s.subject === subject) && (kind === 'all' || s.kind === kind),
-    ),
+  const query = $derived(
+    String(filter ?? '')
+      .trim()
+      .toLowerCase(),
   )
-  const t = $derived(totals(data.value?.sessions ?? [], data.value?.chapters ?? [], today))
-  const best = $derived(bestHours(data.value?.sessions ?? []))
-  const clarity = $derived(clarityBySubject(data.value?.sessions ?? []))
-  const quizzes = $derived(quizByChapter(data.value?.sessions ?? []))
-
-  function title(s: (typeof shown)[number]) {
-    return describeBlock(
-      {
-        id: s.id,
-        date: today,
-        order: 0,
-        window: 'evening',
-        minutes: s.activeMinutes,
-        kind: s.kind,
-        mode: s.mode,
-        ref: s.ref,
-        pageFrom: null,
-        pageTo: null,
-        content: s.content,
-        status: 'done',
-        why: { code: 'extra', chapter: null, clarity: null, count: null },
-        extra: false,
-      },
-      catalogue,
-    )
-  }
+  const shown = $derived(
+    query
+      ? sessions.value.filter((s) => `${s.tag} ${s.note}`.toLowerCase().includes(query))
+      : sessions.value,
+  )
+  const sum = $derived(totals(sessions.value, weekStart(new Date())))
 
   function exportCsv() {
-    const rows = shown.map((s) => {
-      const d = title(s)
-      return [
-        localDate(s.startedAt),
-        copy.kind[s.kind],
-        d.title,
-        s.content,
-        s.activeMinutes,
-        s.focus ? Math.round(s.focus.attention * 100) : null,
-        s.clarity,
-        s.quizScore ? `${s.quizScore.correct}/${s.quizScore.total}` : null,
-        s.note,
-      ]
-    })
-    const csv = toCsv(
-      ['date', 'type', 'title', 'content', 'active_min', 'focus_pct', 'clarity', 'quiz', 'note'],
-      rows,
+    const day = new Date().toISOString().slice(0, 10)
+    download(
+      new File([sessionsCsv(sessions.value)], `vector-logbook-${day}.csv`, { type: 'text/csv' }),
     )
-    const url = URL.createObjectURL(new File([csv], 'vector-logbook.csv', { type: 'text/csv' }))
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `vector-logbook-${today}.csv`
-    a.click()
-    setTimeout(() => URL.revokeObjectURL(url), 10_000)
   }
 </script>
 
-<h1>{copy.logbook.title}</h1>
-
-{#if !data.ready}
-  <p role="status">{copy.app.loading}</p>
-{:else if (data.value?.sessions.length ?? 0) === 0}
-  <EmptyState title={copy.logbook.emptyTitle} body={copy.logbook.emptyBody}>
-    {#snippet action()}<Button variant="primary" href={href('')}>{copy.session.goToday}</Button>{/snippet}
-  </EmptyState>
-{:else}
-  <section aria-labelledby="totals-title">
-    <h2 id="totals-title" class="visually-hidden">{copy.logbook.totals}</h2>
-    <dl class="totals">
-      <div><dt>{copy.logbook.hoursTotal}</dt><dd>{t.hoursTotal}<small> {copy.logbook.hoursUnit}</small></dd></div>
-      <div><dt>{copy.logbook.hoursMonth}</dt><dd>{t.hoursMonth}<small> {copy.logbook.hoursUnit}</small></dd></div>
-      <div><dt>{copy.logbook.hoursWeek}</dt><dd>{t.hoursWeek}<small> {copy.logbook.hoursUnit}</small></dd></div>
-      <div><dt>{copy.logbook.simHours}</dt><dd>{t.simHours}<small> {copy.logbook.hoursUnit}</small></dd></div>
-      <div><dt>{copy.logbook.chaptersDone}</dt><dd>{t.chaptersDone}<small> · {t.bookPercent}%</small></dd></div>
-    </dl>
-  </section>
-
-  <div class="filters">
-    <label>
-      <span>{copy.logbook.filterSubject}</span>
-      <select bind:value={subject}>
-        <option value="all">{copy.logbook.all}</option>
-        {#each subjects as s (s.id)}<option value={s.id}>{s.name}</option>{/each}
-      </select>
-    </label>
-    <label>
-      <span>{copy.logbook.filterKind}</span>
-      <select bind:value={kind}>
-        <option value="all">{copy.logbook.all}</option>
-        {#each blockKinds as k (k)}<option value={k}>{copy.kind[k]}</option>{/each}
-      </select>
-    </label>
-    <Button variant="quiet" onclick={exportCsv}>{copy.logbook.exportCsv}</Button>
-  </div>
-
-  {#if shown.length === 0}
-    <p class="muted">{copy.logbook.noMatch}</p>
-  {:else}
-    <ol class="logbook">
-      {#each shown as s (s.id)}
-        {@const d = title(s)}
-        <LogbookRow
-          date={localDate(s.startedAt)}
-          kind={copy.kind[s.kind]}
-          content={[d.title, s.content !== d.title ? s.content : '', s.quizScore ? `${s.quizScore.correct}/${s.quizScore.total}` : '', s.simOutcome ? copy.materials.sim[s.simOutcome] : ''].filter(Boolean).join(' · ')}
-          activeMinutes={s.activeMinutes}
-          focusPercent={s.focus ? Math.round(s.focus.attention * 100) : null}
-          clarity={s.clarity}
-          note={[s.note, s.simDeviations].filter(Boolean).join(' · ')}
-        />
-      {/each}
-    </ol>
+<div class="page-heading">
+  <h1>{copy.logbook.title}</h1>
+  {#if sessions.ready && sessions.value.length > 0}
+    <Button onclick={exportCsv}>Export CSV <span aria-hidden="true">↗</span></Button>
   {/if}
+</div>
 
-  <section class="stats" aria-labelledby="best-title">
-    <h2 id="best-title">{copy.logbook.bestHours}</h2>
-    {#if best.length === 0}
-      <p class="muted">{copy.logbook.bestHoursEmpty}</p>
+{#if !sessions.ready}
+  <Loading />
+{:else}
+  <dl class="totals" aria-label="Session statistics">
+    <div class="hero">
+      <dt>{copy.logbook.weekHours}</dt>
+      <dd>{sum.weekHours}<small>{copy.logbook.hoursUnit}</small></dd>
+    </div>
+    <div>
+      <dt>{copy.logbook.weekSessions}</dt>
+      <dd>{sum.weekSessions}</dd>
+    </div>
+    <div>
+      <dt>{copy.logbook.averageFocus}</dt>
+      <dd>{sum.averageFocusPct === null ? '—' : sum.averageFocusPct}{#if sum.averageFocusPct !== null}<small>%</small>{/if}</dd>
+    </div>
+    <div>
+      <dt>{copy.logbook.allTime}</dt>
+      <dd>{sum.totalHours}<small>{copy.logbook.hoursUnit}</small></dd>
+    </div>
+  </dl>
+
+  <section class="entries" aria-labelledby="entries-title">
+    <div class="entries-heading">
+      <h2 id="entries-title">Session history</h2>
+      <span class="count">{sessions.value.length} {sessions.value.length === 1 ? 'session' : 'sessions'}</span>
+    </div>
+    {#if sessions.value.length === 0}
+      <div class="empty">
+        <span class="empty-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 3h12v18H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Zm2 5h6m-6 4h6m-6 4h3" /></svg></span>
+        <h3>A little focus adds up.</h3>
+        <p>{copy.logbook.empty}</p>
+        <Button variant="primary" href={import.meta.env.BASE_URL}>Start a session <span aria-hidden="true">↗</span></Button>
+      </div>
     {:else}
-      <ul class="bars">
-        {#each best as b (b.part)}
-          <li>
-            <span>{copy.logbook.dayPart[b.part]}</span>
-            <span class="bar"><span style:width="{b.attention}%"></span></span>
-            <span class="num">{b.attention}%</span>
-          </li>
-        {/each}
-      </ul>
+      <div class="tools">
+        <TextField label={copy.logbook.filter} placeholder="Search tasks and notes…" bind:value={filter} />
+        {#if query}<Button variant="quiet" onclick={() => (filter = '')}>Clear</Button>{/if}
+      </div>
+      {#if query}<p class="results" role="status">{shown.length} of {sessions.value.length} sessions</p>{/if}
+      {#if shown.length === 0}
+        <div class="empty compact">
+          <h3>No matching sessions.</h3>
+          <p>Try another task name or a word from your notes.</p>
+          <Button onclick={() => (filter = '')}>Clear filter</Button>
+        </div>
+      {:else}
+        <ol class="list">
+          {#each shown as s (s.id)}
+            <li class="row">
+              <div class="session-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 21a8 8 0 1 0 0-16 8 8 0 0 0 0 16ZM12 9v4l2.5 1.5M10 2h4" /></svg></div>
+              <div class="main">
+                <p class="when"><time datetime={new Date(s.startedAt).toISOString()}>{formatDateTime(s.startedAt)}</time></p>
+                <h3 class="tag">{s.tag || copy.logbook.untitled}</h3>
+                {#if s.note}<p class="note">{s.note}</p>{/if}
+                <div class="metadata">
+                  {#if s.focusAggregates}
+                    <span>{copy.logbook.focus(s.focusAggregates.focusScorePct)}</span>
+                    <span>{copy.logbook.fatigue(s.focusAggregates.fatigueEvents)}</span>
+                  {:else}
+                    <span>{copy.logbook.noCamera}</span>
+                  {/if}
+                </div>
+              </div>
+              <div class="stats">
+                <span class="minutes">{copy.logbook.minutes(Math.round(s.activeSeconds / 60))}</span>
+                <span class="rating" aria-label="Clarity: {s.clarityRating} out of 5"><span aria-hidden="true">☆</span> {copy.logbook.rating(s.clarityRating)}</span>
+              </div>
+            </li>
+          {/each}
+        </ol>
+      {/if}
     {/if}
   </section>
-
-  {#if clarity.length > 0}
-    <section class="stats" aria-labelledby="clarity-title">
-      <h2 id="clarity-title">{copy.logbook.clarityTrend}</h2>
-      <ul class="bars">
-        {#each clarity as c (c.subject)}
-          <li>
-            <span>{subjectName(c.subject)}</span>
-            <span class="dots" aria-label={c.ratings.join(', ')}>
-              {#each c.ratings as r, i (i)}<span class="dot" style:height="{r * 20}%"></span>{/each}
-            </span>
-            <span class="num">{c.mean}/5</span>
-          </li>
-        {/each}
-      </ul>
-    </section>
-  {/if}
-
-  {#if quizzes.length > 0}
-    <section class="stats" aria-labelledby="quiz-title">
-      <h2 id="quiz-title">{copy.logbook.quizScores}</h2>
-      <ul class="bars">
-        {#each quizzes as q (q.chapterId)}
-          {@const c = data.value?.chapters.find((x) => x.id === q.chapterId)}
-          <li>
-            <span>{c ? `${c.order}. ${c.title}` : q.chapterId}</span>
-            <span class="num wide">{q.scores.map((s) => `${s}%`).join(' → ')}</span>
-          </li>
-        {/each}
-      </ul>
-    </section>
-  {/if}
 {/if}
 
 <style>
-  .muted {
-    color: var(--color-text-secondary);
-  }
-
-  .totals {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr));
-    gap: var(--space-4);
-    margin: 0;
-  }
-
-  .totals dt {
-    font-size: var(--text-sm);
-    color: var(--color-text-secondary);
-  }
-
-  .totals dd {
-    margin: 0;
-    font-family: var(--font-mono);
-    font-size: var(--text-xl);
-  }
-
-  .totals small {
-    font-size: var(--text-sm);
-    color: var(--color-text-secondary);
-  }
-
-  .filters {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: end;
-    gap: var(--space-3);
-  }
-
-  .filters label {
-    display: grid;
-    gap: var(--space-1);
-    font-size: var(--text-sm);
-  }
-
-  select {
-    min-height: var(--target-min);
-    max-width: 100%;
-    padding: 0 var(--space-3);
-    border: var(--border-thin) solid var(--color-border-strong);
-    border-radius: var(--radius-sm);
-    background: var(--color-surface-raised);
-  }
-
-  .logbook {
-    margin: 0;
-    padding: 0;
-    border-top: var(--border-thick) solid var(--color-rule);
-    background: var(--color-surface-raised);
-  }
-
-  .stats {
-    display: grid;
-    gap: var(--space-3);
-  }
-
-  .bars {
-    display: grid;
-    gap: var(--space-2);
-    margin: 0;
-    padding: 0;
-    list-style: none;
-  }
-
-  .bars li {
-    display: grid;
-    grid-template-columns: minmax(7rem, 12rem) 1fr auto;
-    align-items: center;
-    gap: var(--space-3);
-    font-size: var(--text-sm);
-  }
-
-  .bar {
-    height: 0.5rem;
-    border-radius: var(--radius-sm);
-    background: var(--color-accent-soft);
-    overflow: hidden;
-  }
-
-  .bar span {
-    display: block;
-    height: 100%;
-    background: var(--color-accent);
-  }
-
-  .dots {
-    display: flex;
-    align-items: flex-end;
-    gap: 3px;
-    height: 1.5rem;
-  }
-
-  .dot {
-    width: 0.375rem;
-    border-radius: 1px;
-    background: var(--color-accent);
-  }
-
-  .num {
-    font-family: var(--font-mono);
-  }
-
-  .wide {
-    grid-column: 2 / -1;
+  .page-heading { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); }
+  .totals { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-3); margin: 0; }
+  .totals > div { display: flex; flex-direction: column-reverse; justify-content: end; gap: var(--space-4); padding: var(--space-5); border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface-raised); }
+  .totals .hero { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-on-accent); }
+  dt { font-size: var(--text-xs); color: var(--color-text-secondary); }
+  .hero dt, .hero small { color: var(--color-on-accent); }
+  dd { margin: 0; font-size: clamp(1.75rem, 3vw, 2.5rem); font-weight: 500; letter-spacing: -0.05em; line-height: 1; }
+  small { margin-left: 0.15em; font-size: 0.45em; letter-spacing: 0; color: var(--color-text-secondary); }
+  .entries { overflow: hidden; min-width: 0; background: var(--color-surface-raised); border: 1px solid var(--color-border); border-radius: var(--radius-lg); }
+  .entries-heading { display: flex; justify-content: space-between; align-items: center; gap: var(--space-3); padding: var(--space-5); border-bottom: 1px solid var(--color-border); }
+  .entries-heading h2 { font-size: var(--text-md); }
+  .count { padding: 0.25rem 0.625rem; background: var(--color-fill); color: var(--color-text-secondary); border-radius: var(--radius-pill); font-size: var(--text-xs); white-space: nowrap; }
+  .tools { display: flex; align-items: end; gap: var(--space-3); padding: var(--space-5); }
+  .tools :global(.field) { flex: 1; }
+  .results { padding: 0 var(--space-5) var(--space-4); color: var(--color-text-secondary); font-size: var(--text-xs); }
+  .list { margin: 0; padding: 0; list-style: none; }
+  .row { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: start; gap: var(--space-4); padding: var(--space-5); border-top: 1px solid var(--color-border); transition: background-color var(--duration-fast) var(--ease); }
+  .row:hover { background: var(--color-surface); }
+  .session-mark, .empty-icon { display: grid; place-items: center; width: 2.75rem; height: 2.75rem; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-fill); color: var(--color-accent); }
+  svg { width: 1.375rem; height: 1.375rem; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+  .main { display: grid; gap: var(--space-1); min-width: 0; }
+  .when, .metadata { color: var(--color-text-secondary); font-size: var(--text-xs); }
+  .tag { font-size: var(--text-md); font-weight: 500; overflow-wrap: anywhere; }
+  .note { margin-block: var(--space-1); color: var(--color-text-secondary); font-size: var(--text-sm); overflow-wrap: anywhere; }
+  .metadata { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-3); margin-top: var(--space-2); }
+  .stats { display: grid; justify-items: end; gap: var(--space-2); }
+  .minutes { font-weight: 600; white-space: nowrap; }
+  .rating { display: flex; align-items: center; gap: var(--space-1); color: var(--color-text-secondary); font-size: var(--text-xs); }
+  .empty { display: flex; flex-direction: column; align-items: center; gap: var(--space-4); padding: clamp(2rem, 5vw, 4rem) var(--space-5); text-align: center; }
+  .empty h3 { font-size: var(--text-lg); }
+  .empty p { max-width: 36ch; font-size: var(--text-sm); color: var(--color-text-secondary); }
+  .empty-icon { width: 3.5rem; height: 3.5rem; margin-bottom: var(--space-2); }
+  .empty-icon svg { width: 1.75rem; height: 1.75rem; }
+  .compact { border-top: 1px solid var(--color-border); }
+  @media (width < 40rem) {
+    .totals { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .totals > div { padding: var(--space-4); }
+    .page-heading { flex-wrap: wrap; }
+    .row { grid-template-columns: minmax(0, 1fr) auto; gap: var(--space-3); }
+    .session-mark { display: none; }
   }
 </style>
