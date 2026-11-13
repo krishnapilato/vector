@@ -9,9 +9,10 @@
   interface Props {
     calibration: Calibration | undefined
     sensitivity: Sensitivity
+    extras: boolean
   }
 
-  let { calibration, sensitivity }: Props = $props()
+  let { calibration, sensitivity, extras }: Props = $props()
 
   let open = $state(false)
   let starting = $state(false)
@@ -25,6 +26,9 @@
     pitch: number
     blink: number
     jaw: number
+    phone: boolean | null
+    shoulders: number | null
+    hand: boolean | null
     state: FocusState
   } | null>(null)
 
@@ -51,6 +55,12 @@
           pitch: sample.pitch - (calibration?.pitchMean ?? focus.uncalibrated.pitchMean),
           blink: sample.blink,
           jaw: sample.jawOpen,
+          phone: sample.phone,
+          shoulders:
+            sample.shoulderY === null
+              ? null
+              : sample.shoulderY - (calibration?.shoulderY ?? sample.shoulderY),
+          hand: sample.handOnFace,
           state: tracker.state,
         }
       },
@@ -58,7 +68,7 @@
         problem = copy.session.camera[reason]
         open = false
       },
-      { video, canvas },
+      { extras, preview: { video, canvas } },
     )
     starting = false
   }
@@ -98,6 +108,15 @@
         <div><dt>{copy.settings.check.pitch}</dt><dd>{deg(reading.pitch)}</dd></div>
         <div><dt>{copy.settings.check.eyes}</dt><dd>{pct(reading.blink)}</dd></div>
         <div><dt>{copy.settings.check.mouth}</dt><dd>{pct(reading.jaw)}</dd></div>
+        {#if reading.phone !== null}
+          <div><dt>{copy.settings.check.phone}</dt><dd>{reading.phone ? copy.wrapUp.yes : copy.settings.check.none}</dd></div>
+        {/if}
+        {#if reading.shoulders !== null}
+          <div><dt>{copy.settings.check.shoulders}</dt><dd>{pct(-reading.shoulders)}</dd></div>
+        {/if}
+        {#if reading.hand !== null}
+          <div><dt>{copy.settings.check.hand}</dt><dd>{reading.hand ? copy.wrapUp.yes : copy.settings.check.none}</dd></div>
+        {/if}
       </dl>
     {/if}
     <p class="muted small">{copy.settings.check.privacy}</p>

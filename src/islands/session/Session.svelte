@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { tick } from 'svelte'
   import Button from '../../components/Button.svelte'
   import CameraIndicator from '../../components/CameraIndicator.svelte'
   import ConfirmDialog from '../../components/ConfirmDialog.svelte'
@@ -56,6 +57,8 @@
   let breakOffer = $state<FocusReason[] | null>(null)
   let showWhy = $state(false)
   let pausedByAway = false
+  let softVideo = $state<HTMLVideoElement>()
+  let softCanvas = $state<HTMLCanvasElement>()
   let faceBackSince: number | null = null
 
   const isDesk = $derived(active?.block.mode === 'desk')
@@ -93,6 +96,10 @@
     if (active?.focus && tracker) tracker = { ...tracker, aggregate: { ...active.focus } }
     let lastSave = 0
 
+    const preview =
+      s.softPreview && softVideo && softCanvas
+        ? { video: softVideo, canvas: softCanvas }
+        : undefined
     camera = await startCamera(
       (sample) => {
         if (!active || !isRunning(active.timer)) return
@@ -129,6 +136,7 @@
         cameraProblem = reason
         cameraState = 'off'
       },
+      { extras: s.extraSignals !== false, ...(preview ? { preview } : {}) },
     )
     if (camera) cameraState = 'active'
   }
@@ -174,7 +182,10 @@
         active = a ?? null
       }
       loaded = true
-      if (active && active.block.mode === 'desk' && s.camera) void startFocus(s)
+      if (active && active.block.mode === 'desk' && s.camera) {
+        await tick()
+        void startFocus(s)
+      }
     })()
     return () => stopCamera()
   })
@@ -223,6 +234,7 @@
   async function switchToDesk() {
     if (!active || !settings) return
     await persist({ ...active, block: { ...active.block, mode: 'desk' } })
+    await tick()
     void startFocus(settings)
   }
 
@@ -285,6 +297,13 @@
       {#if calibrating}<span class="state" role="status">{copy.settings.calibrating}</span>{/if}
     </div>
     {#if cameraProblem}<InlineNotice tone="attention">{copy.session.camera[cameraProblem]}</InlineNotice>{/if}
+    {#if settings?.camera && settings.softPreview}
+      <!-- Opt-in soft view (proposal 3): small, blurred, never saved. -->
+      <div class="soft" aria-hidden="true">
+        <video bind:this={softVideo} muted playsinline width="320" height="240"></video>
+        <canvas bind:this={softCanvas} width="320" height="240"></canvas>
+      </div>
+    {/if}
   {:else if active.block.mode === 'on-the-go'}
     <p class="muted">{copy.session.onTheGo}</p>
     {#if settings?.camera}
@@ -390,6 +409,32 @@
 
   .state {
     font-weight: var(--font-weight-medium);
+  }
+
+  .soft {
+    position: fixed;
+    right: var(--space-4);
+    bottom: var(--space-4);
+    width: 7.5rem;
+    aspect-ratio: 4 / 3;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    opacity: 0.55;
+    pointer-events: none;
+  }
+
+  .soft video,
+  .soft canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    transform: scaleX(-1);
+  }
+
+  .soft video {
+    object-fit: cover;
+    filter: blur(5px) saturate(0.6);
   }
 
   .timer {

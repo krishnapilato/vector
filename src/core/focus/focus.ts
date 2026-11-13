@@ -16,6 +16,16 @@ export interface FrameSample {
   /** Mean of eyeBlinkLeft and eyeBlinkRight, 0–1. */
   blink: number
   jawOpen: number
+  /**
+   * Extra signals from the other models (ADR 0008), null when not measured. They run at 1–2 fps,
+   * so the camera adapter repeats the latest value between runs.
+   */
+  /** A phone is in the picture (Object Detector). */
+  phone: boolean | null
+  /** Height of the shoulders, 0 at the top of the image and 1 at the bottom (Pose Landmarker). */
+  shoulderY: number | null
+  /** A hand rests on the face or under the chin (Hand Landmarker). */
+  handOnFace: boolean | null
 }
 
 export type FocusState = 'focused' | 'distracted' | 'away' | 'tired'
@@ -27,6 +37,10 @@ export type FocusReason =
   | 'yawns'
   | 'restless'
   | 'eyes-closed'
+  | 'phone'
+  | 'stood-up'
+  | 'slouching'
+  | 'head-on-hand'
 
 export interface FocusRules {
   /** Shorter distractions are ignored: a glance at the notes, a sneeze (§7.5). */
@@ -47,6 +61,12 @@ export interface FocusRules {
   yawnSeconds: number
   yawnsTired: number
   restlessRatio: number
+  /** Shoulders this much higher than when calibrated (share of image height): you stood up. */
+  standRise: number
+  /** Shoulders this much lower for a while: slumping in the chair. */
+  slouchDrop: number
+  slouchSeconds: number
+  handOnFaceSeconds: number
 }
 
 const base: FocusRules = {
@@ -63,6 +83,10 @@ const base: FocusRules = {
   yawnSeconds: 1.5,
   yawnsTired: 3,
   restlessRatio: 3,
+  standRise: 0.18,
+  slouchDrop: 0.1,
+  slouchSeconds: 90,
+  handOnFaceSeconds: 30,
 }
 
 /** Sensitivity scales the thresholds; low means fewer interruptions (§7.5). */
@@ -86,6 +110,7 @@ export const uncalibrated: Calibration = {
   pitchMean: 15,
   pitchSd: 6,
   blinkMean: 0.2,
+  shoulderY: null,
   date: 0,
 }
 
@@ -102,6 +127,10 @@ export interface FocusTracker {
   noFaceSince: number | null
   closedSince: number | null
   jawSince: number | null
+  phoneSince: number | null
+  standSince: number | null
+  slouchSince: number | null
+  handSince: number | null
   yawns: number[]
   state: FocusState
   reasons: FocusReason[]
@@ -125,6 +154,10 @@ export function startTracker(calibration: Calibration, rules: FocusRules): Focus
     noFaceSince: null,
     closedSince: null,
     jawSince: null,
+    phoneSince: null,
+    standSince: null,
+    slouchSince: null,
+    handSince: null,
     yawns: [],
     state: 'focused',
     reasons: [],
@@ -194,6 +227,16 @@ export function step(prev: FocusTracker, s: FrameSample): StepResult {
   t.lookAwaySince = lookingAway ? (prev.lookAwaySince ?? s.t) : null
   t.closedSince = closed ? (prev.closedSince ?? s.t) : null
 
+  // Extra signals (ADR 0008): only when the model measured them and calibration knows the posture.
+  const standing =
+    s.shoulderY !== null && c.shoulderY !== null && c.shoulderY - s.shoulderY > r.standRise
+  const slouching =
+    s.shoulderY !== null && c.shoulderY !== null && s.shoulderY - c.shoulderY > r.slouchDrop
+  t.phoneSince = s.phone === true ? (prev.phoneSince ?? s.t) : null
+  t.standSince = standing ? (prev.standSince ?? s.t) : null
+  t.slouchSince = slouching ? (prev.slouchSince ?? s.t) : null
+  t.handSince = s.handOnFace === true ? (prev.handSince ?? s.t) : null
+
   // Yawns: jaw open past the threshold for long enough, counted once each.
   const jawOpen = s.facePresent && s.jawOpen > r.yawnJaw
   t.jawSince = jawOpen ? (prev.jawSince ?? s.t) : null
@@ -220,19 +263,26 @@ export function step(prev: FocusTracker, s: FrameSample): StepResult {
   const awayFor = t.noFaceSince === null ? 0 : s.t - t.noFaceSince
   const lookFor = t.lookAwaySince === null ? 0 : s.t - t.lookAwaySince
   const closedFor = t.closedSince === null ? 0 : s.t - t.closedSince
+  const phoneFor = t.phoneSince === null ? 0 : s.t - t.phoneSince
+  const standFor = t.standSince === null ? 0 : s.t - t.standSince
+  const slouchFor = t.slouchSince === null ? 0 : s.t - t.slouchSince
+  const handFor = t.handSince === null ? 0 : s.t - t.handSince
   const reasons: FocusReason[] = []
   let state: FocusState = 'focused'
-  if (awayFor >= r.briefSeconds) {
+  if (awayFor >= r.briefSeconds || standFor >= r.briefSeconds) {
     state = 'away'
-    reasons.push('no-face')
-  } else if (lookFor >= r.briefSeconds) {
+    reasons.push(awayFor >= r.briefSeconds ? 'no-face' : 'stood-up')
+  } else if (lookFor >= r.briefSeconds || phoneFor >= r.briefSeconds) {
     state = 'distracted'
-    reasons.push('looking-away')
+    if (phoneFor >= r.briefSeconds) reasons.push('phone')
+    if (lookFor >= r.briefSeconds) reasons.push('looking-away')
   } else {
     if (perclos >= r.perclosTired) reasons.push('perclos')
     if (t.yawns.length >= r.yawnsTired) reasons.push('yawns')
     if (restless >= r.restlessRatio) reasons.push('restless')
     if (closedFor >= r.closedSeconds) reasons.push('eyes-closed')
+    if (slouchFor >= r.slouchSeconds) reasons.push('slouching')
+    if (handFor >= r.handOnFaceSeconds) reasons.push('head-on-hand')
     if (reasons.some((x) => x !== 'eyes-closed')) state = 'tired'
   }
 
@@ -271,7 +321,11 @@ export function step(prev: FocusTracker, s: FrameSample): StepResult {
     a.breaksSuggested++
   }
 
-  return { tracker: t, shouldPause: awayFor >= r.awayPauseSeconds, suggestBreak }
+  return {
+    tracker: t,
+    shouldPause: awayFor >= r.awayPauseSeconds || standFor >= r.awayPauseSeconds,
+    suggestBreak,
+  }
 }
 
 /** The learner answered a break suggestion. Two refusals lower the sensitivity (§7.5). */
@@ -311,6 +365,10 @@ export function calibrate(
     pitchMean: mean(pitch),
     pitchSd: sd(pitch),
     blinkMean: Math.min(1, Math.max(0, mean(faces.map((s) => s.blink)))),
+    shoulderY: (() => {
+      const ys = faces.map((s) => s.shoulderY).filter((y): y is number => y !== null)
+      return ys.length >= 10 ? mean(ys) : null
+    })(),
     date: now,
   }
 }

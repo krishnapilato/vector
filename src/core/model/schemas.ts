@@ -44,6 +44,10 @@ export const Settings = z.object({
   simUnlockAfter: z.number().int().min(0).max(10),
   camera: z.boolean(),
   sensitivity: Sensitivity,
+  /** Phone, posture and hands besides the face (ADR 0008). */
+  extraSignals: z.boolean().default(true),
+  /** A small blurred camera view during desk sessions (docs/proposte.md, n. 3). Off by default. */
+  softPreview: z.boolean().default(false),
   station: z.string().min(1).max(40),
   sounds: z.boolean(),
   alwaysShowTimer: z.boolean(),
@@ -236,6 +240,8 @@ export const Calibration = z.object({
   pitchSd: z.number().min(0),
   /** Eyelid score while reading: looking down at paper closes the eyes a little. */
   blinkMean: z.number().min(0).max(1),
+  /** Shoulder height while reading (ADR 0008); null when the pose model was off. */
+  shoulderY: z.number().min(0).max(1).nullable().default(null),
   date: z.number(),
 })
 export type Calibration = z.infer<typeof Calibration>

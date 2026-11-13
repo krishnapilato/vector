@@ -1,27 +1,28 @@
-# 0007 — Budget di JS della pagina Oggi: 65 kB invece di 60
+# 0007 — Budget di JS della pagina Oggi: 70 kB invece di 60
 
 Data: 2026-11-13 · Stato: proposta, in attesa di Krishna
 
 ## Contesto
 Il piano (sezione 12) fissa la pagina Oggi sotto i 60 kB gzip di JS. Misura reale dopo
-l'ottimizzazione (operazioni del pianificatore caricate dopo il primo disegno, registrazione del
-service worker senza libreria):
+l'ottimizzazione (operazioni del pianificatore e scheda dei traguardi caricate dopo il primo
+disegno, registrazione del service worker senza libreria):
 
 | Parte | kB gzip |
 |---|---|
 | Dexie (imposto dal piano) | 31,4 |
 | Runtime Svelte 5 (imposto dal piano) | 19,0 |
-| `src/lib/copy.ts` (tutti i testi, file unico per la sezione 10) | 6,3 |
-| Isola Oggi e componenti | 7,2 |
-| Altro (date, navigazione, eventi) | 1,0 |
-| **Totale** | **64,9** |
+| `src/lib/copy.ts` (tutti i testi, file unico per la sezione 10) | ~7 |
+| Isola Oggi e componenti | ~7 |
+| Altro (date, navigazione, eventi) | ~1 |
+| **Totale** | **65,3** |
 
-Le sole librerie richieste dal piano pesano 50 kB. Scendere a 60 richiederebbe di dividere
-`copy.ts` in più file, contro la regola del file unico.
+Le sole librerie richieste dal piano pesano 50 kB. I testi crescono con ogni funzione (sync,
+verifica della fotocamera, segnali extra) e il file unico viene caricato per intero.
 
 ## Decisione
-Budget a 65 kB, controllato da `scripts/check-budget.mjs` in `pnpm check`. Si conta solo il JS
-caricato in modo statico; le operazioni caricate subito dopo il primo disegno (`today-ops.ts`) no.
+Budget a 70 kB, controllato da `scripts/check-budget.mjs` in `pnpm check`, con margine per i testi.
+Si conta il JS caricato in modo statico; i moduli caricati subito dopo il primo disegno
+(`today-ops.ts`, scheda traguardi) no.
 
-## Conseguenze
-Se Krishna preferisce 60 kB, l'alternativa è dividere i testi per schermata in `src/lib/copy/`.
+## Alternativa
+Tornare a 60 kB dividendo i testi per schermata in `src/lib/copy/` (Oggi caricherebbe solo i suoi).

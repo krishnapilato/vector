@@ -30,6 +30,8 @@ export function defaultSettings(): Settings {
     simUnlockAfter: 3,
     camera: false,
     sensitivity: 'normal',
+    extraSignals: true,
+    softPreview: false,
     station: 'Desk',
     sounds: true,
     alwaysShowTimer: false,

@@ -135,6 +135,7 @@
       (reason) => {
         calibrationProblem = copy.session.camera[reason]
       },
+      { extras: s.extraSignals !== false },
     )
     if (!handle) {
       calibrating = false
@@ -295,6 +296,18 @@
   <section class="group" aria-labelledby="camera-title">
     <h2 id="camera-title">{copy.settings.camera}</h2>
     <Switch label={copy.settings.camera} description={copy.settings.cameraHint} checked={s.camera} onchange={(v) => void toggleCamera(v)} />
+    <Switch
+      label={copy.settings.extraSignals}
+      description={copy.settings.extraSignalsHint}
+      checked={s.extraSignals !== false}
+      onchange={(v) => toggle({ extraSignals: v })}
+    />
+    <Switch
+      label={copy.settings.softPreview}
+      description={copy.settings.softPreviewHint}
+      checked={s.softPreview === true}
+      onchange={(v) => toggle({ softPreview: v })}
+    />
     <SegmentedControl
       name="sensitivity"
       legend={copy.settings.sensitivity}
@@ -311,7 +324,7 @@
       <Button disabled={calibrating} onclick={calibrate}>{calibrating ? copy.settings.calibrating : copy.settings.calibrate}</Button>
     </div>
     {#if calibrationProblem}<InlineNotice tone="attention" live>{calibrationProblem}</InlineNotice>{/if}
-    {#if s.camera}<CameraCheck calibration={currentCalibration} sensitivity={s.sensitivity} />{/if}
+    {#if s.camera}<CameraCheck calibration={currentCalibration} sensitivity={s.sensitivity} extras={s.extraSignals !== false} />{/if}
     <p><a href={href('settings/privacy')}>{copy.settings.privacyLink}</a></p>
   </section>
 

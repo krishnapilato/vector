@@ -9,7 +9,7 @@ test.describe('camera focus (PIANO-V3 F5)', () => {
     await page.goto('./settings')
     // Turning the camera on asks permission, saves, then caches the model for offline use.
     const modelCached = page.waitForResponse((r) => r.url().includes('face_landmarker.task'))
-    await page.getByRole('switch', { name: 'Camera' }).click()
+    await page.getByRole('switch', { name: 'Camera', exact: true }).click()
     await modelCached
     await page.goto('./')
     await page.getByRole('button', { name: 'I only have 10 minutes' }).click()

@@ -2,7 +2,6 @@
   import Button from '../../components/Button.svelte'
   import Card from '../../components/Card.svelte'
   import InlineNotice from '../../components/InlineNotice.svelte'
-  import MilestoneCard from '../../components/MilestoneCard.svelte'
   import ProgressBar from '../../components/ProgressBar.svelte'
   import { daysBetween, localDate, mondayOf, weekday } from '../../core/calendar/dates'
   import { defaultSettings } from '../../core/model/defaults'
@@ -268,7 +267,9 @@
 
   {#each freshMilestones as m (m.id)}
     <section aria-label={copy.today.milestoneReached}>
-      <MilestoneCard title={m.title} sentence={m.sentence} reachedOn={m.reachedOn} />
+      {#await import('../../components/MilestoneCard.svelte') then { default: MilestoneCard }}
+        <MilestoneCard title={m.title} sentence={m.sentence} reachedOn={m.reachedOn} />
+      {/await}
     </section>
   {/each}
 

@@ -12,7 +12,16 @@ import {
 } from './focus'
 
 const fps = 6
-const reading = { facePresent: true, yaw: 0, pitch: 15, blink: 0.2, jawOpen: 0.05 }
+const reading = {
+  facePresent: true,
+  yaw: 0,
+  pitch: 15,
+  blink: 0.2,
+  jawOpen: 0.05,
+  phone: false,
+  shoulderY: 0.8,
+  handOnFace: false,
+}
 
 /** Runs `seconds` of identical frames at 6 fps from time `from`. */
 function run(
@@ -33,7 +42,7 @@ function run(
   return { tracker: t, paused, suggestions, end: from + seconds }
 }
 
-const fresh = () => startTracker(uncalibrated, rulesFor('normal'))
+const fresh = () => startTracker({ ...uncalibrated, shoulderY: 0.8 }, rulesFor('normal'))
 
 describe('focus states', () => {
   it('stays focused while reading in the calibrated posture', () => {
@@ -115,6 +124,42 @@ describe('tiredness and break suggestions', () => {
   it('explains every suggestion with its signals', () => {
     const r = run(fresh(), 0, 90, { blink: 0.9 })
     expect(r.tracker.reasons.length).toBeGreaterThan(0)
+  })
+})
+
+describe('phone, posture and hands (ADR 0008)', () => {
+  it('ignores a phone glimpsed for a moment, counts one held for 8 s', () => {
+    let r = run(fresh(), 0, 20)
+    r = run(r.tracker, r.end, 4, { phone: true })
+    r = run(r.tracker, r.end, 10)
+    expect(r.tracker.aggregate.distractions).toBe(0)
+    r = run(r.tracker, r.end, 15, { phone: true })
+    expect(r.tracker.state).toBe('distracted')
+    expect(r.tracker.reasons).toContain('phone')
+    expect(r.tracker.aggregate.distractions).toBe(1)
+  })
+
+  it('notices standing up and pauses after 60 s, even with the face in view', () => {
+    let r = run(fresh(), 0, 10)
+    r = run(r.tracker, r.end, 20, { shoulderY: 0.5 })
+    expect(r.tracker.state).toBe('away')
+    expect(r.tracker.reasons).toContain('stood-up')
+    expect(r.paused).toBe(false)
+    r = run(r.tracker, r.end, 45, { shoulderY: 0.5 })
+    expect(r.paused).toBe(true)
+  })
+
+  it('reads slumping and a head resting on a hand as tiredness hints', () => {
+    const slump = run(fresh(), 0, 100, { shoulderY: 0.95 })
+    expect(slump.tracker.reasons).toContain('slouching')
+    expect(slump.tracker.state).toBe('tired')
+    const hand = run(fresh(), 0, 40, { handOnFace: true })
+    expect(hand.tracker.reasons).toContain('head-on-hand')
+  })
+
+  it('ignores signals the models did not measure', () => {
+    const r = run(fresh(), 0, 60, { phone: null, shoulderY: null, handOnFace: null })
+    expect(r.tracker.state).toBe('focused')
   })
 })
 
