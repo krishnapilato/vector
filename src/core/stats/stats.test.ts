@@ -324,6 +324,44 @@ describe('import merge', () => {
     expect(summary.activeSession).toBe(true)
   })
 
+  it('lets the newest settings win between set-up devices', () => {
+    const old = snapshot({
+      settings: [{ ...defaultSettings(), onboarded: true, pagesPer30: 6, updatedAt: 1 }],
+    })
+    const recent = snapshot({
+      settings: [{ ...defaultSettings(), onboarded: true, pagesPer30: 8, updatedAt: 2 }],
+    })
+    expect(mergeSnapshots(old, recent).merged.data.settings[0]?.pagesPer30).toBe(8)
+    expect(mergeSnapshots(recent, old).merged.data.settings[0]?.pagesPer30).toBe(8)
+  })
+
+  it('does not revive a session already logged on the other device', () => {
+    const timer = { totalMs: 1, startedAt: 5, runningSince: null, accumulatedMs: 0, pauses: 0 }
+    const block = {
+      id: 'b',
+      date: '2026-11-20',
+      order: 0,
+      window: 'evening' as const,
+      minutes: 30,
+      kind: 'reading' as const,
+      mode: 'desk' as const,
+      ref: null,
+      pageFrom: null,
+      pageTo: null,
+      content: '',
+      status: 'planned' as const,
+      why: { code: 'extra' as const, chapter: null, clarity: null, count: null },
+      extra: true,
+    }
+    const phone = snapshot({
+      active: [
+        { id: 'active', block, timer, leftApp: 0, hiddenAt: null, focus: null, pageReached: null },
+      ],
+    })
+    const laptop = snapshot({ sessions: [session({ id: 'done', startedAt: 5 })] })
+    expect(mergeSnapshots(laptop, phone).merged.data.active).toEqual([])
+  })
+
   it('is idempotent', () => {
     const a = snapshot({ sessions: [session({ id: 'a', startedAt: 1 })] })
     const once = mergeSnapshots(a, a).merged

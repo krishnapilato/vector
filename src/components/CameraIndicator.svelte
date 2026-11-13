@@ -10,7 +10,7 @@
 
 <p class="camera {state}" role="status">
   <span class="dot" aria-hidden="true"></span>
-  {copy.camera[state]}
+  {copy.session.camera[state]}
 </p>
 
 <style>

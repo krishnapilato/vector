@@ -33,9 +33,11 @@ const base = import.meta.env.BASE_URL
   <body>
     <slot />
     <script>
-      import { registerSW } from 'virtual:pwa-register'
-
-      registerSW({ immediate: true })
+      // The service worker updates itself (skipWaiting + clientsClaim): no extra library needed.
+      if ('serviceWorker' in navigator)
+        void navigator.serviceWorker.register(`${import.meta.env.BASE_URL}sw.js`, {
+          scope: import.meta.env.BASE_URL,
+        })
     </script>
   </body>
 </html>

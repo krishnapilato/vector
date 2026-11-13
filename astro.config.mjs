@@ -4,12 +4,40 @@ import { AstroPWAIntegration } from '@vite-pwa/astro'
 import { defineConfig } from 'astro/config'
 
 const base = '/vector/'
+/** The sync server (ADR 0005): the only origin the app may talk to besides itself. */
+const syncOrigin = 'https://gjerxjpchkyuddjiobze.supabase.co'
 
 export default defineConfig({
   site: 'https://krishnapilato.github.io',
   base,
   output: 'static',
   trailingSlash: 'ignore',
+  markdown: { syntaxHighlight: false },
+  // The browser itself refuses any other connection: camera data cannot leave (ADR 0006).
+  security: {
+    csp: {
+      algorithm: 'SHA-256',
+      directives: [
+        "default-src 'self'",
+        `connect-src 'self' ${syncOrigin}`,
+        "img-src 'self' data: blob:",
+        "font-src 'self'",
+        "media-src 'self' blob: mediastream:",
+        "worker-src 'self' blob:",
+        "manifest-src 'self'",
+        "object-src 'none'",
+        "base-uri 'self'",
+        "form-action 'none'",
+      ],
+      scriptDirective: { resources: ["'self'", "'wasm-unsafe-eval'"] },
+      styleDirective: {
+        resources: [
+          { resource: "'self'", kind: 'element' },
+          { resource: "'unsafe-inline'", kind: 'attribute' },
+        ],
+      },
+    },
+  },
   integrations: [
     svelte(),
     AstroPWAIntegration({
@@ -33,7 +61,19 @@ export default defineConfig({
         ],
       },
       generateSW: {
+        // App, fonts, the face model and its WASM: everything works offline (PIANO-V3 §12).
         globPatterns: ['**/*.{html,js,css,svg,png,woff2}'],
+        globIgnores: ['**/*.woff', 'models/**'],
+        // The face model and WASM (~18 MB) are cached on first use, when the camera is turned
+        // on (lib/camera.ts warmModels): from then on the camera works offline too.
+        runtimeCaching: [
+          {
+            // Serialised into the service worker: no closure over `base`.
+            urlPattern: ({ url }) => url.pathname.startsWith('/vector/models/'),
+            handler: 'CacheFirst',
+            options: { cacheName: 'vector-models', cacheableResponse: { statuses: [200] } },
+          },
+        ],
         navigateFallback: null,
         cleanupOutdatedCaches: true,
       },

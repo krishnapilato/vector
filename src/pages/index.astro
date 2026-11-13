@@ -1,11 +1,11 @@
 ---
-import Base from '../layouts/Base.astro'
+import Today from '../islands/today/Today.svelte'
+import App from '../layouts/App.astro'
 import { copy } from '../lib/copy'
 ---
 
-<Base title="Vector">
-  <main>
-    <h1>{copy.app.name}</h1>
-    <p>{copy.app.building}</p>
-  </main>
-</Base>
+<App title={copy.nav.today}>
+  <Today client:only="svelte">
+    <p slot="fallback" role="status">{copy.app.loading}</p>
+  </Today>
+</App>

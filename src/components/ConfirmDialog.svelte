@@ -9,6 +9,8 @@
     confirmLabel: string
     cancelLabel?: string
     onconfirm: () => void
+    /** Called when the cancel button is pressed (not on Escape). */
+    oncancel?: () => void
   }
 
   let {
@@ -18,6 +20,7 @@
     confirmLabel,
     cancelLabel = copy.dialog.cancel,
     onconfirm,
+    oncancel,
   }: Props = $props()
 
   const uid = $props.id()
@@ -44,7 +47,13 @@
   <h2 id="{uid}-title">{title}</h2>
   {#if message}<p id="{uid}-message">{message}</p>{/if}
   <div class="actions">
-    <Button variant="secondary" onclick={() => (open = false)}>{cancelLabel}</Button>
+    <Button
+      variant="secondary"
+      onclick={() => {
+        open = false
+        oncancel?.()
+      }}>{cancelLabel}</Button
+    >
     <Button variant="primary" onclick={confirm}>{confirmLabel}</Button>
   </div>
 </dialog>

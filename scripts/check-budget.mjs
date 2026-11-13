@@ -1,4 +1,4 @@
-// JS weight budget (PIANO-V3 §12): the Today page ships < 60 kB of gzipped JS.
+// JS weight budget (PIANO-V3 §12, ADR 0007): the Today page ships < 65 kB of gzipped JS.
 // Follows every script the built HTML references, plus their static imports.
 import { existsSync, readFileSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
@@ -6,7 +6,7 @@ import { gzipSync } from 'node:zlib'
 
 const dist = resolve('dist')
 const base = '/vector/'
-const budgets = [{ page: 'index.html', limitKb: 60 }]
+const budgets = [{ page: 'index.html', limitKb: 65 }]
 
 function toFile(url, from) {
   if (url.startsWith(base)) return join(dist, url.slice(base.length))
@@ -25,9 +25,10 @@ function scriptsOf(html) {
   return urls
 }
 
+/** Static imports only: dynamic import() chunks load later, on demand. */
 function importsOf(code) {
   const out = new Set()
-  for (const m of code.matchAll(/(?:import|from)\s*\(?\s*["'](\.{1,2}\/[^"']+\.js)["']/g))
+  for (const m of code.matchAll(/(?:\bfrom|\bimport)\s*["'](\.{1,2}\/[^"']+\.js)["']/g))
     if (m[1]) out.add(m[1])
   return out
 }

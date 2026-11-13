@@ -50,7 +50,10 @@ export function mergeSnapshots(
   const I = incoming.data
   const localSettings = L.settings[0]
   const incomingSettings = I.settings[0]
-  const settingsTaken = !!incomingSettings && !localSettings?.onboarded
+  const settingsTaken =
+    !!incomingSettings &&
+    (!localSettings?.onboarded ||
+      (incomingSettings.onboarded && incomingSettings.updatedAt > localSettings.updatedAt))
   const settings = settingsTaken && incomingSettings ? [incomingSettings] : L.settings
   const lastBackups = [localSettings?.lastBackupAt, incomingSettings?.lastBackupAt].filter(
     (x): x is number => typeof x === 'number',
@@ -93,7 +96,10 @@ export function mergeSnapshots(
     }),
   )
 
+  // A session already logged on either device is not brought back to life.
+  const logged = new Set(sessions.map((s) => s.startedAt))
   const active = [...L.active, ...I.active]
+    .filter((a) => !logged.has(a.timer.startedAt))
     .toSorted((a, b) => b.timer.startedAt - a.timer.startedAt)
     .slice(0, 1)
 

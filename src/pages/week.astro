@@ -1,0 +1,11 @@
+---
+import WeeklyReview from '../islands/week/WeeklyReview.svelte'
+import App from '../layouts/App.astro'
+import { copy } from '../lib/copy'
+---
+
+<App title={copy.week.title}>
+  <WeeklyReview client:only="svelte">
+    <p slot="fallback" role="status">{copy.app.loading}</p>
+  </WeeklyReview>
+</App>

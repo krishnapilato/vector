@@ -13,7 +13,8 @@
       "!**/coverage",
       "!**/playwright-report",
       "!**/test-results",
-      "!**/Claude outputs"
+      "!**/Claude outputs",
+      "!**/*.md"
     ]
   },
   "formatter": {

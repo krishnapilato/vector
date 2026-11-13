@@ -12,6 +12,9 @@
     placeholder?: string
     inputmode?: HTMLInputAttributes['inputmode']
     disabled?: boolean
+    min?: number
+    max?: number
+    oninput?: (value: string | number | null) => void
   }
 
   let {
@@ -24,6 +27,9 @@
     placeholder,
     inputmode,
     disabled = false,
+    min,
+    max,
+    oninput,
   }: Props = $props()
 
   const uid = $props.id()
@@ -43,6 +49,9 @@
       {placeholder}
       {inputmode}
       {disabled}
+      {min}
+      {max}
+      oninput={() => oninput?.(value ?? null)}
       aria-invalid={invalid ? 'true' : undefined}
       aria-describedby={describedby}
     />

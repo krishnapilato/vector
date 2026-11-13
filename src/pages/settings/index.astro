@@ -1,0 +1,11 @@
+---
+import Settings from '../../islands/settings/Settings.svelte'
+import App from '../../layouts/App.astro'
+import { copy } from '../../lib/copy'
+---
+
+<App title={copy.settings.title}>
+  <Settings client:only="svelte">
+    <p slot="fallback" role="status">{copy.app.loading}</p>
+  </Settings>
+</App>

@@ -49,6 +49,8 @@ export const Settings = z.object({
   alwaysShowTimer: z.boolean(),
   pauseWhenAway: z.boolean(),
   lastBackupAt: z.number().nullable(),
+  /** Last change on any device: the newest settings win when devices sync. */
+  updatedAt: z.number(),
 })
 export type Settings = z.infer<typeof Settings>
 

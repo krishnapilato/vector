@@ -10,9 +10,10 @@
     name: string
     legend: string
     hideLegend?: boolean
+    onchange?: (value: T) => void
   }
 
-  let { options, value = $bindable(), name, legend, hideLegend = false }: Props = $props()
+  let { options, value = $bindable(), name, legend, hideLegend = false, onchange }: Props = $props()
 </script>
 
 <fieldset class="segmented">
@@ -20,7 +21,13 @@
   <div class="options">
     {#each options as option (option.value)}
       <label class="option">
-        <input type="radio" {name} value={option.value} bind:group={value} />
+        <input
+          type="radio"
+          {name}
+          value={option.value}
+          bind:group={value}
+          onchange={() => onchange?.(option.value)}
+        />
         <span>{option.label}</span>
       </label>
     {/each}

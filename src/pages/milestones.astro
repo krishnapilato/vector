@@ -1,0 +1,11 @@
+---
+import Milestones from '../islands/milestones/Milestones.svelte'
+import App from '../layouts/App.astro'
+import { copy } from '../lib/copy'
+---
+
+<App title={copy.milestone.title}>
+  <Milestones client:only="svelte">
+    <p slot="fallback" role="status">{copy.app.loading}</p>
+  </Milestones>
+</App>

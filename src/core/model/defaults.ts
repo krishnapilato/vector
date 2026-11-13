@@ -35,5 +35,6 @@ export function defaultSettings(): Settings {
     alwaysShowTimer: false,
     pauseWhenAway: true,
     lastBackupAt: null,
+    updatedAt: 0,
   }
 }

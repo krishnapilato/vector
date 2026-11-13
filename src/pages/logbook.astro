@@ -1,0 +1,11 @@
+---
+import Logbook from '../islands/logbook/Logbook.svelte'
+import App from '../layouts/App.astro'
+import { copy } from '../lib/copy'
+---
+
+<App title={copy.logbook.title}>
+  <Logbook client:only="svelte">
+    <p slot="fallback" role="status">{copy.app.loading}</p>
+  </Logbook>
+</App>

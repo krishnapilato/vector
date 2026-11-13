@@ -4,9 +4,16 @@
     label: string
     description?: string
     disabled?: boolean
+    onchange?: (checked: boolean) => void
   }
 
-  let { checked = $bindable(false), label, description, disabled = false }: Props = $props()
+  let {
+    checked = $bindable(false),
+    label,
+    description,
+    disabled = false,
+    onchange,
+  }: Props = $props()
 
   const uid = $props.id()
 </script>
@@ -24,7 +31,10 @@
     aria-checked={checked}
     aria-describedby={description ? `${uid}-description` : undefined}
     {disabled}
-    onclick={() => (checked = !checked)}
+    onclick={() => {
+      checked = !checked
+      onchange?.(checked)
+    }}
   >
     <span class="track"><span class="thumb"></span></span>
   </button>
