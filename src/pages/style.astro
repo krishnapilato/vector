@@ -1,0 +1,413 @@
+---
+import Button from '../components/Button.svelte'
+import CameraIndicator from '../components/CameraIndicator.svelte'
+import Card from '../components/Card.svelte'
+import EmptyState from '../components/EmptyState.svelte'
+import InlineNotice from '../components/InlineNotice.svelte'
+import LogbookRow from '../components/LogbookRow.svelte'
+import MilestoneCard from '../components/MilestoneCard.svelte'
+import ProgressBar from '../components/ProgressBar.svelte'
+import ControlsDemo from '../islands/style/ControlsDemo.svelte'
+import DialogDemo from '../islands/style/DialogDemo.svelte'
+import TimerDemo from '../islands/style/TimerDemo.svelte'
+import Base from '../layouts/Base.astro'
+
+const colors = [
+  ['bg', 'Background'],
+  ['surface', 'Surface'],
+  ['surface-raised', 'Raised surface'],
+  ['text', 'Text'],
+  ['text-secondary', 'Secondary text'],
+  ['border', 'Border'],
+  ['border-strong', 'Control border'],
+  ['rule', 'Logbook rule'],
+  ['accent', 'Accent'],
+  ['accent-strong', 'Accent, pressed'],
+  ['accent-soft', 'Accent, soft'],
+  ['success', 'Success'],
+  ['success-soft', 'Success, soft'],
+  ['attention', 'Attention'],
+  ['attention-soft', 'Attention, soft'],
+] as const
+
+const typeScale = [
+  ['display', 'Timer', '24:12', true],
+  ['xl', 'Page title', 'Today', false],
+  ['lg', 'Section title', 'Principles of Flight', false],
+  [
+    'md',
+    'Body',
+    'Read pages 112 to 124, then close the book and explain lift in two lines.',
+    false,
+  ],
+  ['sm', 'Secondary', 'Plan updated: chapter 5 moves to Tuesday.', false],
+  ['xs', 'Small print', 'Analysed on this device only.', false],
+] as const
+
+const spaces = [1, 2, 3, 4, 5, 6, 7, 8] as const
+const radii = ['sm', 'md', 'lg'] as const
+const shadows = ['sm', 'md', 'lg'] as const
+---
+
+<Base title="Style guide" noindex>
+  <main class="page">
+    <header class="intro">
+      <h1>Style guide</h1>
+      <p>
+        Every token and component in Vector, in every state. Light theme only, one accent, numbers in
+        mono. Internal page: not in the navigation.
+      </p>
+    </header>
+
+    <section aria-labelledby="colours">
+      <h2 id="colours">Colour</h2>
+      <ul class="swatches">
+        {
+          colors.map(([token, name]) => (
+            <li>
+              <span class="swatch" style={`background: var(--color-${token})`} />
+              <span class="swatch-name">{name}</span>
+              <code>--color-{token}</code>
+            </li>
+          ))
+        }
+      </ul>
+    </section>
+
+    <section aria-labelledby="type">
+      <h2 id="type">Type</h2>
+      <p class="lead">IBM Plex Sans for words, IBM Plex Mono for numbers. Six sizes.</p>
+      <dl class="type-scale">
+        {
+          typeScale.map(([size, role, sample, mono]) => (
+            <div>
+              <dt>
+                {role} <code>--text-{size}</code>
+              </dt>
+              <dd class:list={[{ mono }]} style={`font-size: var(--text-${size})`}>
+                {sample}
+              </dd>
+            </div>
+          ))
+        }
+      </dl>
+    </section>
+
+    <section aria-labelledby="space">
+      <h2 id="space">Space, shape, depth</h2>
+      <div class="shape-grid">
+        <ul class="spaces" aria-label="Spacing scale">
+          {
+            spaces.map((n) => (
+              <li>
+                <span class="space-bar" style={`width: var(--space-${n})`} />
+                <code>--space-{n}</code>
+              </li>
+            ))
+          }
+        </ul>
+        <ul class="tiles" aria-label="Radii">
+          {
+            radii.map((r) => (
+              <li class="tile" style={`border-radius: var(--radius-${r})`}>
+                <code>--radius-{r}</code>
+              </li>
+            ))
+          }
+        </ul>
+        <ul class="tiles" aria-label="Shadows">
+          {
+            shadows.map((s) => (
+              <li class="tile raised" style={`box-shadow: var(--shadow-${s})`}>
+                <code>--shadow-{s}</code>
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+      <p class="lead">
+        Motion: 120 ms and 200 ms with one easing curve, only when something changes state. Off
+        entirely with reduced motion.
+      </p>
+    </section>
+
+    <section aria-labelledby="buttons">
+      <h2 id="buttons">Buttons</h2>
+      <div class="row">
+        <Button variant="primary" size="lg">Start</Button>
+        <Button variant="primary">Save</Button>
+        <Button>Take a break</Button>
+        <Button variant="quiet">Why?</Button>
+      </div>
+      <div class="row">
+        <Button variant="primary" disabled>Start</Button>
+        <Button disabled>Take a break</Button>
+        <Button variant="quiet" disabled>Why?</Button>
+        <Button href="#buttons">Link styled as a button</Button>
+      </div>
+    </section>
+
+    <section aria-labelledby="cards">
+      <h2 id="cards">Cards and progress</h2>
+      <div class="cards">
+        <Card as="article" elevation="raised">
+          <p class="eyebrowless">Reading · 30 min · Desk</p>
+          <h3 class="block-title">Trebbi · Ch. 4 Lift · p. 112–124</h3>
+          <Button variant="primary" size="lg" full>Start</Button>
+        </Card>
+        <Card>
+          <ProgressBar value={3} max={5} label="This week" valueText="3 of 5 blocks" segmented />
+          <ProgressBar value={42} max={100} label="Trebbi" valueText="42%" />
+          <ProgressBar value={0} max={4} label="Empty" valueText="0 of 4 blocks" segmented />
+        </Card>
+      </div>
+    </section>
+
+    <section aria-labelledby="controls">
+      <h2 id="controls">Inputs</h2>
+      <ControlsDemo client:load />
+    </section>
+
+    <section aria-labelledby="session">
+      <h2 id="session">Session</h2>
+      <div class="row">
+        <CameraIndicator state="active" />
+        <CameraIndicator state="paused" />
+        <CameraIndicator state="off" />
+      </div>
+      <TimerDemo client:load />
+    </section>
+
+    <section aria-labelledby="logbook">
+      <h2 id="logbook">Logbook</h2>
+      <ol class="logbook">
+        <LogbookRow
+          date="2026-11-13"
+          kind="Reading"
+          content="Trebbi · Ch. 4 Lift · p. 112–124"
+          activeMinutes={32}
+          focusPercent={84}
+          clarity={4}
+          note="Angle of attack finally makes sense."
+        />
+        <LogbookRow
+          date="2026-11-12"
+          kind="Quiz"
+          content="quizppl.it · Principles of Flight · 18/20"
+          activeMinutes={20}
+          focusPercent={null}
+          clarity={null}
+        />
+        <LogbookRow
+          date="2026-11-11"
+          kind="Simulator"
+          content="MSFS · Circuit at LIML · repeat"
+          activeMinutes={45}
+          focusPercent={null}
+          clarity={3}
+          note="Downwind 150 ft high."
+        />
+      </ol>
+    </section>
+
+    <section aria-labelledby="milestones">
+      <h2 id="milestones">Milestones</h2>
+      <div class="cards">
+        <MilestoneCard
+          title="First full session"
+          sentence="30 minutes, start to finish. The logbook has its first line."
+          reachedOn="2026-11-13"
+        />
+        <MilestoneCard
+          title="10 hours of active study"
+          sentence="Ten hours of real, focused work."
+          reachedOn={null}
+          progress={{ value: 6.5, max: 10, text: '6.5 of 10 h' }}
+        />
+      </div>
+    </section>
+
+    <section aria-labelledby="feedback">
+      <h2 id="feedback">Notices, dialogs, empty states</h2>
+      <div class="stack">
+        <InlineNotice title="Plan updated">Chapter 5 moves to Tuesday.</InlineNotice>
+        <InlineNotice tone="success">You unlocked this week's flight.</InlineNotice>
+        <InlineNotice tone="attention" title="Last backup 16 days ago">
+          A backup keeps your logbook safe if the browser clears its data.
+          <Button slot="action" variant="secondary">Back up now</Button>
+        </InlineNotice>
+        <DialogDemo client:load />
+        <EmptyState
+          title="No sessions yet"
+          body="Every session will appear here, like in a logbook. Start the first one from Today."
+        >
+          <Button slot="action" variant="primary" href="#feedback">Go to Today</Button>
+        </EmptyState>
+      </div>
+    </section>
+  </main>
+</Base>
+
+<style>
+  .page {
+    display: grid;
+    gap: var(--space-8);
+    width: min(72rem, 100%);
+    margin: 0 auto;
+    padding: var(--space-7) var(--space-4) var(--space-8);
+  }
+
+  @media (width >= 48rem) {
+    .page {
+      padding-inline: var(--space-6);
+    }
+  }
+
+  section {
+    display: grid;
+    gap: var(--space-5);
+    padding-top: var(--space-5);
+    border-top: var(--border-thin) solid var(--color-border);
+  }
+
+  .intro {
+    display: grid;
+    gap: var(--space-3);
+  }
+
+  .intro p,
+  .lead {
+    color: var(--color-text-secondary);
+  }
+
+  code {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    color: var(--color-text-secondary);
+  }
+
+  .swatches {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr));
+    gap: var(--space-4);
+    padding: 0;
+    list-style: none;
+  }
+
+  .swatches li {
+    display: grid;
+    gap: var(--space-1);
+  }
+
+  .swatch {
+    height: 3.5rem;
+    margin-bottom: var(--space-1);
+    border: var(--border-thin) solid var(--color-border);
+    border-radius: var(--radius-md);
+  }
+
+  .swatch-name {
+    font-size: var(--text-sm);
+    font-weight: var(--font-weight-medium);
+  }
+
+  .type-scale {
+    display: grid;
+    gap: var(--space-5);
+    margin: 0;
+  }
+
+  .type-scale div {
+    display: grid;
+    gap: var(--space-1);
+  }
+
+  .type-scale dt {
+    font-size: var(--text-xs);
+    color: var(--color-text-secondary);
+  }
+
+  .type-scale dd {
+    margin: 0;
+    line-height: var(--leading-tight);
+    max-width: var(--measure);
+  }
+
+  .type-scale .mono {
+    font-family: var(--font-mono);
+  }
+
+  .shape-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
+    gap: var(--space-6);
+  }
+
+  .spaces,
+  .tiles {
+    display: grid;
+    gap: var(--space-3);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .spaces li {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+  }
+
+  .space-bar {
+    height: 0.75rem;
+    background: var(--color-accent);
+    border-radius: 1px;
+  }
+
+  .tile {
+    display: grid;
+    place-items: center;
+    height: 4rem;
+    border: var(--border-thin) solid var(--color-border-strong);
+    background: var(--color-surface-raised);
+  }
+
+  .tile.raised {
+    border-color: var(--color-border);
+    border-radius: var(--radius-md);
+  }
+
+  .row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-4);
+  }
+
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr));
+    gap: var(--space-5);
+  }
+
+  .eyebrowless {
+    font-size: var(--text-sm);
+    color: var(--color-text-secondary);
+  }
+
+  .block-title {
+    font-size: var(--text-lg);
+  }
+
+  .logbook {
+    margin: 0;
+    padding: 0;
+    border-top: var(--border-thick) solid var(--color-rule);
+    background: var(--color-surface-raised);
+  }
+
+  .stack {
+    display: grid;
+    gap: var(--space-5);
+  }
+</style>

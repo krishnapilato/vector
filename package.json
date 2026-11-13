@@ -12,15 +12,15 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "typecheck": "astro check --minimumFailingSeverity warning",
+    "typecheck": "astro check --minimumFailingSeverity warning && svelte-check --tsconfig ./tsconfig.json --fail-on-warnings",
     "lint": "biome check --error-on-warnings .",
     "lint:fix": "biome check --write .",
     "ci:lint": "biome ci --error-on-warnings .",
-    "test": "vitest run --passWithNoTests",
+    "test": "vitest run",
     "test:watch": "vitest",
     "e2e": "playwright test",
     "budget": "node scripts/check-budget.mjs",
-    "check": "astro check --minimumFailingSeverity warning && biome ci --error-on-warnings . && vitest run --passWithNoTests && astro build && node scripts/check-budget.mjs"
+    "check": "astro check --minimumFailingSeverity warning && svelte-check --tsconfig ./tsconfig.json --fail-on-warnings && biome ci --error-on-warnings . && vitest run && astro build && node scripts/check-budget.mjs"
   },
   "dependencies": {
     "@fontsource/ibm-plex-mono": "5.3.0",

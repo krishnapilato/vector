@@ -1,0 +1,79 @@
+/*
+ * Design tokens: the single source of truth for colour, type, space, shape and motion
+ * (PIANO-V3 §11). One light theme only: it reads well next to a paper book and lights the
+ * face for the camera in the evening. Colours are OKLCH; contrast is checked by
+ * src/styles/tokens.test.ts.
+ */
+:root {
+  color-scheme: light;
+
+  /* Colour: cool chart paper, logbook ink, one accent. */
+  --color-bg: oklch(96.8% 0.005 210);
+  --color-surface: oklch(99.1% 0.002 210);
+  --color-surface-raised: oklch(100% 0 0);
+  --color-text: oklch(25% 0.03 258);
+  --color-text-secondary: oklch(47% 0.025 255);
+  --color-border: oklch(88.5% 0.01 230);
+  --color-border-strong: oklch(60% 0.02 250);
+  --color-rule: oklch(85% 0.035 255);
+  --color-accent: oklch(41% 0.13 266);
+  --color-accent-strong: oklch(34% 0.12 266);
+  --color-accent-soft: oklch(93.5% 0.025 266);
+  --color-on-accent: oklch(99.5% 0 0);
+  --color-success: oklch(46% 0.09 160);
+  --color-success-soft: oklch(94.5% 0.03 160);
+  --color-attention: oklch(49% 0.1 65);
+  --color-attention-soft: oklch(95.5% 0.035 85);
+
+  /* Type: IBM Plex Sans for text, IBM Plex Mono for numbers, timer and statistics. */
+  --font-sans: "IBM Plex Sans", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --text-xs: 0.8125rem;
+  --text-sm: 0.9375rem;
+  --text-md: 1.0625rem;
+  --text-lg: 1.3125rem;
+  --text-xl: 1.75rem;
+  --text-display: 3rem;
+  --leading-tight: 1.2;
+  --leading-body: 1.55;
+  --measure: 66ch;
+
+  /* Space: 4 px scale. */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+  --space-8: 4rem;
+
+  /* Shape: three levels each, chosen by hierarchy. */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 14px;
+  --border-thin: 1px;
+  --border-medium: 1.5px;
+  --border-thick: 2px;
+  --shadow-sm: 0 1px 2px oklch(25% 0.03 258 / 0.06);
+  --shadow-md: 0 2px 6px oklch(25% 0.03 258 / 0.07), 0 1px 2px oklch(25% 0.03 258 / 0.05);
+  --shadow-lg: 0 12px 32px oklch(25% 0.03 258 / 0.14), 0 2px 6px oklch(25% 0.03 258 / 0.06);
+
+  /* Touch: every target at least 44 px. */
+  --target-min: 2.75rem;
+
+  /* Motion: only for state changes. */
+  --duration-fast: 120ms;
+  --duration-base: 200ms;
+  --ease: cubic-bezier(0.2, 0, 0, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration-fast: 0ms;
+    --duration-base: 0ms;
+  }
+}

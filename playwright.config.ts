@@ -17,7 +17,7 @@ export default defineConfig({
     { name: 'phone', use: { ...devices['Pixel 7'] } },
   ],
   webServer: {
-    command: `pnpm build && pnpm preview --port ${port}`,
+    command: `pnpm build && node scripts/serve-dist.mjs ${port}`,
     url: `http://localhost:${port}/vector/`,
     reuseExistingServer: !process.env['CI'],
     timeout: 180_000,

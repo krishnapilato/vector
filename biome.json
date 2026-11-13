@@ -98,5 +98,10 @@
         }
       }
     }
-  ]
+  ],
+  "html": {
+    "formatter": {
+      "indentScriptAndStyle": true
+    }
+  }
 }
