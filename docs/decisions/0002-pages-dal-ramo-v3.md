@@ -1,6 +1,6 @@
 # 0002 — GitHub Pages pubblica anche dal ramo `v3` durante lo sviluppo
 
-Data: 2026-11-13 · Stato: accettata
+Data: 2026-11-13 · Stato: superata il 13 novembre 2026 con il rilascio v1.0.0: Pages pubblica di nuovo solo da `main`
 
 ## Contesto
 
