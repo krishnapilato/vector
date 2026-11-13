@@ -5,9 +5,11 @@
     title: string
     body: string
     action?: Snippet
+    /** Heading level, so the outline stays in order wherever it sits. */
+    level?: 2 | 3
   }
 
-  let { title, body, action }: Props = $props()
+  let { title, body, action, level = 2 }: Props = $props()
 </script>
 
 <div class="empty">
@@ -17,7 +19,7 @@
     <line x1="0" y1="32" x2="96" y2="32" />
     <line class="column" x1="26" y1="0" x2="26" y2="40" />
   </svg>
-  <h3>{title}</h3>
+  <svelte:element this={`h${level}`} class="title">{title}</svelte:element>
   <p>{body}</p>
   {#if action}<div class="action">{@render action()}</div>{/if}
 </div>
@@ -46,6 +48,10 @@
   .column {
     stroke: var(--color-accent);
     stroke-opacity: 0.35;
+  }
+
+  .title {
+    font-size: var(--text-md);
   }
 
   p {

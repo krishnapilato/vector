@@ -23,6 +23,7 @@
     saveSettings,
   } from '../../lib/repo'
   import AvailabilityEditor from '../shared/AvailabilityEditor.svelte'
+  import CameraCheck from './CameraCheck.svelte'
 
   let s = $state<Settings | null>(null)
   let savedNote = $state(false)
@@ -310,6 +311,7 @@
       <Button disabled={calibrating} onclick={calibrate}>{calibrating ? copy.settings.calibrating : copy.settings.calibrate}</Button>
     </div>
     {#if calibrationProblem}<InlineNotice tone="attention" live>{calibrationProblem}</InlineNotice>{/if}
+    {#if s.camera}<CameraCheck calibration={currentCalibration} sensitivity={s.sensitivity} />{/if}
     <p><a href={href('settings/privacy')}>{copy.settings.privacyLink}</a></p>
   </section>
 
@@ -429,7 +431,7 @@
 
   .split {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: var(--space-3);
     margin: 0;
     padding: 0;
@@ -461,6 +463,8 @@
   }
 
   .field input[type='file'] {
+    width: 100%;
+    min-width: 0;
     min-height: var(--target-min);
     font-weight: var(--font-weight-regular);
   }

@@ -65,6 +65,7 @@
   .field {
     display: grid;
     gap: var(--space-2);
+    min-width: 0;
   }
 
   label {
@@ -86,8 +87,10 @@
     outline: var(--border-thin) solid var(--color-accent);
   }
 
+  /* width: 0 + flex: 1 lets the field shrink to any column, down to 360 px screens. */
   input {
     flex: 1;
+    width: 0;
     min-width: 0;
     min-height: var(--target-min);
     padding: 0 var(--space-3);

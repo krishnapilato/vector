@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test'
 
 test('the app loads and is installable as a PWA', async ({ page }) => {
   await page.goto('./')
-  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Vector')
+  await expect(page).toHaveURL(/welcome/)
 
   const manifestHref = await page.locator('link[rel="manifest"]').getAttribute('href')
   expect(manifestHref).toBeTruthy()

@@ -219,6 +219,13 @@
     }
   })
 
+  /** An on-the-go block done at a desk after all: switch mode and turn the camera on. */
+  async function switchToDesk() {
+    if (!active || !settings) return
+    await persist({ ...active, block: { ...active.block, mode: 'desk' } })
+    void startFocus(settings)
+  }
+
   function togglePause() {
     if (!active) return
     const t = Date.now()
@@ -267,7 +274,7 @@
   <header class="head">
     <p class="meta">{copy.kind[active.block.kind]} · {copy.mode[active.block.mode]}</p>
     <h1 class="title">{described.title}</h1>
-    {#if described.detail}<p class="detail">{described.detail}</p>{/if}
+    {#if described.detail}<p class="detail" class:pages={active.block.pageFrom !== null}>{described.detail}</p>{/if}
   </header>
 
   {#if isDesk}
@@ -280,6 +287,9 @@
     {#if cameraProblem}<InlineNotice tone="attention">{copy.session.camera[cameraProblem]}</InlineNotice>{/if}
   {:else if active.block.mode === 'on-the-go'}
     <p class="muted">{copy.session.onTheGo}</p>
+    {#if settings?.camera}
+      <div><Button variant="quiet" onclick={switchToDesk}>{copy.session.switchToDesk}</Button></div>
+    {/if}
   {/if}
 
   {#if isSim && described.lesson}
@@ -366,7 +376,7 @@
     font-size: var(--text-xl);
   }
 
-  .detail {
+  .detail.pages {
     font-family: var(--font-mono);
   }
 

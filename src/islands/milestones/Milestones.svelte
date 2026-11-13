@@ -64,7 +64,7 @@
   <section class="group" aria-labelledby="reached-title">
     <h2 id="reached-title">{copy.milestone.reached}</h2>
     {#if reached.length === 0}
-      <EmptyState title={copy.milestone.reached} body={copy.milestone.emptyReached} />
+      <EmptyState level={3} title={copy.milestone.reached} body={copy.milestone.emptyReached} />
     {:else}
       {#each reached as m (m.id)}
         <MilestoneCard title={m.title} sentence={m.sentence} reachedOn={m.reachedOn} />

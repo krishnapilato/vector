@@ -91,10 +91,20 @@ function toSample(result: FaceLandmarkerResult, t: number): FrameSample {
   }
 }
 
+/**
+ * Optional live check for Settings only (docs/proposte.md, n. 2): the image and the face mesh are
+ * drawn while the panel is open, never during a session, and never saved.
+ */
+export interface Preview {
+  video: HTMLVideoElement
+  canvas: HTMLCanvasElement
+}
+
 /** Starts the camera at 320×240 and analyses frames while the page is visible. */
 export async function startCamera(
   onSample: (s: FrameSample) => void,
   onFailure: (reason: CameraFailure) => void,
+  preview?: Preview,
 ): Promise<CameraHandle | null> {
   let stream: MediaStream
   try {
@@ -116,13 +126,14 @@ export async function startCamera(
     return null
   }
 
-  // The video element is never attached to the page: no preview is ever shown.
-  const video = document.createElement('video')
+  // In sessions the video element is never attached to the page: no image is ever shown.
+  const video = preview?.video ?? document.createElement('video')
   video.muted = true
   video.playsInline = true
   video.srcObject = stream
   await video.play().catch(() => undefined)
 
+  const draw = preview ? await meshPainter(preview.canvas) : null
   let fps = 6
   let stopped = false
   let timeout: ReturnType<typeof setTimeout> | undefined
@@ -139,6 +150,7 @@ export async function startCamera(
       if (costs.length > 12) costs.shift()
       if (fps === 6 && costs.length === 12 && costs.reduce((a, b) => a + b, 0) / 12 > budgetMs)
         fps = 3
+      draw?.(result)
       onSample(toSample(result, (start - t0) / 1000))
     }
     timeout = setTimeout(tick, 1000 / fps)
@@ -155,6 +167,56 @@ export async function startCamera(
       for (const track of stream.getTracks()) track.stop()
       video.srcObject = null
       landmarker.close()
+      preview?.canvas.getContext('2d')?.clearRect(0, 0, preview.canvas.width, preview.canvas.height)
     },
+  }
+}
+
+/** Draws the face mesh MediaPipe sees, in the app's colours. */
+async function meshPainter(canvas: HTMLCanvasElement): Promise<(r: FaceLandmarkerResult) => void> {
+  const { DrawingUtils, FaceLandmarker } = await import('@mediapipe/tasks-vision')
+  const ctx = canvas.getContext('2d')
+  if (!ctx) return () => undefined
+  const css = getComputedStyle(document.documentElement)
+  const color = (token: string) => css.getPropertyValue(token).trim() || '#294490'
+  const paint = new DrawingUtils(ctx)
+  const parts = [
+    {
+      set: FaceLandmarker.FACE_LANDMARKS_TESSELATION,
+      color: 'rgb(255 255 255 / 0.35)',
+      width: 0.5,
+    },
+    {
+      set: FaceLandmarker.FACE_LANDMARKS_FACE_OVAL,
+      color: color('--color-accent-soft'),
+      width: 1.5,
+    },
+    {
+      set: FaceLandmarker.FACE_LANDMARKS_LEFT_EYE,
+      color: color('--color-success-soft'),
+      width: 1.5,
+    },
+    {
+      set: FaceLandmarker.FACE_LANDMARKS_RIGHT_EYE,
+      color: color('--color-success-soft'),
+      width: 1.5,
+    },
+    {
+      set: FaceLandmarker.FACE_LANDMARKS_LEFT_IRIS,
+      color: color('--color-attention-soft'),
+      width: 1.5,
+    },
+    {
+      set: FaceLandmarker.FACE_LANDMARKS_RIGHT_IRIS,
+      color: color('--color-attention-soft'),
+      width: 1.5,
+    },
+    { set: FaceLandmarker.FACE_LANDMARKS_LIPS, color: color('--color-attention-soft'), width: 1.5 },
+  ]
+  return (result) => {
+    ctx.clearRect(0, 0, canvas.width, canvas.height)
+    for (const face of result.faceLandmarks)
+      for (const p of parts)
+        paint.drawConnectors(face, p.set, { color: p.color, lineWidth: p.width })
   }
 }

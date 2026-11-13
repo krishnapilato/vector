@@ -1,6 +1,8 @@
 import { defineConfig, devices } from '@playwright/test'
 
 const port = 4173
+/** A fake camera so the focus pipeline runs end to end without a real webcam. */
+const camera = ['--use-fake-ui-for-media-stream', '--use-fake-device-for-media-stream']
 
 export default defineConfig({
   testDir: './e2e',
@@ -11,6 +13,7 @@ export default defineConfig({
   use: {
     baseURL: `http://localhost:${port}/vector/`,
     trace: 'retain-on-failure',
+    launchOptions: { args: camera },
   },
   projects: [
     { name: 'desktop', use: { ...devices['Desktop Chrome'] } },
@@ -20,6 +23,6 @@ export default defineConfig({
     command: `pnpm build && node scripts/serve-dist.mjs ${port}`,
     url: `http://localhost:${port}/vector/`,
     reuseExistingServer: !process.env['CI'],
-    timeout: 180_000,
+    timeout: 240_000,
   },
 })

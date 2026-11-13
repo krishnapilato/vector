@@ -33,11 +33,13 @@ const base = import.meta.env.BASE_URL
   <body>
     <slot />
     <script>
-      // The service worker updates itself (skipWaiting + clientsClaim): no extra library needed.
-      if ('serviceWorker' in navigator)
-        void navigator.serviceWorker.register(`${import.meta.env.BASE_URL}sw.js`, {
-          scope: import.meta.env.BASE_URL,
-        })
+      // Production builds only (the dev server has no service worker). It updates itself
+      // (skipWaiting + clientsClaim), so no extra library is needed. Offline is a bonus:
+      // a failed registration must never bother the learner.
+      if (import.meta.env.PROD && 'serviceWorker' in navigator)
+        navigator.serviceWorker
+          .register(`${import.meta.env.BASE_URL}sw.js`, { scope: import.meta.env.BASE_URL })
+          .catch(() => undefined)
     </script>
   </body>
 </html>
