@@ -39,6 +39,13 @@ Decisions live in [docs/decisions/](docs/decisions/). The first public release i
   Astro, and is covered by unit tests that run in Node.
 - Works offline, installable as a PWA. Deployed on GitHub Pages under `/vector/`.
 
+## Beyond the plan (approved by Krishna)
+- End-to-end encrypted sync on Supabase project `vector` (ADR 0005); backup files merge on import
+  (ADR 0004). The CSP allows only that one extra origin (ADR 0006).
+- Four MediaPipe models (face, pose, object, hand), served from `public/models` with pinned hashes
+  by `scripts/prepare-models.mjs` (ADR 0008). Today JS budget is 70 kB (ADR 0007).
+- Open ideas wait in `docs/proposte.md`.
+
 ## Commands
 
 - `pnpm dev` — local dev server

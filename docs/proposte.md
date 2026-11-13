@@ -30,7 +30,7 @@ Idee che non sono nel piano. Non si costruiscono finché Krishna non le approva 
 - **Conflitto col piano**: la sezione 2 esclude un'anteprima permanente dell'immagine.
 - **Proposta**: impostazione spenta di default. Se attiva, una miniatura piccola, sfocata e a bassa
   opacità in un angolo della sessione, con la maglia del viso leggera. Nulla viene salvato.
-- **Stato**: in attesa di decisione.
+- **Stato**: approvata e costruita (impostazione «Soft camera view in sessions», spenta di default).
 
 ## 4. Riconoscere gli oggetti attorno (telefono in mano)
 
@@ -40,4 +40,4 @@ Idee che non sono nel piano. Non si costruiscono finché Krishna non le approva 
   solo per la classe «cell phone»; nuovo segnale «telefono in vista» con la stessa regola delle
   distrazioni brevi (ignorato sotto gli 8 s). Mani e corpo (es. «mi alzo dalla sedia») con Hand
   o Pose Landmarker: alzarsi è già coperto oggi dall'assenza del viso (pausa dopo 60 s).
-- **Stato**: in attesa di decisione.
+- **Stato**: approvata da Krishna il 13 novembre 2026 e costruita (ADR 0008).

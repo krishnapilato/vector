@@ -1,6 +1,6 @@
 # 0007 — Budget di JS della pagina Oggi: 70 kB invece di 60
 
-Data: 2026-11-13 · Stato: proposta, in attesa di Krishna
+Data: 2026-11-13 · Stato: accettata da Krishna
 
 ## Contesto
 Il piano (sezione 12) fissa la pagina Oggi sotto i 60 kB gzip di JS. Misura reale dopo
