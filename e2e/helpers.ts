@@ -14,6 +14,8 @@ export async function onboard(page: Page): Promise<void> {
 export function watchExternal(page: Page): string[] {
   const external: string[] = []
   page.on('request', (r) => {
+    // blob: and data: URLs live in the browser's memory; they never reach the network.
+    if (/^(blob|data):/.test(r.url())) return
     if (new URL(r.url()).hostname !== 'localhost') external.push(r.url())
   })
   return external

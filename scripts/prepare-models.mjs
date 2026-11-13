@@ -3,7 +3,7 @@
 // Models (Apache-2.0) are downloaded once from MediaPipe's official bucket and checked against
 // pinned SHA-256 hashes; the WASM comes from the pinned @mediapipe/tasks-vision package.
 import { createHash } from 'node:crypto'
-import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { copyFileSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 
 const bucket = 'https://storage.googleapis.com/mediapipe-models'
@@ -31,11 +31,14 @@ const models = [
 ]
 const out = 'public/models'
 const wasmDir = 'node_modules/@mediapipe/tasks-vision/wasm'
-const wasmFiles = ['vision_wasm_internal.js', 'vision_wasm_internal.wasm']
+// The ES-module build, loaded by the vision worker (ADR 0009).
+const wasmFiles = ['vision_wasm_module_internal.js', 'vision_wasm_module_internal.wasm']
 
 const sha256 = (buf) => createHash('sha256').update(buf).digest('hex')
 
 mkdirSync('.cache', { recursive: true })
+// Start clean so no stale model or WASM ends up in the build.
+rmSync(out, { recursive: true, force: true })
 mkdirSync(join(out, 'wasm'), { recursive: true })
 
 for (const model of models) {

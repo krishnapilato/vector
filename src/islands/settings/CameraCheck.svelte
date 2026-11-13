@@ -2,6 +2,7 @@
   import Button from '../../components/Button.svelte'
   import InlineNotice from '../../components/InlineNotice.svelte'
   import type { FocusState, FocusTracker } from '../../core/focus/focus'
+  import { ease } from '../../core/focus/geometry'
   import type { Calibration, Sensitivity } from '../../core/model/schemas'
   import type { CameraHandle } from '../../lib/camera'
   import { copy } from '../../lib/copy'
@@ -49,12 +50,19 @@
     handle = await startCamera(
       (sample) => {
         tracker = focus.step(tracker, sample).tracker
+        // Readings glide too, so the numbers are easy to follow.
+        const previous = reading
+        const soft = (key: 'yaw' | 'pitch' | 'blink' | 'jaw', value: number) =>
+          ease(previous ? previous[key] : null, value, 0.3)
         reading = {
           face: sample.facePresent,
-          yaw: sample.yaw - (calibration?.yawMean ?? 0),
-          pitch: sample.pitch - (calibration?.pitchMean ?? focus.uncalibrated.pitchMean),
-          blink: sample.blink,
-          jaw: sample.jawOpen,
+          yaw: soft('yaw', sample.yaw - (calibration?.yawMean ?? 0)),
+          pitch: soft(
+            'pitch',
+            sample.pitch - (calibration?.pitchMean ?? focus.uncalibrated.pitchMean),
+          ),
+          blink: soft('blink', sample.blink),
+          jaw: soft('jaw', sample.jawOpen),
           phone: sample.phone,
           shoulders:
             sample.shoulderY === null
