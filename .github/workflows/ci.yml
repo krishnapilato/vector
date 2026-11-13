@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, v3]
   pull_request:
 
 permissions:
@@ -14,7 +14,7 @@ concurrency:
 
 jobs:
   check:
-    name: Typecheck, lint, test, build
+    name: Typecheck, lint, test, build, budget
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -25,14 +25,10 @@ jobs:
           node-version-file: .nvmrc
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm typecheck
-      - run: pnpm ci:lint
-      - run: pnpm test:coverage
-      - run: pnpm build
-      - run: pnpm size
+      - run: pnpm check
 
-  browser:
-    name: Browser and end-to-end tests
+  e2e:
+    name: End-to-end and accessibility
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -44,7 +40,6 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm exec playwright install --with-deps chromium
-      - run: pnpm test:browser
       - run: pnpm e2e
       - if: failure()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2

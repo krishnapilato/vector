@@ -1,11 +1,10 @@
 node_modules
 dist
-dev-dist
+.astro
 coverage
 playwright-report
 test-results
 blob-report
-.vitest
 *.log
 .DS_Store
 .env
