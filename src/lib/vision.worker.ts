@@ -7,8 +7,13 @@
 import { FaceLandmarker } from '@mediapipe/tasks-vision'
 import { headAngles } from '../core/focus/geometry'
 import type { VisionReply, VisionRequest } from './vision-protocol'
+import { localFetch } from './worker-network'
 
 declare const self: DedicatedWorkerGlobalScope
+
+// MediaPipe includes usage telemetry. Block cross-origin fetches before model initialization.
+// GitHub Pages cannot set CSP response headers on the worker script itself.
+self.fetch = localFetch(self.fetch.bind(self), self.location.href)
 
 let face: FaceLandmarker | null = null
 

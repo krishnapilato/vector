@@ -39,7 +39,7 @@ La pagina interna `/vector/style` raccoglie token e stati dei componenti. Le mot
 
 Sessioni, impostazioni e profili vivono in IndexedDB; la sessione in corso usa localStorage per riprendere rapidamente. Non servono account o server applicativi. Font, modelli e WASM vengono serviti dalla stessa origine. I frame della webcam sono elaborati in memoria da MediaPipe in un Web Worker: non sono registrati né inviati; vengono salvati solo aggregati numerici per sessione.
 
-La build applica una Content Security Policy che limita le connessioni alla stessa origine. I backup sono cifrati sul dispositivo quando viene specificata una passphrase; la passphrase non viene salvata. La persistenza dello storage dipende dal browser: esportare un backup resta necessario per proteggersi dalla cancellazione dei dati locali. Il rilevamento della webcam è un’indicazione pratica, non una misura clinica della concentrazione o della stanchezza.
+La build applica una Content Security Policy che limita le connessioni della pagina alla stessa origine. Il worker applica inoltre una policy alle fetch del SDK: le richieste esterne, inclusa la telemetria di MediaPipe, vengono rifiutate prima della rete; i redirect delle fetch locali sono disabilitati. I backup sono cifrati sul dispositivo quando viene specificata una passphrase; la passphrase non viene salvata. La persistenza dello storage dipende dal browser: esportare un backup resta necessario per proteggersi dalla cancellazione dei dati locali. Il rilevamento della webcam è un’indicazione pratica, non una misura clinica della concentrazione o della stanchezza.
 
 ## Sviluppo
 
